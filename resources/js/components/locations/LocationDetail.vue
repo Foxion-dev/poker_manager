@@ -262,10 +262,11 @@
 					</button>
 				</div>
 				<div v-if="tournaments.length > 0" class="space-y-4">
-					<div
+					<router-link
 						v-for="tournament in tournaments"
 						:key="tournament.id"
-						class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+						:to="`/locations/${route.params.id}/tournaments/${tournament.id}`"
+						class="block bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 					>
 						<div class="flex items-start justify-between">
 							<div class="flex-1">
@@ -298,28 +299,22 @@
 									</div>
 								</div>
 							</div>
-							<div v-if="location.is_admin" class="ml-4 flex space-x-2">
-								<router-link
-									:to="`/locations/${route.params.id}/tournaments/${tournament.id}`"
-									class="px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-								>
-									Детали
-								</router-link>
+							<div v-if="location.is_admin" class="ml-4 flex space-x-2" @click.stop>
 								<button
-									@click="editTournament(tournament)"
+									@click.stop="editTournament(tournament)"
 									class="px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
 								>
 									Редактировать
 								</button>
 								<button
-									@click="deleteTournament(tournament.id)"
+									@click.stop="deleteTournament(tournament.id)"
 									class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
 								>
 									Удалить
 								</button>
 							</div>
 						</div>
-					</div>
+					</router-link>
 				</div>
 				<div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
 					<span class="text-4xl mb-4 block">📭</span>
