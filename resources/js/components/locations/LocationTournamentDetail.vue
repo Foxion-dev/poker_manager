@@ -44,14 +44,14 @@
 		</div>
 
 		<div v-if="tournament && tournament.prize_pool" class="mb-6">
-			<div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
 				<div class="flex items-center justify-between">
 					<div>
-						<h3 class="text-lg font-semibold text-white mb-1">Призовой фонд</h3>
-						<p class="text-3xl font-bold text-white">
+						<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Призовой фонд</h3>
+						<p class="text-3xl font-bold text-gray-900 dark:text-white">
 							{{ formatCurrency(tournament.prize_pool, tournament.currency) }}
 						</p>
-						<p class="text-sm text-green-100 mt-1">
+						<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
 							Всего входов: {{ formatCurrency(tournament.total_buyin, tournament.currency) }}
 						</p>
 					</div>
@@ -84,9 +84,6 @@
 								{{ prize.place }} место
 							</div>
 							<div>
-								<p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-									{{ prize.participant_name }}
-								</p>
 								<p class="text-xs text-gray-500 dark:text-gray-400">
 									{{ prize.percentage }}% от призового фонда
 								</p>

@@ -1040,17 +1040,6 @@ const removeParticipant = (index) => {
 	tournamentForm.value.participants.splice(index, 1);
 };
 
-const updatePlaceNumbers = () => {
-	tournamentForm.value.participants.forEach((p, i) => {
-		if (!p.place || p.place < 1) {
-			p.place = i + 1;
-		}
-	});
-};
-
-watch(() => tournamentForm.value.participants.length, () => {
-	updatePlaceNumbers();
-});
 
 const saveTournament = async () => {
 	const validParticipants = tournamentForm.value.participants.filter(p => {

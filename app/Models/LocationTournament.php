@@ -75,28 +75,22 @@ class LocationTournament extends Model
 	public function getPrizeDistributionAttribute(): array
 	{
 		$prizePool = $this->prize_pool;
-		$itmParticipants = $this->participants->where('place', '<=', 3)->sortBy('place')->values();
 		
-		if ($itmParticipants->isEmpty()) {
+		if ($prizePool <= 0) {
 			return [];
 		}
 
 		$distribution = [60, 30, 10];
 		$prizes = [];
 		
-		foreach ($itmParticipants as $index => $participant) {
-			if ($index >= 3) {
-				break;
-			}
-			
+		for ($place = 1; $place <= 3; $place++) {
+			$index = $place - 1;
 			$percentage = $distribution[$index] ?? 0;
 			$prize = round($prizePool * ($percentage / 100), 2);
 			$prize = round($prize / 5) * 5;
 			
 			$prizes[] = [
-				'place' => $participant->place,
-				'participant_id' => $participant->id,
-				'participant_name' => $participant->display_name,
+				'place' => $place,
 				'percentage' => $percentage,
 				'prize' => $prize,
 			];
