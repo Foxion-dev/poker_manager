@@ -119,7 +119,7 @@ class LocationTournament extends Model
 			return [];
 		}
 		
-		$itmPlaces = max(1, min((int) round($itmPlacesFloat), $participantsCount));
+		$itmPlaces = max(1, min((int) ceil($itmPlacesFloat), $participantsCount));
 		
 		if ($itmPlaces === 0 || $itmPlaces > $participantsCount) {
 			return [];

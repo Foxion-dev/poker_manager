@@ -502,12 +502,12 @@ const openPrizeDistributionModal = () => {
 		const itmPercentage = tournament.value.itm_percentage || 15;
 		const itmPlacesFloat = participantsCount * (itmPercentage / 100);
 		
-		if (itmPlacesFloat < 1) {
+		if (itmPlacesFloat < 0.5) {
 			alert('Недостаточно участников для расчета призовых мест');
 			return;
 		}
 		
-		const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
+		const itmPlaces = Math.max(1, Math.min(Math.ceil(itmPlacesFloat), participantsCount));
 		
 		prizeDistributionForm.value = [];
 		for (let place = 1; place <= itmPlaces; place++) {
