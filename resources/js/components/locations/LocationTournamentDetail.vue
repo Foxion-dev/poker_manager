@@ -186,37 +186,62 @@
 							</span>
 						</div>
 					</div>
-					<div v-if="!tournament.is_finished && location?.is_admin" class="flex items-center space-x-2">
+					<div v-if="!tournament.is_finished && location?.is_admin" class="flex items-center space-x-3">
 						<div>
-							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 text-center">
 								Ребаи
 							</label>
-							<input
-								v-model.number="participant.rebuy"
-								type="number"
-								min="0"
-								class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
-								@change="updateParticipant(participant)"
-							/>
+							<div class="flex items-center space-x-1">
+								<button
+									@click="decrementRebuy(participant)"
+									class="w-8 h-8 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+									:disabled="(participant.rebuy || 0) <= 0"
+								>
+									−
+								</button>
+								<input
+									v-model.number="participant.rebuy"
+									type="number"
+									min="0"
+									class="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm font-semibold"
+									@change="updateParticipant(participant)"
+								/>
+								<button
+									@click="incrementRebuy(participant)"
+									class="w-8 h-8 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+								>
+									+
+								</button>
+							</div>
 						</div>
 						<div>
-							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 text-center">
 								Аддон
 							</label>
-							<input
-								v-model="participant.addon"
-								type="checkbox"
-								class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 mt-2"
-								@change="updateParticipant(participant)"
-							/>
+							<div class="flex items-center justify-center">
+								<label class="relative inline-flex items-center cursor-pointer">
+									<input
+										v-model="participant.addon"
+										type="checkbox"
+										class="sr-only peer"
+										@change="updateParticipant(participant)"
+									/>
+									<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+									<span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+										{{ participant.addon ? 'Да' : 'Нет' }}
+									</span>
+								</label>
+							</div>
 						</div>
-						<button
-							@click="removeParticipant(participant)"
-							class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors mt-6"
-							title="Удалить участника"
-						>
-							🗑️
-						</button>
+						<div class="flex items-end">
+							<button
+								@click="removeParticipant(participant)"
+								class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+								title="Удалить участника"
+							>
+								🗑️
+							</button>
+						</div>
 					</div>
 					<div v-else class="flex items-center space-x-4">
 						<div v-if="participant.rebuy > 0" class="text-sm text-gray-600 dark:text-gray-400">
@@ -560,6 +585,18 @@ const addParticipant = async () => {
 		alert(errorMessage);
 	} finally {
 		addingParticipant.value = false;
+	}
+};
+
+const incrementRebuy = (participant) => {
+	participant.rebuy = (participant.rebuy || 0) + 1;
+	updateParticipant(participant);
+};
+
+const decrementRebuy = (participant) => {
+	if ((participant.rebuy || 0) > 0) {
+		participant.rebuy = (participant.rebuy || 0) - 1;
+		updateParticipant(participant);
 	}
 };
 
