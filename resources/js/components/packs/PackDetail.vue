@@ -59,14 +59,14 @@
 						<div class="flex items-center justify-between">
 							<div>
 								<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-									Всего турниров
+									Байин
 								</p>
 								<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-									{{ pack.total_tournaments }}
+									{{ formatCurrency(pack.buyin_usd) }}
 								</p>
 							</div>
 							<div class="h-16 w-16 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
-								<span class="text-3xl">🎯</span>
+								<span class="text-3xl">💵</span>
 							</div>
 						</div>
 					</div>
@@ -77,22 +77,48 @@
 						<div class="flex items-center justify-between">
 							<div>
 								<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-									Общий профит
+									Кэшаут
 								</p>
 								<p
 									class="mt-2 text-3xl font-bold"
-									:class="pack.total_profit_usd >= 0 ? 'text-green-600' : 'text-red-600'"
+									:class="pack.cashout_usd > 0 ? 'text-green-600' : 'text-gray-400'"
 								>
-									{{ formatCurrency(pack.total_profit_usd) }}
+									{{ pack.cashout_usd > 0 ? formatCurrency(pack.cashout_usd) : '-' }}
 								</p>
 							</div>
 							<div
 								class="h-16 w-16 rounded-xl flex items-center justify-center shadow-lg"
-								:class="pack.total_profit_usd >= 0 
+								:class="pack.cashout_usd > 0 
+									? 'bg-gradient-to-br from-green-400 to-green-600' 
+									: 'bg-gradient-to-br from-gray-400 to-gray-600'"
+							>
+								<span class="text-3xl">💰</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+					<div class="p-6">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+									Профит
+								</p>
+								<p
+									class="mt-2 text-3xl font-bold"
+									:class="pack.profit_usd >= 0 ? 'text-green-600' : 'text-red-600'"
+								>
+									{{ formatCurrency(pack.profit_usd) }}
+								</p>
+							</div>
+							<div
+								class="h-16 w-16 rounded-xl flex items-center justify-center shadow-lg"
+								:class="pack.profit_usd >= 0 
 									? 'bg-gradient-to-br from-green-400 to-green-600' 
 									: 'bg-gradient-to-br from-red-400 to-red-600'"
 							>
-								<span class="text-3xl">💰</span>
+								<span class="text-3xl">📈</span>
 							</div>
 						</div>
 					</div>
@@ -138,120 +164,6 @@
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
-					<div class="flex items-center">
-						<div class="h-12 w-12 rounded-lg bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center mr-4">
-							<span class="text-2xl">📈</span>
-						</div>
-						<div>
-							<p class="text-sm font-medium text-gray-600 dark:text-gray-400">Средний байин</p>
-							<p class="text-2xl font-bold text-gray-900 dark:text-white">
-								{{ formatCurrency(pack.average_buyin_usd) }}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
-					<div class="flex items-center">
-						<div class="h-12 w-12 rounded-lg bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center mr-4">
-							<span class="text-2xl">💵</span>
-						</div>
-						<div>
-							<p class="text-sm font-medium text-gray-600 dark:text-gray-400">Общий байин</p>
-							<p class="text-2xl font-bold text-gray-900 dark:text-white">
-								{{ formatCurrency(pack.total_buyin_usd) }}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
-					<div class="flex items-center">
-						<div class="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-4">
-							<span class="text-2xl">🏆</span>
-						</div>
-						<div>
-							<p class="text-sm font-medium text-gray-600 dark:text-gray-400">ITM турниров</p>
-							<p class="text-2xl font-bold text-gray-900 dark:text-white">
-								{{ pack.itm_count }}
-							</p>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
-				<div class="flex items-center mb-6">
-					<div class="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3">
-						<span class="text-xl">🎮</span>
-					</div>
-					<h3 class="text-xl font-bold text-gray-900 dark:text-white">
-						Турниры в паке
-					</h3>
-				</div>
-				<div v-if="tournaments.data && tournaments.data.length > 0" class="overflow-x-auto">
-					<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-						<thead class="bg-gray-50 dark:bg-gray-700">
-							<tr>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-									Дата
-								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-									Рум
-								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-									Байин
-								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-									Кэшаут
-								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-									Профит
-								</th>
-							</tr>
-						</thead>
-						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-							<tr v-for="tournament in tournaments.data" :key="tournament.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-									{{ formatDate(tournament.date) }}
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="flex items-center">
-										<div v-if="tournament.room?.image" class="h-8 w-8 rounded-lg overflow-hidden mr-3">
-											<img :src="getRoomImageUrl(tournament.room.image)" :alt="tournament.room.name" class="h-full w-full object-cover" />
-										</div>
-										<div v-else class="text-xl mr-3">
-											{{ tournament.room?.icon || '🏠' }}
-										</div>
-										<span class="text-sm font-medium text-gray-900 dark:text-white">
-											{{ tournament.room?.name }}
-										</span>
-									</div>
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-									{{ formatBuyin(tournament) }}
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap text-sm font-bold"
-									:class="tournament.cashout ? 'text-green-600' : 'text-gray-400'"
-								>
-									{{ tournament.cashout ? formatCurrency(tournament.cashout) : '-' }}
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap text-sm font-bold"
-									:class="getProfit(tournament) >= 0 ? 'text-green-600' : 'text-red-600'"
-								>
-									{{ formatCurrency(getProfit(tournament)) }}
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-				<div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
-					<span class="text-4xl mb-4 block">📭</span>
-					<p>Нет турниров в этом паке</p>
-				</div>
-			</div>
 		</div>
 
 		<div
@@ -301,6 +213,51 @@
 							</div>
 						</div>
 
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Байин (сумма загрузки) *
+								</label>
+								<input
+									v-model.number="form.buyin"
+									type="number"
+									step="0.01"
+									min="0"
+									required
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+									placeholder="0.00"
+								/>
+							</div>
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Кэшаут (сумма выгрузки)
+								</label>
+								<input
+									v-model.number="form.cashout"
+									type="number"
+									step="0.01"
+									min="0"
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+									placeholder="0.00"
+								/>
+							</div>
+						</div>
+
+						<div>
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								Валюта
+							</label>
+							<select
+								v-model="form.currency_id"
+								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							>
+								<option :value="null">USD (Доллар США)</option>
+								<option v-for="currency in currencies" :key="currency.id" :value="currency.id">
+									{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+								</option>
+							</select>
+						</div>
+
 						<div>
 							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 								Описание
@@ -339,13 +296,14 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { packService } from '../../services/packService';
-import { tournamentService } from '../../services/tournamentService';
+import { useCurrencyStore } from '../../stores/currencies';
 
 const route = useRoute();
 const router = useRouter();
+const currencyStore = useCurrencyStore();
 
 const pack = ref(null);
-const tournaments = ref({ data: [] });
+const currencies = ref([]);
 const loading = ref(false);
 const showForm = ref(false);
 const saving = ref(false);
@@ -354,33 +312,34 @@ const form = ref({
 	name: '',
 	start_date: '',
 	end_date: '',
+	buyin: 0,
+	cashout: null,
+	currency_id: null,
 	description: '',
 });
 
 const fetchPack = async () => {
 	loading.value = true;
 	try {
-		pack.value = await packService.getById(route.params.id);
-		form.value = {
-			name: pack.value.name,
-			start_date: pack.value.start_date,
-			end_date: pack.value.end_date || '',
-			description: pack.value.description || '',
-		};
-		await fetchTournaments();
+		await Promise.all([
+			packService.getById(route.params.id).then(data => {
+				pack.value = data;
+				form.value = {
+					name: data.name,
+					start_date: data.start_date,
+					end_date: data.end_date || '',
+					buyin: data.buyin,
+					cashout: data.cashout || null,
+					currency_id: data.currency?.id || null,
+					description: data.description || '',
+				};
+			}),
+			currencyStore.fetchCurrencies().then(() => currencies.value = currencyStore.currencies),
+		]);
 	} catch (error) {
 		console.error('Error fetching pack:', error);
 	} finally {
 		loading.value = false;
-	}
-};
-
-const fetchTournaments = async () => {
-	try {
-		const response = await tournamentService.getAll({ pack_id: route.params.id });
-		tournaments.value = response;
-	} catch (error) {
-		console.error('Error fetching tournaments:', error);
 	}
 };
 
@@ -407,7 +366,7 @@ const savePack = async () => {
 };
 
 const deletePack = async () => {
-	if (!confirm('Вы уверены, что хотите удалить этот пак? Турниры не будут удалены, но будут отвязаны от пака.')) {
+	if (!confirm('Вы уверены, что хотите удалить этот пак?')) {
 		return;
 	}
 
@@ -432,31 +391,6 @@ const formatDate = (dateString) => {
 	return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-const formatBuyin = (tournament) => {
-	const currency = tournament.currency;
-	const buyin = tournament.buyin;
-	const bountyCount = tournament.bounty_count || 0;
-	const totalBuyin = buyin + (bountyCount * buyin);
-
-	if (!currency || currency.code === 'USD') {
-		return formatCurrency(totalBuyin);
-	}
-
-	const symbol = currency.symbol || currency.code;
-	return `${symbol}${totalBuyin.toFixed(2)} (${formatCurrency(totalBuyin / currency.rate_to_usd)})`;
-};
-
-const getProfit = (tournament) => {
-	const totalBuyin = tournament.buyin + ((tournament.bounty_count || 0) * tournament.buyin);
-	const cashout = tournament.cashout || 0;
-	return cashout - totalBuyin;
-};
-
-const getRoomImageUrl = (imagePath) => {
-	if (!imagePath) return null;
-	if (imagePath.startsWith('http')) return imagePath;
-	return `/storage/${imagePath}`;
-};
 
 onMounted(() => {
 	fetchPack();
