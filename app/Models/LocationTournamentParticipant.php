@@ -12,6 +12,7 @@ class LocationTournamentParticipant extends Model
 
 	protected $fillable = [
 		'location_tournament_id',
+		'name',
 		'user_id',
 		'place',
 		'prize',
@@ -33,5 +34,10 @@ class LocationTournamentParticipant extends Model
 	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class);
+	}
+
+	public function getDisplayNameAttribute(): string
+	{
+		return $this->name ?? $this->user?->name ?? 'Неизвестный участник';
 	}
 }

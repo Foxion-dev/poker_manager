@@ -22,7 +22,8 @@ class StoreLocationTournamentRequest extends FormRequest
 			'format' => ['required', 'in:classic,classic_bounty,progressive_bounty'],
 			'date' => ['required', 'date'],
 			'participants' => ['required', 'array', 'min:1'],
-			'participants.*.user_id' => ['required', 'exists:users,id', 'distinct'],
+			'participants.*.name' => ['required_without:participants.*.user_id', 'nullable', 'string', 'max:255'],
+			'participants.*.user_id' => ['nullable', 'exists:users,id'],
 			'participants.*.place' => ['required', 'integer', 'min:1'],
 			'participants.*.prize' => ['nullable', 'numeric', 'min:0'],
 		];
@@ -32,11 +33,25 @@ class StoreLocationTournamentRequest extends FormRequest
 	{
 		$validator->after(function ($validator) {
 			$participants = $this->input('participants', []);
-			$userIds = array_column($participants, 'user_id');
 			$places = array_column($participants, 'place');
 
+			$userIds = [];
+			$names = [];
+			foreach ($participants as $index => $participant) {
+				if (empty($participant['user_id']) && empty($participant['name'])) {
+					$validator->errors()->add("participants.{$index}", 'Необходимо указать либо пользователя, либо имя участника.');
+				}
+
+				if (!empty($participant['user_id'])) {
+					$userIds[] = $participant['user_id'];
+				}
+				if (!empty($participant['name'])) {
+					$names[] = $participant['name'];
+				}
+			}
+
 			if (count($userIds) !== count(array_unique($userIds))) {
-				$validator->errors()->add('participants', 'Каждый участник может быть добавлен только один раз.');
+				$validator->errors()->add('participants', 'Каждый пользователь может быть добавлен только один раз.');
 			}
 
 			if (count($places) !== count(array_unique($places))) {

@@ -474,41 +474,50 @@
 								<div
 									v-for="(participant, index) in tournamentForm.participants"
 									:key="index"
-									class="flex items-center space-x-2"
+									class="flex flex-col space-y-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
 								>
-									<select
-										v-model="participant.user_id"
-										required
-										class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-									>
-										<option value="">Выберите игрока</option>
-										<option v-for="user in allUsers" :key="user.id" :value="user.id">
-											{{ user.name }}
-										</option>
-									</select>
-									<input
-										v-model.number="participant.place"
-										type="number"
-										min="1"
-										required
-										placeholder="Место"
-										class="w-24 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-									/>
-									<input
-										v-model.number="participant.prize"
-										type="number"
-										step="0.01"
-										min="0"
-										placeholder="Приз"
-										class="w-32 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-									/>
-									<button
-										type="button"
-										@click="removeParticipant(index)"
-										class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-									>
-										Удалить
-									</button>
+									<div class="flex items-center space-x-2">
+										<select
+											v-model="participant.user_id"
+											class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+										>
+											<option value="">Выберите пользователя (опционально)</option>
+											<option v-for="user in allUsers" :key="user.id" :value="user.id">
+												{{ user.name }}
+											</option>
+										</select>
+									</div>
+									<div class="flex items-center space-x-2">
+										<input
+											v-model="participant.name"
+											type="text"
+											placeholder="Имя участника (если не выбран пользователь)"
+											class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+										/>
+										<input
+											v-model.number="participant.place"
+											type="number"
+											min="1"
+											required
+											placeholder="Место"
+											class="w-24 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+										/>
+										<input
+											v-model.number="participant.prize"
+											type="number"
+											step="0.01"
+											min="0"
+											placeholder="Приз"
+											class="w-32 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+										/>
+										<button
+											type="button"
+											@click="removeParticipant(index)"
+											class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+										>
+											Удалить
+										</button>
+									</div>
 								</div>
 								<button
 									type="button"
@@ -655,7 +664,7 @@ const tournamentForm = ref({
 	date: '',
 	buyin: 0,
 	format: 'classic',
-	participants: [{ user_id: '', place: 1, prize: null }],
+	participants: [{ user_id: '', name: '', place: 1, prize: null }],
 });
 
 const fetchLocation = async (password = null) => {
@@ -765,7 +774,7 @@ const openTournamentForm = () => {
 		date: '',
 		buyin: 0,
 		format: 'classic',
-		participants: [{ user_id: '', place: 1, prize: null }],
+		participants: [{ user_id: '', name: '', place: 1, prize: null }],
 	};
 	showTournamentForm.value = true;
 };

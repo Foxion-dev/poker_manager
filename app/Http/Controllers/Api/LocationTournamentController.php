@@ -35,9 +35,12 @@ class LocationTournamentController extends Controller
 					'participants' => $tournament->participants->map(function ($participant) {
 						return [
 							'id' => $participant->id,
+							'name' => $participant->name,
+							'user_id' => $participant->user_id,
 							'user' => $participant->user,
 							'place' => $participant->place,
 							'prize' => $participant->prize,
+							'display_name' => $participant->display_name,
 						];
 					})->sortBy('place')->values(),
 				];
@@ -89,9 +92,12 @@ class LocationTournamentController extends Controller
 			'participants' => $locationTournament->participants->map(function ($participant) {
 				return [
 					'id' => $participant->id,
+					'name' => $participant->name,
+					'user_id' => $participant->user_id,
 					'user' => $participant->user,
 					'place' => $participant->place,
 					'prize' => $participant->prize,
+					'display_name' => $participant->display_name,
 				];
 			})->sortBy('place')->values(),
 		]);

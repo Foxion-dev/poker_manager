@@ -22,7 +22,8 @@ class UpdateLocationTournamentRequest extends FormRequest
 			'format' => ['sometimes', 'required', 'in:classic,classic_bounty,progressive_bounty'],
 			'date' => ['sometimes', 'required', 'date'],
 			'participants' => ['sometimes', 'array', 'min:1'],
-			'participants.*.user_id' => ['required', 'exists:users,id', 'distinct'],
+			'participants.*.name' => ['required_without:participants.*.user_id', 'nullable', 'string', 'max:255'],
+			'participants.*.user_id' => ['nullable', 'exists:users,id'],
 			'participants.*.place' => ['required', 'integer', 'min:1'],
 			'participants.*.prize' => ['nullable', 'numeric', 'min:0'],
 		];
@@ -36,11 +37,21 @@ class UpdateLocationTournamentRequest extends FormRequest
 				return;
 			}
 
-			$userIds = array_column($participants, 'user_id');
 			$places = array_column($participants, 'place');
 
+			$userIds = [];
+			foreach ($participants as $index => $participant) {
+				if (empty($participant['user_id']) && empty($participant['name'])) {
+					$validator->errors()->add("participants.{$index}", 'Необходимо указать либо пользователя, либо имя участника.');
+				}
+
+				if (!empty($participant['user_id'])) {
+					$userIds[] = $participant['user_id'];
+				}
+			}
+
 			if (count($userIds) !== count(array_unique($userIds))) {
-				$validator->errors()->add('participants', 'Каждый участник может быть добавлен только один раз.');
+				$validator->errors()->add('participants', 'Каждый пользователь может быть добавлен только один раз.');
 			}
 
 			if (count($places) !== count(array_unique($places))) {
