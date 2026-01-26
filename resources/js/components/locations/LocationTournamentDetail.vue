@@ -691,8 +691,6 @@ const removeParticipant = async (participant) => {
 
 	saving.value = true;
 	try {
-		await locationService.removeTournamentParticipant(route.params.locationId, route.params.id, participant.id);
-		
 		const response = await locationService.removeTournamentParticipant(route.params.locationId, route.params.id, participant.id);
 		
 		if (response && response.participants) {
