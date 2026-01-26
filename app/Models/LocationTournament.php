@@ -90,8 +90,7 @@ class LocationTournament extends Model
 
 	public function getPrizeDistributionAttribute(): array
 	{
-		$customDistribution = $this->prize_distribution;
-		if (is_array($customDistribution) && count($customDistribution) > 0) {
+		if ($this->prize_distribution && is_array($this->prize_distribution) && count($this->prize_distribution) > 0) {
 			$prizePool = $this->prize_pool;
 			return array_map(function($prize) use ($prizePool) {
 				return [
@@ -99,7 +98,7 @@ class LocationTournament extends Model
 					'percentage' => $prize['percentage'],
 					'prize' => round($prizePool * ($prize['percentage'] / 100), 2),
 				];
-			}, $customDistribution);
+			}, $this->prize_distribution);
 		}
 
 		$prizePool = $this->prize_pool;
@@ -116,13 +115,13 @@ class LocationTournament extends Model
 		$itmPercentage = (float) ($this->itm_percentage ?? 15);
 		$itmPlacesFloat = $participantsCount * ($itmPercentage / 100);
 		
-		if ($itmPlacesFloat < 1) {
+		if ($itmPlacesFloat < 0.5) {
 			return [];
 		}
 		
 		$itmPlaces = max(1, min((int) round($itmPlacesFloat), $participantsCount));
 		
-		if ($itmPlaces === 0) {
+		if ($itmPlaces === 0 || $itmPlaces > $participantsCount) {
 			return [];
 		}
 
