@@ -10,7 +10,9 @@ services:
             - 'host.docker.internal:host-gateway'
         expose:
             - '9000'
+            - '80'
         ports:
+            - '8080:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
@@ -25,16 +27,6 @@ services:
         depends_on:
             - mysql
             - redis
-        command: >
-            bash -c "
-            if [ ! -d /var/www/html/public/build ]; then
-                echo 'Сборка assets...';
-                npm install && npm run build;
-            fi &&
-            php artisan config:clear &&
-            php artisan cache:clear &&
-            php-fpm
-            "
     nginx:
         image: 'nginx:alpine'
         ports:
