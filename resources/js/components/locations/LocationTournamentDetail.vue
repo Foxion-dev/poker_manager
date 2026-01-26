@@ -187,17 +187,27 @@ const updateParticipant = async (participant) => {
 	
 	saving.value = true;
 	try {
-		await locationService.updateTournamentParticipants(
-			route.params.locationId,
-			route.params.id,
-			{
-				participants: tournament.value.participants.map(p => ({
+		const participantsData = tournament.value.participants.map(p => {
+			if (p.id === participant.id) {
+				return {
 					id: p.id,
 					rebuy: p.rebuy ?? 0,
 					addon: p.addon ?? false,
 					prize: p.prize ?? null,
-				}))
+				};
 			}
+			return {
+				id: p.id,
+				rebuy: p.rebuy ?? 0,
+				addon: p.addon ?? false,
+				prize: p.prize ?? null,
+			};
+		});
+
+		await locationService.updateTournamentParticipants(
+			route.params.locationId,
+			route.params.id,
+			{ participants: participantsData }
 		);
 		await fetchTournament();
 	} catch (error) {
@@ -242,7 +252,7 @@ const formatBuyin = (tournament) => {
 	}
 
 	const buyinInCurrency = parseFloat(tournament.buyin) || 0;
-	const buyinInUSD = buyinInCurrency * parseFloat(tournament.currency.rate_to_usd);
+	const buyinInUSD = buyinInCurrency * parseFloat(tournament.currency.rate_to_usd || 1);
 
 	return `${formatCurrency(buyinInCurrency, tournament.currency)} (${formatCurrency(buyinInUSD)})`;
 };

@@ -1103,12 +1103,13 @@ const formatCurrency = (value, currencyCode = 'USD', symbol = '$') => {
 };
 
 const formatBuyin = (tournament) => {
+	if (!tournament || !tournament.buyin) return '';
 	if (!tournament.currency || tournament.currency.code === 'USD') {
 		return formatCurrency(tournament.buyin);
 	}
 
 	const buyinInCurrency = parseFloat(tournament.buyin) || 0;
-	const buyinInUSD = buyinInCurrency * parseFloat(tournament.currency.rate_to_usd);
+	const buyinInUSD = buyinInCurrency * parseFloat(tournament.currency.rate_to_usd || 1);
 
 	return `${formatCurrency(buyinInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(buyinInUSD)})`;
 };
