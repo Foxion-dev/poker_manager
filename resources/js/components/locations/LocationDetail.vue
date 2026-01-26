@@ -958,11 +958,12 @@ const deleteLocation = async () => {
 
 const openTournamentForm = () => {
 	editingTournament.value = null;
+	const today = new Date().toISOString().split('T')[0];
 	tournamentForm.value = {
 		name: '',
-		date: '',
+		date: today,
 		buyin: 0,
-		currency_id: null,
+		currency_id: availableCurrencies.value.length === 1 ? availableCurrencies.value[0].id : null,
 		format: 'classic',
 		participants: [{ user_id: '', name: '', place: 1, prize: null }],
 	};
