@@ -10,14 +10,14 @@ class StatisticsService
 {
 	public function getBankrollHistory(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): Collection
 	{
-		$query = $user->tournaments()->with('currency')->orderBy('date')->orderBy('id');
+		$query = $user->tournaments()->withUsd()->orderBy('tournaments.date')->orderBy('tournaments.id');
 
 		if ($startDate) {
-			$query->where('date', '>=', $startDate);
+			$query->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('date', '<=', $endDate);
+			$query->where('tournaments.date', '<=', $endDate);
 		}
 
 		$tournaments = $query->get();
@@ -25,10 +25,7 @@ class StatisticsService
 		$history = collect();
 
 		foreach ($tournaments as $tournament) {
-			$rateToUsd = $tournament->currency?->rate_to_usd ?? 1.0;
-			$totalBuyin = ($tournament->buyin + ($tournament->bounty_count * $tournament->buyin)) / $rateToUsd;
-			$cashout = ($tournament->cashout ?? 0) / $rateToUsd;
-			$profit = $cashout - $totalBuyin;
+			$profit = (float) $tournament->profit_usd;
 			$runningTotal += $profit;
 
 			$history->push([
@@ -76,15 +73,7 @@ class StatisticsService
 			$query->where('tournaments.date', '<=', $endDate);
 		}
 
-		$averageBuyin = $query->selectRaw('
-				AVG(
-					CASE 
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
-					END
-				) as avg_buyin
-			')
+		$averageBuyin = $query->selectRaw('AVG(' . \App\Models\Tournament::getBuyinUsdExpression() . ') as avg_buyin')
 			->value('avg_buyin');
 
 		return round($averageBuyin ?? 0, 2);
@@ -104,21 +93,8 @@ class StatisticsService
 		}
 
 		$stats = $query->selectRaw('
-				SUM(
-					CASE 
-						WHEN tournaments.cashout IS NULL THEN 0
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.cashout
-						ELSE tournaments.cashout / currencies.rate_to_usd
-					END
-				) as total_cashout,
-				SUM(
-					CASE 
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
-					END
-				) as total_buyin
+				SUM(' . \App\Models\Tournament::getCashoutUsdExpression() . ') as total_cashout,
+				SUM(' . \App\Models\Tournament::getBuyinUsdExpression() . ') as total_buyin
 			')
 			->first();
 
@@ -167,22 +143,7 @@ class StatisticsService
 			$query->where('tournaments.date', '<=', $endDate);
 		}
 
-		$profit = $query->selectRaw('
-				SUM(
-					CASE 
-						WHEN tournaments.cashout IS NULL THEN 0
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.cashout
-						ELSE tournaments.cashout / currencies.rate_to_usd
-					END
-					-
-					CASE 
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
-					END
-				) as profit
-			')
+		$profit = $query->selectRaw('SUM(' . \App\Models\Tournament::getProfitUsdExpression() . ') as profit')
 			->value('profit');
 
 		return round($profit ?? 0, 2);
@@ -202,15 +163,7 @@ class StatisticsService
 			$query->where('tournaments.date', '<=', $endDate);
 		}
 
-		$averageCashout = $query->selectRaw('
-				AVG(
-					CASE 
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.cashout
-						ELSE tournaments.cashout / currencies.rate_to_usd
-					END
-				) as avg_cashout
-			')
+		$averageCashout = $query->selectRaw('AVG(' . \App\Models\Tournament::getCashoutUsdExpression() . ') as avg_cashout')
 			->value('avg_cashout');
 
 		return round($averageCashout ?? 0, 2);
@@ -223,27 +176,8 @@ class StatisticsService
 			->selectRaw('
 				tournaments.room_id,
 				COUNT(*) as total_tournaments,
-				SUM(
-					CASE 
-						WHEN tournaments.cashout IS NULL THEN 0
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.cashout
-						ELSE tournaments.cashout / currencies.rate_to_usd
-					END
-					-
-					CASE 
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
-					END
-				) as profit,
-				AVG(
-					CASE 
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
-					END
-				) as avg_buyin,
+				SUM(' . \App\Models\Tournament::getProfitUsdExpression() . ') as profit,
+				AVG(' . \App\Models\Tournament::getBuyinUsdExpression() . ') as avg_buyin,
 				SUM(CASE WHEN tournaments.cashout IS NOT NULL THEN 1 ELSE 0 END) as itm_count
 			')
 			->with('room')

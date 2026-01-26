@@ -51,19 +51,12 @@ class TournamentController extends Controller
 			if ($sortBy === 'buyin') {
 				$query->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
 					->select('tournaments.*')
-					->selectRaw('CASE 
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 THEN tournaments.buyin 
-						ELSE tournaments.buyin / currencies.rate_to_usd 
-					END as buyin_usd')
+					->selectRaw(\App\Models\Tournament::getBuyinUsdExpression() . ' as buyin_usd')
 					->orderBy('buyin_usd', $sortOrder);
 			} elseif ($sortBy === 'cashout') {
 				$query->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
 					->select('tournaments.*')
-					->selectRaw('CASE 
-						WHEN tournaments.cashout IS NULL THEN 0
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 THEN tournaments.cashout 
-						ELSE tournaments.cashout / currencies.rate_to_usd 
-					END as cashout_usd')
+					->selectRaw(\App\Models\Tournament::getCashoutUsdExpression() . ' as cashout_usd')
 					->orderBy('cashout_usd', $sortOrder);
 			} else {
 				$query->orderBy('tournaments.' . $sortBy, $sortOrder);
