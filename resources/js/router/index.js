@@ -145,7 +145,7 @@ router.beforeEach(async (to, from, next) => {
 		return;
 	}
 
-	if (token && !authStore.isAuthenticated) {
+	if (token && !authStore.isAuthenticated && to.meta.requiresAuth) {
 		try {
 			await authStore.fetchUser();
 		} catch (error) {
