@@ -268,14 +268,31 @@ const showPasswordForm = ref(false);
 const locationPassword = ref('');
 const checkingPassword = ref(false);
 
+const getStoredPassword = (locationId) => {
+	return sessionStorage.getItem(`location_password_${locationId}`);
+};
+
+const savePassword = (locationId, password) => {
+	sessionStorage.setItem(`location_password_${locationId}`, password);
+};
+
+const clearPassword = (locationId) => {
+	sessionStorage.removeItem(`location_password_${locationId}`);
+};
+
 const fetchLocation = async (password = null) => {
 	loading.value = true;
 	try {
 		const params = password ? { password } : {};
 		location.value = await locationService.getPublicLocation(route.params.id, password);
 		await fetchTournaments(password);
+		
+		if (password) {
+			savePassword(route.params.id, password);
+		}
 	} catch (error) {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
+			clearPassword(route.params.id);
 			showPasswordForm.value = true;
 		} else if (error.response?.status === 404) {
 			if (error.response?.data?.message === 'Location is not public') {
@@ -315,6 +332,7 @@ const submitPassword = async () => {
 	} catch (error) {
 		if (error.response?.status === 403) {
 			alert('Неверный пароль');
+			clearPassword(route.params.id);
 			locationPassword.value = '';
 		} else {
 			console.error('Error submitting password:', error);
@@ -343,6 +361,11 @@ const formatDate = (dateString) => {
 };
 
 onMounted(() => {
-	fetchLocation();
+	const storedPassword = getStoredPassword(route.params.id);
+	if (storedPassword) {
+		fetchLocation(storedPassword);
+	} else {
+		fetchLocation();
+	}
 });
 </script>
