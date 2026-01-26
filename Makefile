@@ -1,7 +1,23 @@
-.PHONY: help up down restart build shell composer npm artisan migrate fresh seed test pint
+.PHONY: help start up down restart build shell composer npm artisan migrate fresh seed test pint
 
 help: ## Показать справку по командам
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+start: ## Запустить проект локально (контейнеры + dev сервер)
+	@echo "🚀 Запуск проекта..."
+	@if ! ./vendor/bin/sail ps | grep -q "laravel.test"; then \
+		echo "📦 Запуск Docker контейнеров..."; \
+		./vendor/bin/sail up -d; \
+		echo "⏳ Ожидание запуска сервисов..."; \
+		sleep 5; \
+	else \
+		echo "✅ Контейнеры уже запущены"; \
+	fi
+	@echo "🎨 Запуск Vite dev сервера..."
+	@echo "📝 Приложение доступно на http://localhost"
+	@echo "🔧 Vite dev server на http://localhost:5173"
+	@echo ""
+	./vendor/bin/sail npm run dev
 
 up: ## Запустить контейнеры Docker
 	./vendor/bin/sail up -d
