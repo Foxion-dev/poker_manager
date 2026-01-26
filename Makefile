@@ -173,6 +173,8 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@./vendor/bin/sail composer install --no-interaction --prefer-dist --optimize-autoloader
 	@echo "✅ PHP зависимости установлены"
 	@echo ""
+	@echo "🔧 Исправление прав доступа перед установкой npm..."
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
 	@echo "📦 Установка Node.js зависимостей..."
 	@./vendor/bin/sail npm install
 	@echo "✅ Node.js зависимости установлены"
@@ -180,6 +182,9 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@echo "🎨 Сборка assets для production..."
 	@./vendor/bin/sail npm run build
 	@echo "✅ Assets собраны"
+	@echo ""
+	@echo "🔧 Исправление прав доступа после сборки..."
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
 	@echo ""
 	@echo "🗄️  Запуск миграций..."
 	@./vendor/bin/sail artisan migrate --force || echo "⚠️  Ошибка при миграциях. Продолжаем..."
@@ -197,9 +202,5 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@./vendor/bin/sail artisan route:cache || true
 	@./vendor/bin/sail artisan view:cache || true
 	@echo "✅ Приложение оптимизировано"
-	@echo ""
-	@echo "🔧 Исправление прав доступа..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
-	@echo "✅ Права доступа исправлены"
 	@echo ""
 	@echo "🎉 Деплой завершен успешно!"
