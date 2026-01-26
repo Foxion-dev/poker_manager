@@ -16,6 +16,49 @@
 			</router-link>
 		</div>
 
+		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-100 dark:border-gray-700">
+			<div class="flex flex-col sm:flex-row gap-4 items-end">
+				<div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">📅</span>
+							Дата начала
+						</label>
+						<input
+							v-model="dateFrom"
+							type="date"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						/>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">📅</span>
+							Дата окончания
+						</label>
+						<input
+							v-model="dateTo"
+							type="date"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						/>
+					</div>
+				</div>
+				<div class="flex gap-2">
+					<button
+						@click="applyTodayFilter"
+						class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+					>
+						Сегодня
+					</button>
+					<button
+						@click="clearFilter"
+						class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+					>
+						Сбросить
+					</button>
+				</div>
+			</div>
+		</div>
+
 		<div v-if="loading" class="flex items-center justify-center py-20">
 			<div class="text-center">
 				<svg class="animate-spin h-12 w-12 text-indigo-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -121,12 +164,43 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTournamentStore } from '../../stores/tournaments';
 
 const tournamentStore = useTournamentStore();
 const { tournaments, loading } = storeToRefs(tournamentStore);
+
+const today = new Date().toISOString().split('T')[0];
+const dateFrom = ref(today);
+const dateTo = ref(today);
+
+const applyTodayFilter = () => {
+	dateFrom.value = today;
+	dateTo.value = today;
+	fetchTournaments();
+};
+
+const clearFilter = () => {
+	dateFrom.value = '';
+	dateTo.value = '';
+	fetchTournaments();
+};
+
+const fetchTournaments = () => {
+	const params = {};
+	if (dateFrom.value) {
+		params.date_from = dateFrom.value;
+	}
+	if (dateTo.value) {
+		params.date_to = dateTo.value;
+	}
+	tournamentStore.fetchTournaments(params);
+};
+
+watch([dateFrom, dateTo], () => {
+	fetchTournaments();
+});
 
 const formatCurrency = (value, currencyCode = 'USD', symbol = '$') => {
 	const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
@@ -193,6 +267,6 @@ const getProfit = (tournament) => {
 };
 
 onMounted(() => {
-	tournamentStore.fetchTournaments();
+	fetchTournaments();
 });
 </script>
