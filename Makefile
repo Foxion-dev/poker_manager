@@ -127,6 +127,11 @@ optimize: ## Оптимизировать приложение
 	./vendor/bin/sail artisan route:cache
 	./vendor/bin/sail artisan view:cache
 
+fix-permissions: ## Исправить права доступа в контейнере
+	@echo "Исправление прав доступа..."
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
+	@echo "Права доступа исправлены!"
+
 setup: ## Первоначальная настройка проекта
 	@echo "Настройка проекта..."
 	@if [ ! -f ./vendor/bin/sail ]; then \
@@ -141,6 +146,8 @@ setup: ## Первоначальная настройка проекта
 	@echo "Ожидание запуска контейнеров..."
 	@sleep 5
 	./vendor/bin/sail composer install
+	@echo "Исправление прав доступа..."
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
 	./vendor/bin/sail npm install
 	@echo "Ожидание запуска MySQL..."
 	@sleep 5

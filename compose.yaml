@@ -25,8 +25,16 @@ services:
         networks:
             - sail
         depends_on:
-            - mysql
-            - redis
+            mysql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "php", "-r", "echo 'OK';"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 30s
     nginx:
         image: 'nginx:alpine'
         ports:
@@ -37,7 +45,8 @@ services:
         networks:
             - sail
         depends_on:
-            - laravel.test
+            laravel.test:
+                condition: service_healthy
     mysql:
         image: 'mysql:8.4'
         ports:
