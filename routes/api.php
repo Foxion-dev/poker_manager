@@ -48,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::apiResource('locations', LocationController::class);
 	Route::post('locations/{location}/admins', [LocationController::class, 'addAdmin']);
 	Route::delete('locations/{location}/admins/{admin}', [LocationController::class, 'removeAdmin']);
+	Route::post('locations/{location}/users', [LocationController::class, 'addUser']);
+	Route::delete('locations/{location}/users/{user}', [LocationController::class, 'removeUser']);
 	Route::get('locations/{location}/tournaments', [LocationTournamentController::class, 'index']);
 	Route::post('locations/{location}/tournaments', [LocationTournamentController::class, 'store']);
 	Route::get('locations/{location}/tournaments/{locationTournament}', [LocationTournamentController::class, 'show']);

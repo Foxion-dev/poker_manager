@@ -61,6 +61,16 @@ export const locationService = {
 		return response.data;
 	},
 
+	async addUser(locationId, data) {
+		const response = await api.post(`/locations/${locationId}/users`, data);
+		return response.data;
+	},
+
+	async removeUser(locationId, userId) {
+		const response = await api.delete(`/locations/${locationId}/users/${userId}`);
+		return response.data;
+	},
+
 	async getPublicLocation(id, password = null) {
 		const params = password ? { password } : {};
 		const response = await api.get(`/public/locations/${id}`, { params });

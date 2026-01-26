@@ -45,6 +45,13 @@
 							Управление админами
 						</button>
 						<button
+							v-if="location?.can_manage_admins"
+							@click="showUsersForm = true"
+							class="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors mr-2"
+						>
+							Управление пользователями
+						</button>
+						<button
 							v-if="location?.is_admin"
 							@click="openTournamentForm"
 							class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors mr-2"
@@ -620,6 +627,80 @@
 				</div>
 			</div>
 		</div>
+
+		<div
+			v-if="showUsersForm"
+			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+			@click.self="showUsersForm = false"
+		>
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+				<div class="p-6">
+					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Управление пользователями</h3>
+
+					<div v-if="location?.users && location.users.length > 0" class="mb-6">
+						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Текущие пользователи:</h4>
+						<div class="space-y-2">
+							<div
+								v-for="locationUser in location.users"
+								:key="locationUser.id"
+								class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+							>
+								<div class="flex items-center">
+									<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
+										{{ locationUser.name?.charAt(0).toUpperCase() }}
+									</div>
+									<span class="text-sm font-medium text-gray-900 dark:text-white">{{ locationUser.name }}</span>
+									<span v-if="locationUser.id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+										Создатель
+									</span>
+									<span v-if="location.admins?.some(a => a.id === locationUser.id)" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+										Админ
+									</span>
+								</div>
+								<button
+									v-if="locationUser.id !== location.user_id && !location.admins?.some(a => a.id === locationUser.id)"
+									@click="removeUser(locationUser.id)"
+									class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+								>
+									Удалить
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<div>
+						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Добавить пользователя:</h4>
+						<div class="flex items-center space-x-2">
+							<select
+								v-model="newUserId"
+								class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							>
+								<option value="">Выберите пользователя</option>
+								<option v-for="user in availableUsersForLocation" :key="user.id" :value="user.id">
+									{{ user.name }}
+								</option>
+							</select>
+							<button
+								@click="addUser"
+								:disabled="!newUserId || addingUser"
+								class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
+							>
+								{{ addingUser ? 'Добавление...' : 'Добавить' }}
+							</button>
+						</div>
+					</div>
+
+					<div class="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+						<button
+							@click="showUsersForm = false"
+							class="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+						>
+							Закрыть
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -643,6 +724,7 @@ const loading = ref(false);
 const showLocationForm = ref(false);
 const showTournamentForm = ref(false);
 const showAdminForm = ref(false);
+const showUsersForm = ref(false);
 const showPasswordForm = ref(false);
 const locationPassword = ref('');
 const checkingPassword = ref(false);
@@ -651,6 +733,8 @@ const savingLocation = ref(false);
 const savingTournament = ref(false);
 const addingAdmin = ref(false);
 const newAdminUserId = ref('');
+const addingUser = ref(false);
+const newUserId = ref('');
 
 const locationForm = ref({
 	name: '',
@@ -894,6 +978,16 @@ const availableUsers = computed(() => {
 	return allUsers.value.filter(user => !adminIds.includes(user.id));
 });
 
+const availableUsersForLocation = computed(() => {
+	if (!location.value || !allUsers.value.length) return [];
+	const existingUserIds = [
+		location.value.user_id,
+		...(location.value.admins?.map(a => a.id) || []),
+		...(location.value.users?.map(u => u.id) || [])
+	];
+	return allUsers.value.filter(user => !existingUserIds.includes(user.id));
+});
+
 const addAdmin = async () => {
 	if (!newAdminUserId.value) return;
 
@@ -921,6 +1015,36 @@ const removeAdmin = async (adminId) => {
 	} catch (error) {
 		console.error('Error removing admin:', error);
 		alert(error.response?.data?.message || 'Ошибка при удалении админа');
+	}
+};
+
+const addUser = async () => {
+	if (!newUserId.value) return;
+
+	addingUser.value = true;
+	try {
+		await locationService.addUser(route.params.id, { user_id: newUserId.value });
+		newUserId.value = '';
+		await fetchLocation();
+	} catch (error) {
+		console.error('Error adding user:', error);
+		alert(error.response?.data?.message || 'Ошибка при добавлении пользователя');
+	} finally {
+		addingUser.value = false;
+	}
+};
+
+const removeUser = async (userId) => {
+	if (!confirm('Вы уверены, что хотите удалить этого пользователя из локации?')) {
+		return;
+	}
+
+	try {
+		await locationService.removeUser(route.params.id, userId);
+		await fetchLocation();
+	} catch (error) {
+		console.error('Error removing user:', error);
+		alert(error.response?.data?.message || 'Ошибка при удалении пользователя');
 	}
 };
 

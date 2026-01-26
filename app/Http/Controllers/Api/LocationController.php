@@ -75,7 +75,7 @@ class LocationController extends Controller
 			}
 		}
 
-		$location->load(['user', 'admins']);
+		$location->load(['user', 'admins', 'users']);
 		$location->loadCount('tournaments');
 
 		return response()->json([
@@ -89,6 +89,7 @@ class LocationController extends Controller
 			'is_admin' => $location->isAdmin($user),
 			'can_manage_admins' => $location->canManageAdmins($user),
 			'admins' => $location->admins,
+			'users' => $location->users,
 			'tournaments_count' => $location->tournaments_count,
 			'average_buyin' => $location->average_buyin,
 			'top_players_by_wins' => $location->top_players_by_wins,
@@ -165,6 +166,41 @@ class LocationController extends Controller
 		$location->admins()->detach($adminId);
 
 		return response()->json(['message' => 'Admin removed successfully']);
+	}
+
+	public function addUser(Location $location, Request $request): JsonResponse
+	{
+		$user = $request->user();
+
+		if (!$location->canManageAdmins($user)) {
+			return response()->json(['message' => 'Unauthorized'], 403);
+		}
+
+		$userId = $request->input('user_id');
+		if (!$userId) {
+			return response()->json(['message' => 'User ID is required'], 422);
+		}
+
+		if ($location->users()->where('user_id', $userId)->exists()) {
+			return response()->json(['message' => 'User is already added'], 422);
+		}
+
+		$location->users()->attach($userId);
+
+		return response()->json(['message' => 'User added successfully']);
+	}
+
+	public function removeUser(Location $location, Request $request, int $userId): JsonResponse
+	{
+		$user = $request->user();
+
+		if (!$location->canManageAdmins($user)) {
+			return response()->json(['message' => 'Unauthorized'], 403);
+		}
+
+		$location->users()->detach($userId);
+
+		return response()->json(['message' => 'User removed successfully']);
 	}
 
 	public function publicShow(Location $location, Request $request): JsonResponse

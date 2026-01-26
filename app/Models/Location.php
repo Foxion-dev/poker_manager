@@ -49,6 +49,12 @@ class Location extends Model
 			->withTimestamps();
 	}
 
+	public function users(): BelongsToMany
+	{
+		return $this->belongsToMany(User::class, 'location_users')
+			->withTimestamps();
+	}
+
 	public function isAdmin(User $user): bool
 	{
 		return $this->user_id === $user->id || $this->admins()->where('user_id', $user->id)->exists();
