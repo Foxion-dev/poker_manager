@@ -65,16 +65,25 @@
 
 					<div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
 						<div>
-							<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Турниров</p>
-							<p class="text-lg font-bold text-gray-900 dark:text-white">{{ pack.tournaments_count || 0 }}</p>
+							<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Байин</p>
+							<p class="text-lg font-bold text-gray-900 dark:text-white">{{ formatCurrency(pack.buyin_usd) }}</p>
+						</div>
+						<div>
+							<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Кэшаут</p>
+							<p
+								class="text-lg font-bold"
+								:class="pack.cashout_usd > 0 ? 'text-green-600' : 'text-gray-400'"
+							>
+								{{ pack.cashout_usd > 0 ? formatCurrency(pack.cashout_usd) : '-' }}
+							</p>
 						</div>
 						<div>
 							<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Профит</p>
 							<p
 								class="text-lg font-bold"
-								:class="pack.total_profit_usd >= 0 ? 'text-green-600' : 'text-red-600'"
+								:class="pack.profit_usd >= 0 ? 'text-green-600' : 'text-red-600'"
 							>
-								{{ formatCurrency(pack.total_profit_usd) }}
+								{{ formatCurrency(pack.profit_usd) }}
 							</p>
 						</div>
 						<div>
@@ -85,10 +94,6 @@
 							>
 								{{ pack.roi }}%
 							</p>
-						</div>
-						<div>
-							<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">ITM %</p>
-							<p class="text-lg font-bold text-gray-900 dark:text-white">{{ pack.itm_percentage }}%</p>
 						</div>
 					</div>
 
@@ -159,6 +164,51 @@
 							</div>
 						</div>
 
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Байин (сумма загрузки) *
+								</label>
+								<input
+									v-model.number="form.buyin"
+									type="number"
+									step="0.01"
+									min="0"
+									required
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+									placeholder="0.00"
+								/>
+							</div>
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Кэшаут (сумма выгрузки)
+								</label>
+								<input
+									v-model.number="form.cashout"
+									type="number"
+									step="0.01"
+									min="0"
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+									placeholder="0.00"
+								/>
+							</div>
+						</div>
+
+						<div>
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								Валюта
+							</label>
+							<select
+								v-model="form.currency_id"
+								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							>
+								<option :value="null">USD (Доллар США)</option>
+								<option v-for="currency in currencies" :key="currency.id" :value="currency.id">
+									{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+								</option>
+							</select>
+						</div>
+
 						<div>
 							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 								Описание
@@ -197,10 +247,13 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { packService } from '../../services/packService';
+import { useCurrencyStore } from '../../stores/currencies';
 
 const router = useRouter();
+const currencyStore = useCurrencyStore();
 
 const packs = ref([]);
+const currencies = ref([]);
 const loading = ref(false);
 const showForm = ref(false);
 const editingPack = ref(null);
@@ -210,13 +263,19 @@ const form = ref({
 	name: '',
 	start_date: '',
 	end_date: '',
+	buyin: 0,
+	cashout: null,
+	currency_id: null,
 	description: '',
 });
 
 const fetchPacks = async () => {
 	loading.value = true;
 	try {
-		packs.value = await packService.getAll();
+		await Promise.all([
+			packService.getAll().then(data => packs.value = data),
+			currencyStore.fetchCurrencies().then(() => currencies.value = currencyStore.currencies),
+		]);
 	} catch (error) {
 		console.error('Error fetching packs:', error);
 	} finally {
@@ -230,6 +289,9 @@ const openCreateForm = () => {
 		name: '',
 		start_date: '',
 		end_date: '',
+		buyin: 0,
+		cashout: null,
+		currency_id: null,
 		description: '',
 	};
 	showForm.value = true;
@@ -241,6 +303,9 @@ const editPack = (pack) => {
 		name: pack.name,
 		start_date: pack.start_date,
 		end_date: pack.end_date || '',
+		buyin: pack.buyin,
+		cashout: pack.cashout || null,
+		currency_id: pack.currency?.id || null,
 		description: pack.description || '',
 	};
 	showForm.value = true;
@@ -270,7 +335,7 @@ const savePack = async () => {
 };
 
 const deletePack = async (id) => {
-	if (!confirm('Вы уверены, что хотите удалить этот пак? Турниры не будут удалены, но будут отвязаны от пака.')) {
+	if (!confirm('Вы уверены, что хотите удалить этот пак?')) {
 		return;
 	}
 

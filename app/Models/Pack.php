@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pack extends Model
 {
@@ -16,6 +15,9 @@ class Pack extends Model
 		'name',
 		'start_date',
 		'end_date',
+		'buyin',
+		'cashout',
+		'currency_id',
 		'description',
 	];
 
@@ -24,6 +26,8 @@ class Pack extends Model
 		return [
 			'start_date' => 'date',
 			'end_date' => 'date',
+			'buyin' => 'decimal:2',
+			'cashout' => 'decimal:2',
 		];
 	}
 
@@ -32,79 +36,74 @@ class Pack extends Model
 		return $this->belongsTo(User::class);
 	}
 
-	public function tournaments(): HasMany
+	public function currency(): BelongsTo
 	{
-		return $this->hasMany(Tournament::class);
+		return $this->belongsTo(Currency::class);
 	}
 
-	public function getTotalTournamentsAttribute(): int
+	public function getBuyinUsdAttribute(): float
 	{
-		return $this->tournaments()->count();
+		if (!$this->currency || !$this->currency->rate_to_usd || $this->currency->rate_to_usd == 0 || $this->currency->rate_to_usd == 1) {
+			return (float) $this->buyin;
+		}
+		return round((float) $this->buyin / $this->currency->rate_to_usd, 2);
 	}
 
-	public function getTotalProfitUsdAttribute(): float
+	public function getCashoutUsdAttribute(): float
 	{
-		$profit = $this->tournaments()
-			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
-			->selectRaw('SUM(' . Tournament::getProfitUsdExpression() . ') as profit')
-			->value('profit');
-
-		return round($profit ?? 0, 2);
+		if (!$this->cashout) {
+			return 0;
+		}
+		if (!$this->currency || !$this->currency->rate_to_usd || $this->currency->rate_to_usd == 0 || $this->currency->rate_to_usd == 1) {
+			return (float) $this->cashout;
+		}
+		return round((float) $this->cashout / $this->currency->rate_to_usd, 2);
 	}
 
-	public function getTotalBuyinUsdAttribute(): float
+	public function getProfitUsdAttribute(): float
 	{
-		$buyin = $this->tournaments()
-			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
-			->selectRaw('SUM(' . Tournament::getBuyinUsdExpression() . ') as total_buyin')
-			->value('total_buyin');
-
-		return round($buyin ?? 0, 2);
-	}
-
-	public function getTotalCashoutUsdAttribute(): float
-	{
-		$cashout = $this->tournaments()
-			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
-			->selectRaw('SUM(' . Tournament::getCashoutUsdExpression() . ') as total_cashout')
-			->value('total_cashout');
-
-		return round($cashout ?? 0, 2);
+		return round($this->cashout_usd - $this->buyin_usd, 2);
 	}
 
 	public function getRoiAttribute(): float
 	{
-		$totalBuyin = $this->total_buyin_usd;
-		if ($totalBuyin == 0) {
+		if ($this->buyin_usd == 0) {
 			return 0;
 		}
-
-		$roi = (($this->total_cashout_usd - $totalBuyin) / $totalBuyin) * 100;
+		$roi = (($this->cashout_usd - $this->buyin_usd) / $this->buyin_usd) * 100;
 		return round($roi, 2);
 	}
 
-	public function getItmCountAttribute(): int
+	public function getIsItmAttribute(): bool
 	{
-		return $this->tournaments()->whereNotNull('cashout')->count();
+		return $this->cashout !== null;
 	}
 
-	public function getItmPercentageAttribute(): float
+	public static function getBuyinUsdExpression(): string
 	{
-		$total = $this->total_tournaments;
-		if ($total == 0) {
-			return 0;
-		}
-
-		return round(($this->itm_count / $total) * 100, 2);
+		return "
+			CASE 
+				WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+				THEN packs.buyin
+				ELSE packs.buyin / currencies.rate_to_usd
+			END
+		";
 	}
 
-	public function getAverageBuyinUsdAttribute(): float
+	public static function getCashoutUsdExpression(): string
 	{
-		$avgBuyin = $this->tournaments()
-			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
-			->selectRaw('AVG(' . Tournament::getBuyinUsdExpression() . ') as avg_buyin')
-			->value('avg_buyin');
+		return "
+			CASE 
+				WHEN packs.cashout IS NULL THEN 0
+				WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+				THEN packs.cashout
+				ELSE packs.cashout / currencies.rate_to_usd
+			END
+		";
+	}
 
-		return round($avgBuyin ?? 0, 2);
+	public static function getProfitUsdExpression(): string
+	{
+		return self::getCashoutUsdExpression() . ' - ' . self::getBuyinUsdExpression();
 	}
 }

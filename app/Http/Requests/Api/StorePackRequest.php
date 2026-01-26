@@ -17,6 +17,9 @@ class StorePackRequest extends FormRequest
 			'name' => ['required', 'string', 'max:255'],
 			'start_date' => ['required', 'date'],
 			'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+			'buyin' => ['required', 'numeric', 'min:0'],
+			'cashout' => ['nullable', 'numeric', 'min:0'],
+			'currency_id' => ['nullable', 'exists:currencies,id'],
 			'description' => ['nullable', 'string'],
 		];
 	}

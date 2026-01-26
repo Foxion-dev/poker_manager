@@ -10,26 +10,63 @@ class StatisticsService
 {
 	public function getBankrollHistory(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): Collection
 	{
-		$query = $user->tournaments()->withUsd()->orderBy('tournaments.date')->orderBy('tournaments.id');
+		$tournamentsQuery = $user->tournaments()->withUsd();
 
 		if ($startDate) {
-			$query->where('tournaments.date', '>=', $startDate);
+			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('tournaments.date', '<=', $endDate);
+			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
 		}
 
-		$tournaments = $query->get();
+		$tournaments = $tournamentsQuery->get();
+
+		$packsQuery = $user->packs()->leftJoin('currencies', 'packs.currency_id', '=', 'currencies.id')
+			->select('packs.*')
+			->selectRaw(\App\Models\Pack::getProfitUsdExpression() . ' as profit_usd')
+			->selectRaw('packs.start_date as date');
+
+		if ($startDate) {
+			$packsQuery->where('packs.start_date', '>=', $startDate);
+		}
+
+		if ($endDate) {
+			$packsQuery->where('packs.start_date', '<=', $endDate);
+		}
+
+		$packs = $packsQuery->get();
+
+		$allItems = collect();
+		foreach ($tournaments as $tournament) {
+			$allItems->push([
+				'date' => $tournament->date,
+				'profit_usd' => (float) $tournament->profit_usd,
+				'id' => $tournament->id,
+			]);
+		}
+
+		foreach ($packs as $pack) {
+			$allItems->push([
+				'date' => $pack->start_date,
+				'profit_usd' => (float) $pack->profit_usd,
+				'id' => 'pack_' . $pack->id,
+			]);
+		}
+
+		$allItems = $allItems->sortBy(function ($item) {
+			return $item['date']->format('Y-m-d') . '_' . $item['id'];
+		});
+
 		$runningTotal = 0;
 		$history = collect();
 
-		foreach ($tournaments as $tournament) {
-			$profit = (float) $tournament->profit_usd;
+		foreach ($allItems as $item) {
+			$profit = $item['profit_usd'];
 			$runningTotal += $profit;
 
 			$history->push([
-				'date' => $tournament->date->format('Y-m-d'),
+				'date' => $item['date']->format('Y-m-d'),
 				'balance' => round($runningTotal, 2),
 				'profit' => round($profit, 2),
 			]);
@@ -47,126 +84,255 @@ class StatisticsService
 			default => '%Y-%m',
 		};
 
-		return $user->tournaments()
+		$tournaments = $user->tournaments()
 			->selectRaw("DATE_FORMAT(date, '{$format}') as period, COUNT(*) as count")
 			->groupBy('period')
-			->orderBy('period', 'desc')
-			->get()
-			->map(function ($item) {
-				return [
-					'period' => $item->period,
-					'count' => $item->count,
-				];
-			});
+			->get();
+
+		$packs = $user->packs()
+			->selectRaw("DATE_FORMAT(start_date, '{$format}') as period, COUNT(*) as count")
+			->groupBy('period')
+			->get();
+
+		$combined = collect();
+		foreach ($tournaments as $item) {
+			$existing = $combined->firstWhere('period', $item->period);
+			if ($existing) {
+				$existing->count += $item->count;
+			} else {
+				$combined->push($item);
+			}
+		}
+
+		foreach ($packs as $item) {
+			$existing = $combined->firstWhere('period', $item->period);
+			if ($existing) {
+				$existing->count += $item->count;
+			} else {
+				$combined->push($item);
+			}
+		}
+
+		return $combined->sortByDesc('period')->values()->map(function ($item) {
+			return [
+				'period' => $item->period,
+				'count' => $item->count,
+			];
+		});
 	}
 
 	public function getAverageBuyin(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments()
+		$tournamentsQuery = $user->tournaments()
 			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
 
 		if ($startDate) {
-			$query->where('tournaments.date', '>=', $startDate);
+			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('tournaments.date', '<=', $endDate);
+			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
 		}
 
-		$averageBuyin = $query->selectRaw('AVG(' . \App\Models\Tournament::getBuyinUsdExpression() . ') as avg_buyin')
-			->value('avg_buyin');
+		$tournamentsStats = $tournamentsQuery->selectRaw('
+				SUM(' . \App\Models\Tournament::getBuyinUsdExpression() . ') as total_buyin,
+				COUNT(*) as count
+			')
+			->first();
 
-		return round($averageBuyin ?? 0, 2);
+		$packsQuery = $user->packs()
+			->leftJoin('currencies', 'packs.currency_id', '=', 'currencies.id');
+
+		if ($startDate) {
+			$packsQuery->where('packs.start_date', '>=', $startDate);
+		}
+
+		if ($endDate) {
+			$packsQuery->where('packs.start_date', '<=', $endDate);
+		}
+
+		$packsStats = $packsQuery->selectRaw('
+				SUM(' . \App\Models\Pack::getBuyinUsdExpression() . ') as total_buyin,
+				COUNT(*) as count
+			')
+			->first();
+
+		$totalBuyin = ($tournamentsStats->total_buyin ?? 0) + ($packsStats->total_buyin ?? 0);
+		$totalCount = ($tournamentsStats->count ?? 0) + ($packsStats->count ?? 0);
+
+		if ($totalCount == 0) {
+			return 0;
+		}
+
+		return round($totalBuyin / $totalCount, 2);
 	}
 
 	public function getROI(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments()
+		$tournamentsQuery = $user->tournaments()
 			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
 
 		if ($startDate) {
-			$query->where('tournaments.date', '>=', $startDate);
+			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('tournaments.date', '<=', $endDate);
+			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
 		}
 
-		$stats = $query->selectRaw('
+		$tournamentsStats = $tournamentsQuery->selectRaw('
 				SUM(' . \App\Models\Tournament::getCashoutUsdExpression() . ') as total_cashout,
 				SUM(' . \App\Models\Tournament::getBuyinUsdExpression() . ') as total_buyin
 			')
 			->first();
 
-		if (!$stats || $stats->total_buyin == 0) {
+		$packsQuery = $user->packs()
+			->leftJoin('currencies', 'packs.currency_id', '=', 'currencies.id');
+
+		if ($startDate) {
+			$packsQuery->where('packs.start_date', '>=', $startDate);
+		}
+
+		if ($endDate) {
+			$packsQuery->where('packs.start_date', '<=', $endDate);
+		}
+
+		$packsStats = $packsQuery->selectRaw('
+				SUM(' . \App\Models\Pack::getCashoutUsdExpression() . ') as total_cashout,
+				SUM(' . \App\Models\Pack::getBuyinUsdExpression() . ') as total_buyin
+			')
+			->first();
+
+		$totalBuyin = ($tournamentsStats->total_buyin ?? 0) + ($packsStats->total_buyin ?? 0);
+		$totalCashout = ($tournamentsStats->total_cashout ?? 0) + ($packsStats->total_cashout ?? 0);
+
+		if ($totalBuyin == 0) {
 			return 0;
 		}
 
-		$roi = (($stats->total_cashout - $stats->total_buyin) / $stats->total_buyin) * 100;
+		$roi = (($totalCashout - $totalBuyin) / $totalBuyin) * 100;
 
 		return round($roi, 2);
 	}
 
 	public function getITMPercentage(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments();
+		$tournamentsQuery = $user->tournaments();
 
 		if ($startDate) {
-			$query->where('date', '>=', $startDate);
+			$tournamentsQuery->where('date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('date', '<=', $endDate);
+			$tournamentsQuery->where('date', '<=', $endDate);
 		}
 
-		$totalTournaments = $query->count();
+		$totalTournaments = $tournamentsQuery->count();
+		$itmTournaments = (clone $tournamentsQuery)->whereNotNull('cashout')->count();
 
-		if ($totalTournaments == 0) {
+		$packsQuery = $user->packs();
+
+		if ($startDate) {
+			$packsQuery->where('start_date', '>=', $startDate);
+		}
+
+		if ($endDate) {
+			$packsQuery->where('start_date', '<=', $endDate);
+		}
+
+		$totalPacks = $packsQuery->count();
+		$itmPacks = (clone $packsQuery)->whereNotNull('cashout')->count();
+
+		$total = $totalTournaments + $totalPacks;
+
+		if ($total == 0) {
 			return 0;
 		}
 
-		$itmCount = (clone $query)->whereNotNull('cashout')->count();
+		$itmCount = $itmTournaments + $itmPacks;
 
-		return round(($itmCount / $totalTournaments) * 100, 2);
+		return round(($itmCount / $total) * 100, 2);
 	}
 
 	public function getTotalProfit(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments()
+		$tournamentsQuery = $user->tournaments()
 			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
 
 		if ($startDate) {
-			$query->where('tournaments.date', '>=', $startDate);
+			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('tournaments.date', '<=', $endDate);
+			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
 		}
 
-		$profit = $query->selectRaw('SUM(' . \App\Models\Tournament::getProfitUsdExpression() . ') as profit')
+		$tournamentsProfit = $tournamentsQuery->selectRaw('SUM(' . \App\Models\Tournament::getProfitUsdExpression() . ') as profit')
 			->value('profit');
 
-		return round($profit ?? 0, 2);
+		$packsQuery = $user->packs()
+			->leftJoin('currencies', 'packs.currency_id', '=', 'currencies.id');
+
+		if ($startDate) {
+			$packsQuery->where('packs.start_date', '>=', $startDate);
+		}
+
+		if ($endDate) {
+			$packsQuery->where('packs.start_date', '<=', $endDate);
+		}
+
+		$packsProfit = $packsQuery->selectRaw('SUM(' . \App\Models\Pack::getProfitUsdExpression() . ') as profit')
+			->value('profit');
+
+		return round(($tournamentsProfit ?? 0) + ($packsProfit ?? 0), 2);
 	}
 
 	public function getAverageCashout(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments()
+		$tournamentsQuery = $user->tournaments()
 			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
 			->whereNotNull('tournaments.cashout');
 
 		if ($startDate) {
-			$query->where('tournaments.date', '>=', $startDate);
+			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('tournaments.date', '<=', $endDate);
+			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
 		}
 
-		$averageCashout = $query->selectRaw('AVG(' . \App\Models\Tournament::getCashoutUsdExpression() . ') as avg_cashout')
-			->value('avg_cashout');
+		$tournamentsStats = $tournamentsQuery->selectRaw('
+				SUM(' . \App\Models\Tournament::getCashoutUsdExpression() . ') as total_cashout,
+				COUNT(*) as count
+			')
+			->first();
 
-		return round($averageCashout ?? 0, 2);
+		$packsQuery = $user->packs()
+			->leftJoin('currencies', 'packs.currency_id', '=', 'currencies.id')
+			->whereNotNull('packs.cashout');
+
+		if ($startDate) {
+			$packsQuery->where('packs.start_date', '>=', $startDate);
+		}
+
+		if ($endDate) {
+			$packsQuery->where('packs.start_date', '<=', $endDate);
+		}
+
+		$packsStats = $packsQuery->selectRaw('
+				SUM(' . \App\Models\Pack::getCashoutUsdExpression() . ') as total_cashout,
+				COUNT(*) as count
+			')
+			->first();
+
+		$totalCashout = ($tournamentsStats->total_cashout ?? 0) + ($packsStats->total_cashout ?? 0);
+		$totalCount = ($tournamentsStats->count ?? 0) + ($packsStats->count ?? 0);
+
+		if ($totalCount == 0) {
+			return 0;
+		}
+
+		return round($totalCashout / $totalCount, 2);
 	}
 
 	public function getStatisticsByRoom(User $user): Collection

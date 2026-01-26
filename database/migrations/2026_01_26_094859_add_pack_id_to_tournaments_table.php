@@ -12,8 +12,10 @@ return new class extends Migration
 	public function up(): void
 	{
 		Schema::table('tournaments', function (Blueprint $table) {
-			$table->foreignId('pack_id')->nullable()->after('user_id')->constrained()->onDelete('set null');
-			$table->index('pack_id');
+			if (!Schema::hasColumn('tournaments', 'pack_id')) {
+				$table->foreignId('pack_id')->nullable()->after('user_id')->constrained()->onDelete('set null');
+				$table->index('pack_id');
+			}
 		});
 	}
 

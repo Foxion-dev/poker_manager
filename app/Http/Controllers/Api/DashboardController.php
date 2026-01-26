@@ -26,17 +26,30 @@ class DashboardController extends Controller
 			->when($endDate, fn($q) => $q->where('date', '<=', $endDate))
 			->count();
 
-		$totalTournamentsAll = $user->tournaments()->count();
+		$totalPacks = $user->packs()
+			->when($startDate, fn($q) => $q->where('start_date', '>=', $startDate))
+			->when($endDate, fn($q) => $q->where('start_date', '<=', $endDate))
+			->count();
+
+		$totalTournamentsAll = $user->tournaments()->count() + $user->packs()->count();
+
+		$itmTournaments = $user->tournaments()
+			->when($startDate, fn($q) => $q->where('date', '>=', $startDate))
+			->when($endDate, fn($q) => $q->where('date', '<=', $endDate))
+			->whereNotNull('cashout')
+			->count();
+
+		$itmPacks = $user->packs()
+			->when($startDate, fn($q) => $q->where('start_date', '>=', $startDate))
+			->when($endDate, fn($q) => $q->where('start_date', '<=', $endDate))
+			->whereNotNull('cashout')
+			->count();
 
 		return response()->json([
-			'total_tournaments' => $totalTournaments,
+			'total_tournaments' => $totalTournaments + $totalPacks,
 			'total_tournaments_all' => $totalTournamentsAll,
 			'total_profit' => $this->statisticsService->getTotalProfit($user, $startDate, $endDate),
-			'itm_count' => $user->tournaments()
-				->when($startDate, fn($q) => $q->where('date', '>=', $startDate))
-				->when($endDate, fn($q) => $q->where('date', '<=', $endDate))
-				->whereNotNull('cashout')
-				->count(),
+			'itm_count' => $itmTournaments + $itmPacks,
 			'itm_percentage' => $this->statisticsService->getITMPercentage($user, $startDate, $endDate),
 			'average_buyin' => $this->statisticsService->getAverageBuyin($user, $startDate, $endDate),
 			'roi' => $this->statisticsService->getROI($user, $startDate, $endDate),
