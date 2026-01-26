@@ -49,7 +49,7 @@
 				<div>
 					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 						<span class="mr-2">💵</span>
-						Байин ($)
+						Байин
 					</label>
 					<input
 						v-model.number="form.buyin"
@@ -60,6 +60,22 @@
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 						placeholder="0.00"
 					/>
+				</div>
+
+				<div>
+					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+						<span class="mr-2">💱</span>
+						Валюта
+					</label>
+					<select
+						v-model="form.currency_id"
+						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+					>
+						<option :value="null">USD (Доллар США)</option>
+						<option v-for="currency in currencyStore.currencies" :key="currency.id" :value="currency.id">
+							{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+						</option>
+					</select>
 				</div>
 
 				<div>
@@ -140,11 +156,13 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useTournamentStore } from '../../stores/tournaments';
 import { useRoomStore } from '../../stores/rooms';
+import { useCurrencyStore } from '../../stores/currencies';
 
 const router = useRouter();
 const route = useRoute();
 const tournamentStore = useTournamentStore();
 const roomStore = useRoomStore();
+const currencyStore = useCurrencyStore();
 
 const isEdit = computed(() => !!route.params.id);
 const loading = ref(false);
@@ -154,6 +172,7 @@ const form = ref({
 	room_id: '',
 	date: '',
 	buyin: 0,
+	currency_id: null,
 	bounty_count: 0,
 	place: null,
 	cashout: null,
@@ -161,9 +180,12 @@ const form = ref({
 
 onMounted(async () => {
 	try {
-		await roomStore.fetchRooms();
+		await Promise.all([
+			roomStore.fetchRooms(),
+			currencyStore.fetchCurrencies(),
+		]);
 	} catch (err) {
-		error.value = 'Ошибка загрузки румов';
+		error.value = 'Ошибка загрузки данных';
 	}
 
 	if (isEdit.value) {
@@ -173,6 +195,7 @@ onMounted(async () => {
 				room_id: tournament.room_id,
 				date: tournament.date,
 				buyin: tournament.buyin,
+				currency_id: tournament.currency_id,
 				bounty_count: tournament.bounty_count,
 				place: tournament.place,
 				cashout: tournament.cashout,
