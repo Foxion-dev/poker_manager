@@ -128,6 +128,39 @@
 				</div>
 			</div>
 
+			<div v-if="!tournament.is_finished && location?.is_admin" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+				<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+					Добавить участника
+				</label>
+				<div class="flex items-center space-x-2 mb-2">
+					<select
+						v-model="newParticipantUserId"
+						class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+					>
+						<option value="">Выберите пользователя локации (опционально)</option>
+						<option v-for="locationUser in locationUsers" :key="locationUser.id" :value="locationUser.user_id || locationUser.id">
+							{{ locationUser.display_name || locationUser.name }}
+						</option>
+					</select>
+				</div>
+				<div class="flex items-center space-x-2">
+					<input
+						v-model="newParticipantName"
+						type="text"
+						placeholder="Или введите имя нового участника"
+						class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						@keyup.enter="addParticipant"
+					/>
+					<button
+						@click="addParticipant"
+						:disabled="(!newParticipantUserId && !newParticipantName) || addingParticipant"
+						class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-colors"
+					>
+						{{ addingParticipant ? 'Добавление...' : 'Добавить' }}
+					</button>
+				</div>
+			</div>
+
 			<div v-if="tournament.participants && tournament.participants.filter(p => {
 				const name = p.display_name || p.name || p.user?.name || '';
 				return name && name !== 'Без имени' && name !== 'Неизвестный участник';
@@ -435,6 +468,10 @@ const tournament = ref(null);
 const location = ref(null);
 const loading = ref(false);
 const saving = ref(false);
+const newParticipantUserId = ref('');
+const newParticipantName = ref('');
+const addingParticipant = ref(false);
+const locationUsers = ref([]);
 
 const locationId = computed(() => route.params.locationId);
 
@@ -455,8 +492,43 @@ const fetchTournament = async () => {
 const fetchLocation = async () => {
 	try {
 		location.value = await locationService.getById(route.params.locationId);
+		if (location.value && location.value.users) {
+			locationUsers.value = location.value.users;
+		}
 	} catch (error) {
 		console.error('Error fetching location:', error);
+	}
+};
+
+const addParticipant = async () => {
+	if (!newParticipantUserId.value && !newParticipantName.value?.trim()) {
+		alert('Необходимо указать либо пользователя, либо имя участника');
+		return;
+	}
+
+	addingParticipant.value = true;
+	try {
+		const data = {};
+		if (newParticipantUserId.value) {
+			data.user_id = newParticipantUserId.value;
+		}
+		if (newParticipantName.value?.trim()) {
+			data.name = newParticipantName.value.trim();
+		}
+
+		await locationService.addTournamentParticipant(route.params.locationId, route.params.id, data);
+		
+		newParticipantUserId.value = '';
+		newParticipantName.value = '';
+		
+		await fetchTournament();
+		await fetchLocation();
+	} catch (error) {
+		console.error('Error adding participant:', error);
+		const errorMessage = error.response?.data?.message || 'Ошибка при добавлении участника';
+		alert(errorMessage);
+	} finally {
+		addingParticipant.value = false;
 	}
 };
 

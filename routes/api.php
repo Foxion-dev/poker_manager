@@ -56,6 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::get('locations/{location}/tournaments/{locationTournament}', [LocationTournamentController::class, 'show']);
 	Route::put('locations/{location}/tournaments/{locationTournament}', [LocationTournamentController::class, 'update']);
 	Route::put('locations/{location}/tournaments/{locationTournament}/participants', [LocationTournamentController::class, 'updateParticipants']);
+	Route::post('locations/{location}/tournaments/{locationTournament}/participants', [LocationTournamentController::class, 'addParticipant']);
 	Route::post('locations/{location}/tournaments/{locationTournament}/finish', [LocationTournamentController::class, 'finish']);
 	Route::delete('locations/{location}/tournaments/{locationTournament}', [LocationTournamentController::class, 'destroy']);
 

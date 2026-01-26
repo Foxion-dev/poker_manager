@@ -100,4 +100,9 @@ export const locationService = {
 		const response = await api.post(`/locations/${locationId}/tournaments/${tournamentId}/finish`);
 		return response.data;
 	},
+
+	async addTournamentParticipant(locationId, tournamentId, data) {
+		const response = await api.post(`/locations/${locationId}/tournaments/${tournamentId}/participants`, data);
+		return response.data;
+	},
 };

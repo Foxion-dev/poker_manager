@@ -229,6 +229,54 @@ class LocationTournamentController extends Controller
 		return response()->json($locationTournament);
 	}
 
+	public function addParticipant(Request $request, Location $location, $locationTournamentId): JsonResponse
+	{
+		$user = $request->user();
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
+
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can add participants'], 403);
+		}
+
+		if ($locationTournament->is_finished) {
+			return response()->json(['message' => 'Cannot add participants to finished tournament'], 400);
+		}
+
+		$request->validate([
+			'user_id' => 'nullable|exists:users,id',
+			'name' => 'nullable|string|max:255',
+		], [
+			'user_id.exists' => 'Пользователь не найден',
+		]);
+
+		if (!$request->user_id && !$request->name) {
+			return response()->json(['message' => 'Необходимо указать либо пользователя, либо имя участника'], 422);
+		}
+
+		$maxPlace = $locationTournament->participants()->max('place') ?? 0;
+		$newPlace = $maxPlace + 1;
+
+		$participantData = [
+			'user_id' => $request->user_id ?: null,
+			'name' => $request->name ?: null,
+			'place' => $newPlace,
+			'rebuy' => 0,
+			'addon' => false,
+		];
+
+		$participant = $locationTournament->participants()->create($participantData);
+
+		if ($request->user_id && !$location->users()->where('user_id', $request->user_id)->exists()) {
+			$location->users()->attach($request->user_id);
+		}
+
+		$locationTournament->load(['participants.user', 'currency']);
+
+		return response()->json($locationTournament);
+	}
+
 	public function finish(Request $request, Location $location, $locationTournamentId): JsonResponse
 	{
 		$user = $request->user();
