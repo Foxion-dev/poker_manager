@@ -216,6 +216,14 @@
 										<span class="mr-1">🎁</span>
 										{{ tournament.bounty_count }} баунти
 									</span>
+									<router-link
+										v-if="tournament.pack"
+										:to="`/packs/${tournament.pack.id}`"
+										class="flex items-center px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+									>
+										<span class="mr-1">📦</span>
+										{{ tournament.pack.name }}
+									</router-link>
 								</div>
 							</div>
 						</div>
