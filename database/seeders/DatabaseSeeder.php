@@ -22,6 +22,9 @@ class DatabaseSeeder extends Seeder
 			['name' => 'Unibet', 'icon' => '♦️'],
 			['name' => 'Bet365', 'icon' => '♣️'],
 			['name' => 'ACR', 'icon' => '🎴'],
+			['name' => 'pokerdom', 'icon' => '🎯'],
+			['name' => 'redstarpoker', 'icon' => '⭐'],
+			['name' => 'coinpoker', 'icon' => '🪙'],
 		];
 
 		$rooms = collect();
@@ -50,6 +53,9 @@ class DatabaseSeeder extends Seeder
 			'Unibet' => 195.25,
 			'Bet365' => 320.00,
 			'ACR' => 203.50,
+			'pokerdom' => 380.00,
+			'redstarpoker' => 275.50,
+			'coinpoker' => 420.25,
 		];
 
 		foreach ($rooms as $room) {

@@ -12,7 +12,16 @@ class RoomController extends Controller
 {
 	public function index(): JsonResponse
 	{
-		$rooms = Room::all();
+		$priorityOrder = [
+			'GGPoker' => 1,
+			'pokerdom' => 2,
+			'redstarpoker' => 3,
+			'coinpoker' => 4,
+		];
+
+		$rooms = Room::all()->sortBy(function ($room) use ($priorityOrder) {
+			return $priorityOrder[$room->name] ?? 999;
+		})->values();
 
 		return response()->json($rooms);
 	}
