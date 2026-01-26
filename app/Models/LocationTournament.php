@@ -90,15 +90,19 @@ class LocationTournament extends Model
 
 	public function getPrizeDistributionAttribute(): array
 	{
-		if ($this->prize_distribution && is_array($this->prize_distribution) && count($this->prize_distribution) > 0) {
-			$prizePool = $this->prize_pool;
-			return array_map(function($prize) use ($prizePool) {
-				return [
-					'place' => $prize['place'],
-					'percentage' => $prize['percentage'],
-					'prize' => round($prizePool * ($prize['percentage'] / 100), 2),
-				];
-			}, $this->prize_distribution);
+		$customDistribution = $this->attributes['prize_distribution'] ?? null;
+		if ($customDistribution) {
+			$decoded = is_string($customDistribution) ? json_decode($customDistribution, true) : $customDistribution;
+			if (is_array($decoded) && count($decoded) > 0 && isset($decoded[0]['percentage'])) {
+				$prizePool = $this->prize_pool;
+				return array_map(function($prize) use ($prizePool) {
+					return [
+						'place' => $prize['place'],
+						'percentage' => $prize['percentage'],
+						'prize' => round($prizePool * ($prize['percentage'] / 100), 2),
+					];
+				}, $decoded);
+			}
 		}
 
 		$prizePool = $this->prize_pool;
