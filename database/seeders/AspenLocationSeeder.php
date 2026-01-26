@@ -33,6 +33,10 @@ class AspenLocationSeeder extends Seeder
 			]
 		);
 
+		if (!$location->admins()->where('user_id', $owner->id)->exists()) {
+			$location->admins()->attach($owner->id);
+		}
+
 		$participants = [
 			'Богдан',
 			'Аня',
