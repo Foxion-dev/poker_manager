@@ -628,18 +628,16 @@ const addParticipant = async () => {
 	}
 };
 
-const incrementRebuy = (participant) => {
+const incrementRebuy = async (participant) => {
 	participant.rebuy = (participant.rebuy || 0) + 1;
-	updateParticipant(participant);
-	return false;
+	await updateParticipant(participant);
 };
 
-const decrementRebuy = (participant) => {
+const decrementRebuy = async (participant) => {
 	if ((participant.rebuy || 0) > 0) {
 		participant.rebuy = (participant.rebuy || 0) - 1;
-		updateParticipant(participant);
+		await updateParticipant(participant);
 	}
-	return false;
 };
 
 const removeParticipant = async (participant) => {
@@ -663,6 +661,8 @@ const removeParticipant = async (participant) => {
 
 const updateParticipant = async (participant) => {
 	if (saving.value) return;
+	
+	const scrollPosition = window.scrollY || window.pageYOffset;
 	
 	saving.value = true;
 	try {
@@ -691,6 +691,10 @@ const updateParticipant = async (participant) => {
 			{ participants: participantsData }
 		);
 		await fetchTournament();
+		
+		requestAnimationFrame(() => {
+			window.scrollTo(0, scrollPosition);
+		});
 	} catch (error) {
 		console.error('Error updating participant:', error);
 		alert('Ошибка при обновлении участника');
