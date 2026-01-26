@@ -164,3 +164,37 @@ class LocationController extends Controller
 
 		return response()->json(['message' => 'Admin removed successfully']);
 	}
+
+	public function publicShow(Location $location, Request $request): JsonResponse
+	{
+		if (!$location->is_public) {
+			return response()->json(['message' => 'Location is not public'], 404);
+		}
+
+		if ($location->password) {
+			$password = $request->get('password');
+			if (!$password || !$location->checkPassword($password)) {
+				return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+			}
+		}
+
+		$location->load('user');
+		$location->loadCount('tournaments');
+
+		return response()->json([
+			'id' => $location->id,
+			'name' => $location->name,
+			'description' => $location->description,
+			'is_public' => $location->is_public,
+			'has_password' => !empty($location->password),
+			'user' => [
+				'id' => $location->user->id,
+				'name' => $location->user->name,
+			],
+			'tournaments_count' => $location->tournaments_count,
+			'average_buyin' => $location->average_buyin,
+			'top_players_by_wins' => $location->top_players_by_wins,
+			'top_players_by_prize' => $location->top_players_by_prize,
+		]);
+	}
+}
