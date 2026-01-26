@@ -933,7 +933,6 @@ const fetchLocation = async (password = null) => {
 		await fetchCurrencies();
 	} catch (error) {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
-			clearPassword(route.params.id);
 			showPasswordForm.value = true;
 		} else {
 			console.error('Error fetching location:', error);
