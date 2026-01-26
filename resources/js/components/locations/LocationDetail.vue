@@ -614,14 +614,6 @@
 										placeholder="Место"
 										class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
 									/>
-									<input
-										v-model.number="participant.prize"
-										type="number"
-										step="0.01"
-										min="0"
-										placeholder="Приз"
-										class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
-									/>
 									<button
 										type="button"
 										@click="removeParticipant(index)"
@@ -994,10 +986,10 @@ const editTournament = (tournament) => {
 		buyin: tournament.buyin,
 		format: tournament.format,
 		participants: tournament.participants.map(p => ({
-			user_id: p.user_id || '',
+			user_id: p.user_id ? String(p.user_id) : '',
 			name: p.name || '',
 			place: p.place,
-			prize: p.prize || null,
+			prize: null,
 		})),
 	};
 	showTournamentForm.value = true;
@@ -1040,7 +1032,13 @@ const saveTournament = async () => {
 		return;
 	}
 
-	if (tournamentForm.value.participants.some(p => !p.user_id && !p.name)) {
+	const invalidParticipants = tournamentForm.value.participants.filter(p => {
+		const hasUserId = p.user_id !== null && p.user_id !== undefined && p.user_id !== '';
+		const hasName = p.name && p.name.trim() !== '';
+		return !hasUserId && !hasName;
+	});
+
+	if (invalidParticipants.length > 0) {
 		alert('Необходимо указать либо пользователя, либо имя участника для всех участников.');
 		return;
 	}
@@ -1127,17 +1125,28 @@ const addSelectedUsersAsParticipants = () => {
 		: 0;
 
 	selectedLocationUsers.value.forEach((userId, index) => {
-		const locationUser = locationUsers.value.find(u => (u.user_id || u.id) == userId);
-		if (locationUser && !tournamentForm.value.participants.some(p => 
-			(p.user_id && p.user_id == locationUser.user_id) || 
-			(!p.user_id && p.name === locationUser.name)
-		)) {
-			tournamentForm.value.participants.push({
-				user_id: locationUser.user_id || '',
-				name: locationUser.user_id ? '' : (locationUser.name || ''),
-				place: maxPlace + index + 1,
-				prize: null,
+		const locationUser = locationUsers.value.find(u => {
+			const id = u.user_id || u.id;
+			return id == userId || id === userId;
+		});
+		
+		if (locationUser) {
+			const isDuplicate = tournamentForm.value.participants.some(p => {
+				if (locationUser.user_id) {
+					return p.user_id && (p.user_id == locationUser.user_id || p.user_id === locationUser.user_id);
+				} else {
+					return !p.user_id && p.name === locationUser.name;
+				}
 			});
+
+			if (!isDuplicate) {
+				tournamentForm.value.participants.push({
+					user_id: locationUser.user_id ? String(locationUser.user_id) : '',
+					name: locationUser.user_id ? '' : (locationUser.display_name || locationUser.name || ''),
+					place: maxPlace + index + 1,
+					prize: null,
+				});
+			}
 		}
 	});
 
@@ -1163,7 +1172,7 @@ const addNewUserToLocationAndTournament = async () => {
 		if (newUser) {
 			tournamentForm.value.participants.push({
 				user_id: '',
-				name: newUser.name,
+				name: newUser.display_name || newUser.name,
 				place: maxPlace + 1,
 				prize: null,
 			});

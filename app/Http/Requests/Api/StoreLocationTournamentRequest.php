@@ -26,7 +26,6 @@ class StoreLocationTournamentRequest extends FormRequest
 			'participants.*.name' => ['required_without:participants.*.user_id', 'nullable', 'string', 'max:255'],
 			'participants.*.user_id' => ['nullable', 'exists:users,id'],
 			'participants.*.place' => ['required', 'integer', 'min:1'],
-			'participants.*.prize' => ['nullable', 'numeric', 'min:0'],
 		];
 	}
 
