@@ -272,7 +272,7 @@
 								<h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ tournament.name }}</h4>
 								<div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
 									<span>📅 {{ formatDate(tournament.date) }}</span>
-									<span>💵 {{ formatCurrency(tournament.buyin) }}</span>
+									<span>💵 {{ formatBuyin(tournament) }}</span>
 									<span>🎯 {{ tournament.format_label }}</span>
 								</div>
 								<div v-if="tournament.participants && tournament.participants.length > 0" class="mt-3">
@@ -299,6 +299,12 @@
 								</div>
 							</div>
 							<div v-if="location.is_admin" class="ml-4 flex space-x-2">
+								<router-link
+									:to="`/locations/${route.params.id}/tournaments/${tournament.id}`"
+									class="px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+								>
+									Детали
+								</router-link>
 								<button
 									@click="editTournament(tournament)"
 									class="px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
@@ -1084,11 +1090,27 @@ const deleteTournament = async (id) => {
 	}
 };
 
-const formatCurrency = (value) => {
-	return new Intl.NumberFormat('ru-RU', {
-		style: 'currency',
-		currency: 'USD',
-	}).format(value);
+const formatCurrency = (value, currencyCode = 'USD', symbol = '$') => {
+	const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+	
+	if (currencyCode === 'USD') {
+		return new Intl.NumberFormat('ru-RU', {
+			style: 'currency',
+			currency: 'USD',
+		}).format(numValue);
+	}
+	return `${symbol}${numValue.toFixed(2)}`;
+};
+
+const formatBuyin = (tournament) => {
+	if (!tournament.currency || tournament.currency.code === 'USD') {
+		return formatCurrency(tournament.buyin);
+	}
+
+	const buyinInCurrency = parseFloat(tournament.buyin) || 0;
+	const buyinInUSD = buyinInCurrency * parseFloat(tournament.currency.rate_to_usd);
+
+	return `${formatCurrency(buyinInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(buyinInUSD)})`;
 };
 
 const formatDate = (dateString) => {

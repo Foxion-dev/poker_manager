@@ -90,4 +90,14 @@ export const locationService = {
 		const response = await api.post(`/locations/${locationId}/currencies`, data);
 		return response.data;
 	},
+
+	async updateTournamentParticipants(locationId, tournamentId, data) {
+		const response = await api.put(`/locations/${locationId}/tournaments/${tournamentId}/participants`, data);
+		return response.data;
+	},
+
+	async finishTournament(locationId, tournamentId) {
+		const response = await api.post(`/locations/${locationId}/tournaments/${tournamentId}/finish`);
+		return response.data;
+	},
 };

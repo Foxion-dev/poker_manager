@@ -18,6 +18,7 @@ class LocationTournament extends Model
 		'currency_id',
 		'format',
 		'date',
+		'is_finished',
 	];
 
 	protected function casts(): array
@@ -25,6 +26,7 @@ class LocationTournament extends Model
 		return [
 			'buyin' => 'decimal:2',
 			'date' => 'date',
+			'is_finished' => 'boolean',
 		];
 	}
 

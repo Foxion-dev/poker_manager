@@ -34,6 +34,7 @@ class LocationTournamentController extends Controller
 					'format' => $tournament->format,
 					'format_label' => $tournament->format_label,
 					'date' => $tournament->date->format('Y-m-d'),
+					'is_finished' => $tournament->is_finished ?? false,
 					'participants' => $tournament->participants->map(function ($participant) {
 						return [
 							'id' => $participant->id,
@@ -41,6 +42,8 @@ class LocationTournamentController extends Controller
 							'user_id' => $participant->user_id,
 							'user' => $participant->user,
 							'place' => $participant->place,
+							'rebuy' => $participant->rebuy ?? 0,
+							'addon' => $participant->addon ?? false,
 							'prize' => $participant->prize,
 							'display_name' => $participant->display_name,
 						];
@@ -66,7 +69,14 @@ class LocationTournamentController extends Controller
 		$tournament = $location->tournaments()->create($data);
 
 		foreach ($participants as $participant) {
-			$tournament->participants()->create($participant);
+			$participantData = [
+				'user_id' => $participant['user_id'] ?? null,
+				'name' => $participant['name'] ?? null,
+				'place' => $participant['place'],
+				'rebuy' => $participant['rebuy'] ?? 0,
+				'addon' => $participant['addon'] ?? false,
+			];
+			$tournament->participants()->create($participantData);
 		}
 
 		return response()->json($tournament->load('participants.user'), 201);
@@ -93,6 +103,7 @@ class LocationTournamentController extends Controller
 			'format_label' => $locationTournament->format_label,
 			'date' => $locationTournament->date->format('Y-m-d'),
 			'location' => $location,
+			'is_finished' => $locationTournament->is_finished ?? false,
 			'participants' => $locationTournament->participants->map(function ($participant) {
 				return [
 					'id' => $participant->id,
@@ -100,6 +111,8 @@ class LocationTournamentController extends Controller
 					'user_id' => $participant->user_id,
 					'user' => $participant->user,
 					'place' => $participant->place,
+					'rebuy' => $participant->rebuy ?? 0,
+					'addon' => $participant->addon ?? false,
 					'prize' => $participant->prize,
 					'display_name' => $participant->display_name,
 				];
@@ -125,7 +138,14 @@ class LocationTournamentController extends Controller
 			$locationTournament->participants()->delete();
 
 			foreach ($participants as $participant) {
-				$locationTournament->participants()->create($participant);
+				$participantData = [
+					'user_id' => $participant['user_id'] ?? null,
+					'name' => $participant['name'] ?? null,
+					'place' => $participant['place'],
+					'rebuy' => $participant['rebuy'] ?? 0,
+					'addon' => $participant['addon'] ?? false,
+				];
+				$locationTournament->participants()->create($participantData);
 			}
 		}
 
@@ -147,6 +167,49 @@ class LocationTournamentController extends Controller
 		$locationTournament->delete();
 
 		return response()->json(['message' => 'Tournament deleted successfully']);
+	}
+
+	public function updateParticipants(Request $request, LocationTournament $locationTournament): JsonResponse
+	{
+		$user = $request->user();
+		$location = $locationTournament->location;
+
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can update participants'], 403);
+		}
+
+		$participants = $request->input('participants', []);
+
+		foreach ($participants as $participantData) {
+			$participant = $locationTournament->participants()->find($participantData['id']);
+			if ($participant) {
+				$participant->update([
+					'rebuy' => $participantData['rebuy'] ?? 0,
+					'addon' => $participantData['addon'] ?? false,
+					'prize' => $participantData['prize'] ?? null,
+				]);
+			}
+		}
+
+		$locationTournament->load(['participants.user', 'currency']);
+
+		return response()->json($locationTournament);
+	}
+
+	public function finish(Request $request, LocationTournament $locationTournament): JsonResponse
+	{
+		$user = $request->user();
+		$location = $locationTournament->location;
+
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can finish tournaments'], 403);
+		}
+
+		$locationTournament->update(['is_finished' => true]);
+
+		$locationTournament->load(['participants.user', 'currency']);
+
+		return response()->json($locationTournament);
 	}
 
 	public function publicIndex(Request $request, Location $location): JsonResponse

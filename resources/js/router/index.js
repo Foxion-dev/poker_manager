@@ -65,6 +65,11 @@ const routes = [
 				name: 'LocationDetail',
 				component: () => import('../components/locations/LocationDetail.vue'),
 			},
+			{
+				path: '/locations/:locationId/tournaments/:id',
+				name: 'LocationTournamentDetail',
+				component: () => import('../components/locations/LocationTournamentDetail.vue'),
+			},
 		],
 	},
 	{
@@ -113,6 +118,7 @@ const pageTitles = {
 	PackDetail: 'Детали пака - Poker Manager',
 	Locations: 'Локации - Poker Manager',
 	LocationDetail: 'Детали локации - Poker Manager',
+	LocationTournamentDetail: 'Детали турнира - Poker Manager',
 	PublicLocationView: 'Публичная локация - Poker Manager',
 	AdminRooms: 'Управление румами - Админ-панель',
 	AdminCurrencies: 'Управление валютами - Админ-панель',

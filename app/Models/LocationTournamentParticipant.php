@@ -15,6 +15,8 @@ class LocationTournamentParticipant extends Model
 		'name',
 		'user_id',
 		'place',
+		'rebuy',
+		'addon',
 		'prize',
 	];
 
@@ -22,6 +24,8 @@ class LocationTournamentParticipant extends Model
 	{
 		return [
 			'place' => 'integer',
+			'rebuy' => 'integer',
+			'addon' => 'boolean',
 			'prize' => 'decimal:2',
 		];
 	}
