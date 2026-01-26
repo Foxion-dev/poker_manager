@@ -10,7 +10,7 @@ class StatisticsService
 {
 	public function getBankrollHistory(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): Collection
 	{
-		$query = $user->tournaments()->orderBy('date')->orderBy('id');
+		$query = $user->tournaments()->with('currency')->orderBy('date')->orderBy('id');
 
 		if ($startDate) {
 			$query->where('date', '>=', $startDate);
@@ -25,8 +25,10 @@ class StatisticsService
 		$history = collect();
 
 		foreach ($tournaments as $tournament) {
-			$totalBuyin = $tournament->buyin + ($tournament->bounty_count * $tournament->buyin);
-			$profit = ($tournament->cashout ?? 0) - $totalBuyin;
+			$rateToUsd = $tournament->currency?->rate_to_usd ?? 1.0;
+			$totalBuyin = ($tournament->buyin + ($tournament->bounty_count * $tournament->buyin)) / $rateToUsd;
+			$cashout = ($tournament->cashout ?? 0) / $rateToUsd;
+			$profit = $cashout - $totalBuyin;
 			$runningTotal += $profit;
 
 			$history->push([
@@ -63,17 +65,26 @@ class StatisticsService
 
 	public function getAverageBuyin(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments();
+		$query = $user->tournaments()
+			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
 
 		if ($startDate) {
-			$query->where('date', '>=', $startDate);
+			$query->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('date', '<=', $endDate);
+			$query->where('tournaments.date', '<=', $endDate);
 		}
 
-		$averageBuyin = $query->selectRaw('AVG(buyin + (bounty_count * buyin)) as avg_buyin')
+		$averageBuyin = $query->selectRaw('
+				AVG(
+					CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
+						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+					END
+				) as avg_buyin
+			')
 			->value('avg_buyin');
 
 		return round($averageBuyin ?? 0, 2);
@@ -81,19 +92,33 @@ class StatisticsService
 
 	public function getROI(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments();
+		$query = $user->tournaments()
+			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
 
 		if ($startDate) {
-			$query->where('date', '>=', $startDate);
+			$query->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('date', '<=', $endDate);
+			$query->where('tournaments.date', '<=', $endDate);
 		}
 
 		$stats = $query->selectRaw('
-				SUM(COALESCE(cashout, 0)) as total_cashout,
-				SUM(buyin + (bounty_count * buyin)) as total_buyin
+				SUM(
+					CASE 
+						WHEN tournaments.cashout IS NULL THEN 0
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.cashout
+						ELSE tournaments.cashout / currencies.rate_to_usd
+					END
+				) as total_cashout,
+				SUM(
+					CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
+						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+					END
+				) as total_buyin
 			')
 			->first();
 
@@ -131,17 +156,33 @@ class StatisticsService
 
 	public function getTotalProfit(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments();
+		$query = $user->tournaments()
+			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
 
 		if ($startDate) {
-			$query->where('date', '>=', $startDate);
+			$query->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('date', '<=', $endDate);
+			$query->where('tournaments.date', '<=', $endDate);
 		}
 
-		$profit = $query->selectRaw('SUM(COALESCE(cashout, 0) - (buyin + (bounty_count * buyin))) as profit')
+		$profit = $query->selectRaw('
+				SUM(
+					CASE 
+						WHEN tournaments.cashout IS NULL THEN 0
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.cashout
+						ELSE tournaments.cashout / currencies.rate_to_usd
+					END
+					-
+					CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
+						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+					END
+				) as profit
+			')
 			->value('profit');
 
 		return round($profit ?? 0, 2);
@@ -149,17 +190,28 @@ class StatisticsService
 
 	public function getAverageCashout(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$query = $user->tournaments()->whereNotNull('cashout');
+		$query = $user->tournaments()
+			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
+			->whereNotNull('tournaments.cashout');
 
 		if ($startDate) {
-			$query->where('date', '>=', $startDate);
+			$query->where('tournaments.date', '>=', $startDate);
 		}
 
 		if ($endDate) {
-			$query->where('date', '<=', $endDate);
+			$query->where('tournaments.date', '<=', $endDate);
 		}
 
-		$averageCashout = $query->avg('cashout');
+		$averageCashout = $query->selectRaw('
+				AVG(
+					CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.cashout
+						ELSE tournaments.cashout / currencies.rate_to_usd
+					END
+				) as avg_cashout
+			')
+			->value('avg_cashout');
 
 		return round($averageCashout ?? 0, 2);
 	}
@@ -167,15 +219,35 @@ class StatisticsService
 	public function getStatisticsByRoom(User $user): Collection
 	{
 		return $user->tournaments()
+			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
 			->selectRaw('
-				room_id,
+				tournaments.room_id,
 				COUNT(*) as total_tournaments,
-				SUM(COALESCE(cashout, 0) - (buyin + (bounty_count * buyin))) as profit,
-				AVG(buyin + (bounty_count * buyin)) as avg_buyin,
-				SUM(CASE WHEN cashout IS NOT NULL THEN 1 ELSE 0 END) as itm_count
+				SUM(
+					CASE 
+						WHEN tournaments.cashout IS NULL THEN 0
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.cashout
+						ELSE tournaments.cashout / currencies.rate_to_usd
+					END
+					-
+					CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
+						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+					END
+				) as profit,
+				AVG(
+					CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
+						ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+					END
+				) as avg_buyin,
+				SUM(CASE WHEN tournaments.cashout IS NOT NULL THEN 1 ELSE 0 END) as itm_count
 			')
 			->with('room')
-			->groupBy('room_id')
+			->groupBy('tournaments.room_id')
 			->get()
 			->map(function ($item) {
 				return [
