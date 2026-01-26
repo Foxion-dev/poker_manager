@@ -362,24 +362,33 @@ const updateChart = () => {
 					fill: true,
 					tension: 0.4,
 					pointRadius: 0,
-					pointHoverRadius: 0,
+					pointHoverRadius: 6,
+					pointHoverBackgroundColor: lineColor,
+					pointHoverBorderColor: '#fff',
+					pointHoverBorderWidth: 2,
 				},
 			],
 		},
-		options: {
+			options: {
 			responsive: true,
 			maintainAspectRatio: false,
+			interaction: {
+				intersect: false,
+				mode: 'index',
+			},
 			plugins: {
 				legend: {
 					display: false,
 				},
 				tooltip: {
+					enabled: true,
 					backgroundColor: isDark ? '#1f2937' : '#fff',
 					titleColor: textColor,
 					bodyColor: textColor,
 					borderColor: gridColor,
 					borderWidth: 1,
 					padding: 12,
+					displayColors: false,
 					callbacks: {
 						title: function(context) {
 							return context[0].label;
