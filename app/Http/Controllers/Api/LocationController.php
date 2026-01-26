@@ -68,9 +68,35 @@ class LocationController extends Controller
 
 		if ($location->is_public && $location->password) {
 			$password = $request->get('password');
-			if (!$password || !$location->checkPassword($password)) {
-				if ($location->user_id !== $user->id && !$location->isAdmin($user)) {
+			
+			if (!$password) {
+				$savedPassword = \App\Models\LocationUserPassword::where('user_id', $user->id)
+					->where('location_id', $location->id)
+					->first();
+				
+				if ($savedPassword) {
+					$password = $savedPassword->password;
+					if (!$location->checkPassword($password)) {
+						if ($location->user_id !== $user->id && !$location->isAdmin($user)) {
+							return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+						}
+					}
+				} elseif ($location->user_id !== $user->id && !$location->isAdmin($user)) {
 					return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+				}
+			} else {
+				if (!$location->checkPassword($password)) {
+					if ($location->user_id !== $user->id && !$location->isAdmin($user)) {
+						return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+					}
+				} else {
+					\App\Models\LocationUserPassword::updateOrCreate(
+						[
+							'user_id' => $user->id,
+							'location_id' => $location->id,
+						],
+						['password' => $password]
+					);
 				}
 			}
 		}

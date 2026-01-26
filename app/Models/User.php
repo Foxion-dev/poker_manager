@@ -103,4 +103,9 @@ class User extends Authenticatable
 		return $this->belongsToMany(Location::class, 'location_admins')
 			->withTimestamps();
 	}
+
+	public function locationPasswords(): HasMany
+	{
+		return $this->hasMany(LocationUserPassword::class);
+	}
 }

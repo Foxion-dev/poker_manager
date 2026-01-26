@@ -67,6 +67,11 @@ class Location extends Model
 			->withTimestamps();
 	}
 
+	public function userPasswords(): HasMany
+	{
+		return $this->hasMany(LocationUserPassword::class);
+	}
+
 	public function isAdmin(User $user): bool
 	{
 		return $this->user_id === $user->id || $this->admins()->where('user_id', $user->id)->exists();

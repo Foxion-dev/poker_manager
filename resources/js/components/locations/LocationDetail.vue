@@ -928,13 +928,12 @@ const fetchLocation = async (password = null) => {
 			password: '',
 			selected_currencies: location.value.currencies?.map(c => c.id) || [],
 		};
-		const storedPassword = getStoredPassword(route.params.id);
-		const passwordForTournaments = storedPassword || password;
-		await fetchTournaments(passwordForTournaments);
+		await fetchTournaments(password);
 		await fetchUsers();
 		await fetchCurrencies();
 	} catch (error) {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
+			clearPassword(route.params.id);
 			showPasswordForm.value = true;
 		} else {
 			console.error('Error fetching location:', error);
@@ -959,7 +958,6 @@ const submitPassword = async () => {
 	} catch (error) {
 		if (error.response?.status === 403) {
 			alert('Неверный пароль');
-			clearPassword(route.params.id);
 			locationPassword.value = '';
 		} else {
 			console.error('Error submitting password:', error);
@@ -1414,11 +1412,6 @@ const removeUser = async (userId) => {
 };
 
 onMounted(() => {
-	const storedPassword = getStoredPassword(route.params.id);
-	if (storedPassword) {
-		fetchLocation(storedPassword);
-	} else {
-		fetchLocation();
-	}
+	fetchLocation();
 });
 </script>
