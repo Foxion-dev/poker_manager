@@ -39,6 +39,7 @@ class LocationController extends Controller
 					'description' => $location->description,
 					'is_public' => $location->is_public,
 					'has_password' => !empty($location->password),
+					'user_id' => $location->user_id,
 					'user' => $location->user,
 					'is_admin' => $location->isAdmin($user),
 					'tournaments_count' => $location->tournaments_count,
@@ -83,6 +84,7 @@ class LocationController extends Controller
 			'description' => $location->description,
 			'is_public' => $location->is_public,
 			'has_password' => !empty($location->password),
+			'user_id' => $location->user_id,
 			'user' => $location->user,
 			'is_admin' => $location->isAdmin($user),
 			'can_manage_admins' => $location->canManageAdmins($user),
@@ -187,6 +189,7 @@ class LocationController extends Controller
 			'description' => $location->description,
 			'is_public' => $location->is_public,
 			'has_password' => !empty($location->password),
+			'user_id' => $location->user_id,
 			'user' => [
 				'id' => $location->user->id,
 				'name' => $location->user->name,
