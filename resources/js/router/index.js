@@ -145,12 +145,15 @@ router.beforeEach(async (to, from, next) => {
 		return;
 	}
 
-	if (token && !authStore.isAuthenticated) {
+	if (token && !authStore.isAuthenticated && !to.meta.public) {
 		try {
 			await authStore.fetchUser();
 		} catch (error) {
-			next({ name: 'Login' });
-			return;
+			localStorage.removeItem('auth_token');
+			if (to.meta.requiresAuth) {
+				next({ name: 'Login' });
+				return;
+			}
 		}
 	}
 
