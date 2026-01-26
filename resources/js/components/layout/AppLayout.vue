@@ -35,6 +35,16 @@
 								<span class="mr-2">🎯</span>
 								Турниры
 							</router-link>
+							<router-link
+								to="/packs"
+								class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+								:class="$route.name === 'Packs' || $route.name === 'PackDetail'
+									? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
+									: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+							>
+								<span class="mr-2">📦</span>
+								Паки
+							</router-link>
 						</div>
 					</div>
 					<div class="flex items-center space-x-4">

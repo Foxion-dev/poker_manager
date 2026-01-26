@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\PackController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\TournamentController;
 use App\Http\Controllers\Api\UserRoomController;
@@ -32,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::prefix('dashboard')->group(function () {
 		Route::get('/stats', [DashboardController::class, 'stats']);
 	});
+
+	Route::apiResource('packs', PackController::class);
 
 	Route::prefix('admin')->middleware('admin')->group(function () {
 		Route::get('/users', [\App\Http\Controllers\Api\AdminUserController::class, 'index']);

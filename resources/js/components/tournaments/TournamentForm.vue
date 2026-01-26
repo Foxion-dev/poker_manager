@@ -18,6 +18,22 @@
 			<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
 				<div>
 					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+						<span class="mr-2">📦</span>
+						Пак
+					</label>
+					<select
+						v-model="form.pack_id"
+						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+					>
+						<option :value="null">Без пака</option>
+						<option v-for="pack in packs" :key="pack.id" :value="pack.id">
+							{{ pack.name }}
+						</option>
+					</select>
+				</div>
+
+				<div>
+					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 						<span class="mr-2">🎰</span>
 						Рум
 					</label>
@@ -157,6 +173,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useTournamentStore } from '../../stores/tournaments';
 import { useRoomStore } from '../../stores/rooms';
 import { useCurrencyStore } from '../../stores/currencies';
+import { packService } from '../../services/packService';
 
 const router = useRouter();
 const route = useRoute();
@@ -167,8 +184,10 @@ const currencyStore = useCurrencyStore();
 const isEdit = computed(() => !!route.params.id);
 const loading = ref(false);
 const error = ref('');
+const packs = ref([]);
 
 const form = ref({
+	pack_id: null,
 	room_id: '',
 	date: '',
 	buyin: 0,
@@ -183,6 +202,7 @@ onMounted(async () => {
 		await Promise.all([
 			roomStore.fetchRooms(),
 			currencyStore.fetchCurrencies(),
+			packService.getAll().then(data => packs.value = data),
 		]);
 	} catch (err) {
 		error.value = 'Ошибка загрузки данных';
@@ -192,6 +212,7 @@ onMounted(async () => {
 		try {
 			const tournament = await tournamentStore.fetchTournament(route.params.id);
 			form.value = {
+				pack_id: tournament.pack_id,
 				room_id: tournament.room_id,
 				date: tournament.date,
 				buyin: tournament.buyin,

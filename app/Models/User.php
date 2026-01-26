@@ -81,4 +81,9 @@ class User extends Authenticatable
 	{
 		return $this->hasMany(UserRoom::class);
 	}
+
+	public function packs(): HasMany
+	{
+		return $this->hasMany(Pack::class);
+	}
 }

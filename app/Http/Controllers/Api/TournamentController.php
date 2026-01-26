@@ -13,7 +13,11 @@ class TournamentController extends Controller
 {
 	public function index(Request $request): JsonResponse
 	{
-		$query = $request->user()->tournaments()->with(['room', 'currency']);
+		$query = $request->user()->tournaments()->with(['room', 'currency', 'pack']);
+
+		if ($request->has('pack_id')) {
+			$query->where('pack_id', $request->pack_id);
+		}
 
 		if ($request->has('room_id')) {
 			$query->where('room_id', $request->room_id);
@@ -74,9 +78,19 @@ class TournamentController extends Controller
 
 	public function store(StoreTournamentRequest $request): JsonResponse
 	{
-		$tournament = $request->user()->tournaments()->create($request->validated());
+		$user = $request->user();
+		$data = $request->validated();
 
-		return response()->json($tournament->load(['room', 'currency']), 201);
+		if (isset($data['pack_id'])) {
+			$pack = \App\Models\Pack::find($data['pack_id']);
+			if (!$pack || $pack->user_id !== $user->id) {
+				return response()->json(['message' => 'Pack not found or unauthorized'], 422);
+			}
+		}
+
+		$tournament = $user->tournaments()->create($data);
+
+		return response()->json($tournament->load(['room', 'currency', 'pack']), 201);
 	}
 
 	public function show(Request $request, Tournament $tournament): JsonResponse
@@ -85,7 +99,7 @@ class TournamentController extends Controller
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
-		return response()->json($tournament->load(['room', 'currency']));
+		return response()->json($tournament->load(['room', 'currency', 'pack']));
 	}
 
 	public function update(UpdateTournamentRequest $request, Tournament $tournament): JsonResponse
@@ -94,9 +108,19 @@ class TournamentController extends Controller
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
-		$tournament->update($request->validated());
+		$user = $request->user();
+		$data = $request->validated();
 
-		return response()->json($tournament->load(['room', 'currency']));
+		if (isset($data['pack_id'])) {
+			$pack = \App\Models\Pack::find($data['pack_id']);
+			if (!$pack || $pack->user_id !== $user->id) {
+				return response()->json(['message' => 'Pack not found or unauthorized'], 422);
+			}
+		}
+
+		$tournament->update($data);
+
+		return response()->json($tournament->load(['room', 'currency', 'pack']));
 	}
 
 	public function destroy(Request $request, Tournament $tournament): JsonResponse
