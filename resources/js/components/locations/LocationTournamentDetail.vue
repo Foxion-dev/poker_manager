@@ -464,7 +464,7 @@
 							+ Добавить место
 						</button>
 						<button
-							@click="resetPrizeDistribution"
+							@click="recalculatePrizePercentages"
 							class="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
 						>
 							Пересчитать автоматически
@@ -483,8 +483,7 @@
 							</label>
 						</div>
 						<button
-							v-if="hasFixedPrizeDistribution"
-							@click="clearPrizeDistribution"
+							@click="resetPrizeDistribution"
 							class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
 						>
 							Очистить кастомное
@@ -852,6 +851,37 @@ const removePrizePlace = (index) => {
 	prizeDistributionForm.value.forEach((p, i) => {
 		p.place = i + 1;
 	});
+};
+
+const recalculatePrizePercentages = () => {
+	if (!prizeDistributionForm.value || prizeDistributionForm.value.length === 0) {
+		alert('Сначала добавьте призовые места');
+		return;
+	}
+	
+	const placesCount = prizeDistributionForm.value.length;
+	
+	prizeDistributionForm.value = [];
+	for (let place = 1; place <= placesCount; place++) {
+		let percentage = 0;
+		if (placesCount === 1) {
+			percentage = 100;
+		} else if (placesCount === 2) {
+			percentage = place === 1 ? 60 : 40;
+		} else if (placesCount === 3) {
+			percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
+		} else {
+			if (place === 1) percentage = 50;
+			else if (place === 2) percentage = 25;
+			else if (place === 3) percentage = 12.5;
+			else percentage = 12.5 / (placesCount - 3);
+		}
+		
+		prizeDistributionForm.value.push({
+			place: place,
+			percentage: percentage,
+		});
+	}
 };
 
 const resetPrizeDistribution = () => {
