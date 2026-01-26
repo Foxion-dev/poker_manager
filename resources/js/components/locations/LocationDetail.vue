@@ -1008,7 +1008,9 @@ const editTournament = (tournament) => {
 		name: tournament.name,
 		date: tournament.date,
 		buyin: tournament.buyin,
+		currency_id: tournament.currency_id,
 		format: tournament.format,
+		itm_percentage: tournament.itm_percentage ?? 100,
 		participants: tournament.participants.map(p => ({
 			user_id: p.user_id ? String(p.user_id) : '',
 			name: p.name || '',
