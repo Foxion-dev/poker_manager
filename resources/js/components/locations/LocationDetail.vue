@@ -477,18 +477,32 @@
 							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 								Участники *
 							</label>
-							<div class="mb-3">
-								<select
-									v-model="selectedLocationUsers"
-									multiple
-									size="8"
-									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-								>
-									<option v-for="locationUser in locationUsers" :key="locationUser.id || locationUser.user_id" :value="locationUser.user_id || locationUser.id">
-										{{ locationUser.display_name || locationUser.name }}
-									</option>
-								</select>
-								<div class="mt-2 flex items-center space-x-2">
+							<div class="mb-4">
+								<div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50 max-h-64 overflow-y-auto">
+									<div class="space-y-2">
+										<label
+											v-for="locationUser in locationUsers"
+											:key="locationUser.id || locationUser.user_id"
+											class="flex items-center space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg cursor-pointer transition-colors"
+										>
+											<input
+												type="checkbox"
+												:value="locationUser.user_id || locationUser.id"
+												v-model="selectedLocationUsers"
+												class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+											/>
+											<div class="flex-1 flex items-center">
+												<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
+													{{ (locationUser.display_name || locationUser.name)?.charAt(0).toUpperCase() }}
+												</div>
+												<span class="text-sm font-medium text-gray-900 dark:text-white">
+													{{ locationUser.display_name || locationUser.name }}
+												</span>
+											</div>
+										</label>
+									</div>
+								</div>
+								<div class="mt-3 flex items-center space-x-2">
 									<button
 										type="button"
 										@click="selectAllLocationUsers"
@@ -512,62 +526,66 @@
 									</button>
 								</div>
 							</div>
-							<div class="space-y-2">
+
+							<div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Добавить нового пользователя в локацию и турнир
+								</label>
+								<div class="flex items-center space-x-2">
+									<input
+										v-model="newParticipantName"
+										type="text"
+										placeholder="Введите имя нового пользователя"
+										class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+										@keyup.enter="addNewUserToLocationAndTournament"
+									/>
+									<button
+										type="button"
+										@click="addNewUserToLocationAndTournament"
+										:disabled="!newParticipantName || addingNewUser"
+										class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-colors"
+									>
+										{{ addingNewUser ? 'Добавление...' : 'Добавить' }}
+									</button>
+								</div>
+							</div>
+
+							<div v-if="tournamentForm.participants.length > 0" class="space-y-2">
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Выбранные участники ({{ tournamentForm.participants.length }})
+								</label>
 								<div
 									v-for="(participant, index) in tournamentForm.participants"
 									:key="index"
-									class="flex flex-col space-y-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+									class="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
 								>
-									<div class="flex items-center space-x-2">
-										<select
-											v-model="participant.user_id"
-											class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-										>
-											<option value="">Выберите пользователя локации (опционально)</option>
-											<option v-for="locationUser in locationUsers" :key="locationUser.id || locationUser.user_id" :value="locationUser.user_id || locationUser.id">
-												{{ locationUser.display_name || locationUser.name }}
-											</option>
-										</select>
-									</div>
-									<div class="flex items-center space-x-2">
-										<input
-											v-model="participant.name"
-											type="text"
-											placeholder="Имя участника (если не выбран пользователь)"
-											class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-										/>
-										<input
-											v-model.number="participant.place"
-											type="number"
-											min="1"
-											required
-											placeholder="Место"
-											class="w-24 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-										/>
-										<input
-											v-model.number="participant.prize"
-											type="number"
-											step="0.01"
-											min="0"
-											placeholder="Приз"
-											class="w-32 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-										/>
-										<button
-											type="button"
-											@click="removeParticipant(index)"
-											class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-										>
-											Удалить
-										</button>
-									</div>
+									<span class="flex-1 text-sm font-medium text-gray-900 dark:text-white">
+										{{ getParticipantDisplayName(participant) }}
+									</span>
+									<input
+										v-model.number="participant.place"
+										type="number"
+										min="1"
+										required
+										placeholder="Место"
+										class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
+									/>
+									<input
+										v-model.number="participant.prize"
+										type="number"
+										step="0.01"
+										min="0"
+										placeholder="Приз"
+										class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
+									/>
+									<button
+										type="button"
+										@click="removeParticipant(index)"
+										class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+									>
+										Удалить
+									</button>
 								</div>
-								<button
-									type="button"
-									@click="addParticipant"
-									class="w-full px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-								>
-									➕ Добавить участника вручную
-								</button>
 							</div>
 						</div>
 
@@ -766,6 +784,8 @@ const location = ref(null);
 const tournaments = ref([]);
 const allUsers = ref([]);
 const selectedLocationUsers = ref([]);
+const newParticipantName = ref('');
+const addingNewUser = ref(false);
 const loading = ref(false);
 const showLocationForm = ref(false);
 const showTournamentForm = ref(false);
@@ -932,12 +952,6 @@ const closeTournamentForm = () => {
 	editingTournament.value = null;
 };
 
-const addParticipant = () => {
-	const maxPlace = tournamentForm.value.participants.length > 0
-		? Math.max(...tournamentForm.value.participants.map(p => p.place || 0))
-		: 0;
-	tournamentForm.value.participants.push({ user_id: '', name: '', place: maxPlace + 1, prize: null });
-};
 
 const removeParticipant = (index) => {
 	tournamentForm.value.participants.splice(index, 1);
@@ -1058,7 +1072,10 @@ const addSelectedUsersAsParticipants = () => {
 
 	selectedLocationUsers.value.forEach((userId, index) => {
 		const locationUser = locationUsers.value.find(u => (u.user_id || u.id) == userId);
-		if (locationUser) {
+		if (locationUser && !tournamentForm.value.participants.some(p => 
+			(p.user_id && p.user_id == locationUser.user_id) || 
+			(!p.user_id && p.name === locationUser.name)
+		)) {
 			tournamentForm.value.participants.push({
 				user_id: locationUser.user_id || '',
 				name: locationUser.user_id ? '' : (locationUser.name || ''),
@@ -1069,6 +1086,48 @@ const addSelectedUsersAsParticipants = () => {
 	});
 
 	selectedLocationUsers.value = [];
+};
+
+const addNewUserToLocationAndTournament = async () => {
+	if (!newParticipantName.value.trim()) return;
+
+	addingNewUser.value = true;
+	try {
+		await locationService.addUser(route.params.id, { name: newParticipantName.value.trim() });
+		await fetchLocation();
+
+		const maxPlace = tournamentForm.value.participants.length > 0
+			? Math.max(...tournamentForm.value.participants.map(p => p.place || 0))
+			: 0;
+
+		const newUser = location.value.users.find(u => 
+			!u.user_id && u.name === newParticipantName.value.trim()
+		);
+
+		if (newUser) {
+			tournamentForm.value.participants.push({
+				user_id: '',
+				name: newUser.name,
+				place: maxPlace + 1,
+				prize: null,
+			});
+		}
+
+		newParticipantName.value = '';
+	} catch (error) {
+		console.error('Error adding new user:', error);
+		alert(error.response?.data?.message || 'Ошибка при добавлении пользователя');
+	} finally {
+		addingNewUser.value = false;
+	}
+};
+
+const getParticipantDisplayName = (participant) => {
+	if (participant.user_id) {
+		const locationUser = locationUsers.value.find(u => u.user_id == participant.user_id);
+		return locationUser ? (locationUser.display_name || locationUser.name) : 'Неизвестный пользователь';
+	}
+	return participant.name || 'Без имени';
 };
 
 const addAdmin = async () => {
