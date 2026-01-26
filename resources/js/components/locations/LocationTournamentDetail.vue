@@ -122,9 +122,15 @@
 				</button>
 			</div>
 
-			<div v-if="tournament.participants && tournament.participants.length > 0" class="space-y-3">
+			<div v-if="tournament.participants && tournament.participants.filter(p => {
+				const name = p.display_name || p.name || p.user?.name || '';
+				return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+			}).length > 0" class="space-y-3">
 				<div
-					v-for="participant in tournament.participants"
+					v-for="participant in tournament.participants.filter(p => {
+						const name = p.display_name || p.name || p.user?.name || '';
+						return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+					})"
 					:key="participant.id"
 					class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
 				>

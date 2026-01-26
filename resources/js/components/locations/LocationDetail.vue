@@ -275,11 +275,11 @@
 									<span>💵 {{ formatBuyin(tournament) }}</span>
 									<span>🎯 {{ tournament.format_label }}</span>
 								</div>
-								<div v-if="tournament.participants && tournament.participants.length > 0" class="mt-3">
+								<div v-if="tournament.participants && tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени').length > 0" class="mt-3">
 									<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Участники:</p>
 									<div class="flex flex-wrap gap-2">
 										<div
-											v-for="participant in tournament.participants"
+											v-for="participant in tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени')"
 											:key="participant.id"
 											class="px-3 py-1 text-xs rounded-full"
 											:class="participant.place === 1 
@@ -617,12 +617,21 @@
 								</div>
 							</div>
 
-							<div v-if="tournamentForm.participants.length > 0" class="space-y-2">
+							<div v-if="tournamentForm.participants.filter(p => {
+								const name = getParticipantDisplayName(p);
+								return name && name !== 'Без имени';
+							}).length > 0" class="space-y-2">
 								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-									Выбранные участники ({{ tournamentForm.participants.length }})
+									Выбранные участники ({{ tournamentForm.participants.filter(p => {
+										const name = getParticipantDisplayName(p);
+										return name && name !== 'Без имени';
+									}).length }})
 								</label>
 								<div
-									v-for="(participant, index) in tournamentForm.participants"
+									v-for="(participant, index) in tournamentForm.participants.filter(p => {
+										const name = getParticipantDisplayName(p);
+										return name && name !== 'Без имени';
+									})"
 									:key="index"
 									class="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
 								>
@@ -1245,7 +1254,8 @@ const getParticipantDisplayName = (participant) => {
 		const locationUser = locationUsers.value.find(u => u.user_id == participant.user_id);
 		return locationUser ? (locationUser.display_name || locationUser.name) : 'Неизвестный пользователь';
 	}
-	return participant.name || 'Без имени';
+	const name = participant.name || participant.user?.name || '';
+	return name && name !== 'Без имени' ? name : '';
 };
 
 const fetchCurrencies = async () => {
