@@ -117,40 +117,42 @@
 							{{ formatDate(user.created_at) }}
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-							<button
-								v-if="!user.banned_at"
-								@click="banUser(user)"
-								class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-4"
-							>
-								Забанить
-							</button>
-							<button
-								v-else
-								@click="unbanUser(user)"
-								class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-4"
-							>
-								Разбанить
-							</button>
-							<button
-								v-if="!user.is_admin"
-								@click="makeAdmin(user)"
-								class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-4"
-							>
-								Сделать админом
-							</button>
-							<button
-								v-else
-								@click="removeAdmin(user)"
-								class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 mr-4"
-							>
-								Убрать админа
-							</button>
-							<button
-								@click="deleteUser(user)"
-								class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-							>
-								Удалить
-							</button>
+							<div class="flex items-center justify-end space-x-2">
+								<button
+									v-if="!user.banned_at"
+									@click="banUser(user)"
+									class="px-3 py-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+								>
+									Забанить
+								</button>
+								<button
+									v-if="user.banned_at"
+									@click="unbanUser(user)"
+									class="px-3 py-1 text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+								>
+									Разбанить
+								</button>
+								<button
+									v-if="!user.is_admin"
+									@click="makeAdmin(user)"
+									class="px-3 py-1 text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
+								>
+									Сделать админом
+								</button>
+								<button
+									v-if="user.is_admin"
+									@click="removeAdmin(user)"
+									class="px-3 py-1 text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors"
+								>
+									Убрать админа
+								</button>
+								<button
+									@click="deleteUser(user)"
+									class="px-3 py-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+								>
+									Удалить
+								</button>
+							</div>
 						</td>
 					</tr>
 					<tr v-if="users.data.length === 0">
