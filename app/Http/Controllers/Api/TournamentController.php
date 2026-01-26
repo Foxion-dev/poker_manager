@@ -48,12 +48,31 @@ class TournamentController extends Controller
 
 		$allowedSortFields = ['date', 'buyin', 'cashout', 'place'];
 		if (in_array($sortBy, $allowedSortFields)) {
-			$query->orderBy($sortBy, $sortOrder);
+			if ($sortBy === 'buyin') {
+				$query->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
+					->select('tournaments.*')
+					->selectRaw('CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 THEN tournaments.buyin 
+						ELSE tournaments.buyin / currencies.rate_to_usd 
+					END as buyin_usd')
+					->orderBy('buyin_usd', $sortOrder);
+			} elseif ($sortBy === 'cashout') {
+				$query->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
+					->select('tournaments.*')
+					->selectRaw('CASE 
+						WHEN tournaments.cashout IS NULL THEN 0
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 THEN tournaments.cashout 
+						ELSE tournaments.cashout / currencies.rate_to_usd 
+					END as cashout_usd')
+					->orderBy('cashout_usd', $sortOrder);
+			} else {
+				$query->orderBy('tournaments.' . $sortBy, $sortOrder);
+			}
 		} else {
-			$query->orderBy('date', 'desc');
+			$query->orderBy('tournaments.date', 'desc');
 		}
 
-		$query->orderBy('id', 'desc');
+		$query->orderBy('tournaments.id', 'desc');
 
 		$tournaments = $query->paginate($request->get('per_page', 15));
 
