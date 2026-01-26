@@ -78,7 +78,7 @@
 									</span>
 									<span class="flex items-center">
 										<span class="mr-1">💵</span>
-										Байин: {{ formatCurrency(tournament.buyin) }}
+										Байин: {{ formatBuyin(tournament) }}
 									</span>
 									<span v-if="tournament.bounty_count > 0" class="flex items-center">
 										<span class="mr-1">🎁</span>
@@ -94,7 +94,7 @@
 									class="text-lg font-bold"
 									:class="getProfit(tournament) >= 0 ? 'text-green-600' : 'text-red-600'"
 								>
-									{{ formatCurrency(tournament.cashout) }}
+									{{ formatCashout(tournament) }}
 								</div>
 								<div v-else class="text-sm font-medium text-gray-500 dark:text-gray-400">
 									Не в деньгах
@@ -104,7 +104,7 @@
 									class="text-xs mt-1"
 									:class="getProfit(tournament) >= 0 ? 'text-green-600' : 'text-red-600'"
 								>
-									{{ getProfit(tournament) >= 0 ? '+' : '' }}{{ formatCurrency(getProfit(tournament)) }}
+									{{ getProfit(tournament) >= 0 ? '+' : '' }}{{ formatProfit(tournament) }}
 								</div>
 							</div>
 							<router-link
@@ -130,11 +130,50 @@ import { useTournamentStore } from '../../stores/tournaments';
 const tournamentStore = useTournamentStore();
 const { tournaments, loading } = storeToRefs(tournamentStore);
 
-const formatCurrency = (value) => {
-	return new Intl.NumberFormat('ru-RU', {
-		style: 'currency',
-		currency: 'USD',
-	}).format(value);
+const formatCurrency = (value, currencyCode = 'USD', symbol = '$') => {
+	if (currencyCode === 'USD') {
+		return new Intl.NumberFormat('ru-RU', {
+			style: 'currency',
+			currency: 'USD',
+		}).format(value);
+	}
+	return `${symbol}${value.toFixed(2)}`;
+};
+
+const formatBuyin = (tournament) => {
+	if (!tournament.currency || tournament.currency.code === 'USD') {
+		return formatCurrency(tournament.buyin);
+	}
+
+	const buyinInCurrency = tournament.buyin;
+	const buyinInUSD = buyinInCurrency / tournament.currency.rate_to_usd;
+
+	return `${formatCurrency(buyinInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(buyinInUSD)})`;
+};
+
+const formatCashout = (tournament) => {
+	if (!tournament.currency || tournament.currency.code === 'USD') {
+		return formatCurrency(tournament.cashout);
+	}
+
+	const cashoutInCurrency = tournament.cashout;
+	const cashoutInUSD = cashoutInCurrency / tournament.currency.rate_to_usd;
+
+	return `${formatCurrency(cashoutInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(cashoutInUSD)})`;
+};
+
+const formatProfit = (tournament) => {
+	const totalBuyin = tournament.buyin + (tournament.bounty_count * tournament.buyin);
+	const profit = (tournament.cashout || 0) - totalBuyin;
+
+	if (!tournament.currency || tournament.currency.code === 'USD') {
+		return formatCurrency(profit);
+	}
+
+	const profitInCurrency = profit;
+	const profitInUSD = profitInCurrency / tournament.currency.rate_to_usd;
+
+	return `${formatCurrency(profitInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(profitInUSD)})`;
 };
 
 const formatDate = (date) => {
