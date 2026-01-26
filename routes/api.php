@@ -1,0 +1,32 @@
+<?php
+
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\RoomController;
+use App\Http\Controllers\Api\TournamentController;
+use App\Http\Controllers\Api\UserRoomController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+	Route::get('/user', [AuthController::class, 'user']);
+	Route::post('/logout', [AuthController::class, 'logout']);
+
+	Route::apiResource('rooms', RoomController::class);
+	Route::apiResource('tournaments', TournamentController::class);
+
+	Route::prefix('user-rooms')->group(function () {
+		Route::get('/', [UserRoomController::class, 'index']);
+		Route::get('/{room}', [UserRoomController::class, 'show']);
+		Route::put('/{room}/balance', [UserRoomController::class, 'updateBalance']);
+		Route::post('/{room}/attach', [UserRoomController::class, 'attach']);
+		Route::delete('/{room}/detach', [UserRoomController::class, 'detach']);
+	});
+
+	Route::prefix('dashboard')->group(function () {
+		Route::get('/stats', [DashboardController::class, 'stats']);
+	});
+});
