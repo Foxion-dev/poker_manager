@@ -34,15 +34,19 @@ class LocationUserPassword extends Model
 	public function setPasswordAttribute($value)
 	{
 		if ($value) {
-			$this->attributes['password'] = Hash::make($value);
+			$this->attributes['password'] = encrypt($value);
 		}
 	}
 
-	public function checkPassword($password): bool
+	public function getPasswordAttribute($value)
 	{
-		if (!$this->password) {
-			return false;
+		if ($value) {
+			try {
+				return decrypt($value);
+			} catch (\Exception $e) {
+				return null;
+			}
 		}
-		return Hash::check($password, $this->password);
+		return null;
 	}
 }
