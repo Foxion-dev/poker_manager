@@ -81,12 +81,14 @@ class LocationTournamentController extends Controller
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
-		$locationTournament->load('participants.user');
+		$locationTournament->load(['participants.user', 'currency']);
 
 		return response()->json([
 			'id' => $locationTournament->id,
 			'name' => $locationTournament->name,
 			'buyin' => $locationTournament->buyin,
+			'currency_id' => $locationTournament->currency_id,
+			'currency' => $locationTournament->currency,
 			'format' => $locationTournament->format,
 			'format_label' => $locationTournament->format_label,
 			'date' => $locationTournament->date->format('Y-m-d'),
