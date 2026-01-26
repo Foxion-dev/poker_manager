@@ -381,8 +381,11 @@ const updateChart = () => {
 					borderWidth: 1,
 					padding: 12,
 					callbacks: {
+						title: function(context) {
+							return context[0].label;
+						},
 						label: function(context) {
-							return formatCurrency(context.parsed.y);
+							return 'Баланс: ' + formatCurrency(context.parsed.y);
 						},
 					},
 				},
