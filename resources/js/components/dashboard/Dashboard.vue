@@ -205,23 +205,3 @@ onMounted(() => {
 	statisticsStore.fetchStats();
 });
 </script>
-
-<script setup>
-import { computed, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useStatisticsStore } from '../../stores/statistics';
-
-const statisticsStore = useStatisticsStore();
-const { stats, loading } = storeToRefs(statisticsStore);
-
-const formatCurrency = (value) => {
-	return new Intl.NumberFormat('ru-RU', {
-		style: 'currency',
-		currency: 'USD',
-	}).format(value);
-};
-
-onMounted(() => {
-	statisticsStore.fetchStats();
-});
-</script>
