@@ -541,8 +541,8 @@ const fetchTournaments = async () => {
 
 const fetchUsers = async () => {
 	try {
-		const response = await api.get('/admin/users');
-		allUsers.value = response.data.data || [];
+		const response = await api.get('/users/list');
+		allUsers.value = response.data || [];
 	} catch (error) {
 		console.error('Error fetching users:', error);
 	}

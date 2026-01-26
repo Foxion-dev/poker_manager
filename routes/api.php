@@ -38,8 +38,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	Route::apiResource('packs', PackController::class);
 
+	Route::get('users/list', function (Request $request) {
+		return response()->json(\App\Models\User::select('id', 'name', 'email')->orderBy('name')->get());
+	});
+
 	Route::apiResource('locations', LocationController::class);
-	Route::apiResource('locations.tournaments', LocationTournamentController::class)->shallow();
+	Route::get('locations/{location}/tournaments', [LocationTournamentController::class, 'index']);
+	Route::post('locations/{location}/tournaments', [LocationTournamentController::class, 'store']);
+	Route::get('locations/{location}/tournaments/{locationTournament}', [LocationTournamentController::class, 'show']);
+	Route::put('locations/{location}/tournaments/{locationTournament}', [LocationTournamentController::class, 'update']);
+	Route::delete('locations/{location}/tournaments/{locationTournament}', [LocationTournamentController::class, 'destroy']);
 
 	Route::prefix('admin')->middleware('admin')->group(function () {
 		Route::get('/users', [\App\Http\Controllers\Api\AdminUserController::class, 'index']);
