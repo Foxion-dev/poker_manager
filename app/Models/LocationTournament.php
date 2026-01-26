@@ -73,19 +73,16 @@ class LocationTournament extends Model
 	public function getPrizePoolAttribute(): float
 	{
 		$totalBuyin = $this->total_buyin;
-		$itmPercentage = (float) ($this->itm_percentage ?? 15);
 		$rakeType = $this->rake_type ?? 'fixed';
 		$rake = (float) ($this->rake ?? 30);
 		
-		$prizePoolBeforeRake = $totalBuyin * ($itmPercentage / 100);
-		
 		if ($rakeType === 'percentage') {
-			$rakeAmount = $prizePoolBeforeRake * ($rake / 100);
+			$rakeAmount = $totalBuyin * ($rake / 100);
 		} else {
 			$rakeAmount = $rake;
 		}
 		
-		return round($prizePoolBeforeRake - $rakeAmount, 2);
+		return round($totalBuyin - $rakeAmount, 2);
 	}
 
 	public function getPrizeDistributionAttribute(): array
