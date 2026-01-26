@@ -1,4 +1,4 @@
-.PHONY: help start up down restart build shell composer npm artisan migrate fresh seed test pint
+.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php
 
 help: ## Показать справку по командам
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -30,6 +30,22 @@ restart: ## Перезапустить контейнеры Docker
 
 build: ## Пересобрать контейнеры Docker
 	./vendor/bin/sail build --no-cache
+
+rebuild: ## Остановить, пересобрать и запустить контейнеры
+	./vendor/bin/sail down
+	./vendor/bin/sail build --no-cache
+	./vendor/bin/sail up -d
+
+switch-php: ## Переключить версию PHP (использовать: make switch-php VERSION=8.4)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Ошибка: Укажите версию PHP. Пример: make switch-php VERSION=8.4"; \
+		exit 1; \
+	fi
+	@echo "Переключение на PHP $(VERSION)..."
+	@sed -i '' "s|context: './vendor/laravel/sail/runtimes/[0-9.]*'|context: './vendor/laravel/sail/runtimes/$(VERSION)'|g" compose.yaml
+	@sed -i '' "s|image: 'sail-[0-9.]*/app'|image: 'sail-$(VERSION)/app'|g" compose.yaml
+	@echo "Версия PHP изменена на $(VERSION)"
+	@echo "Теперь выполните: make rebuild"
 
 shell: ## Открыть shell в контейнере Laravel
 	./vendor/bin/sail shell
@@ -113,7 +129,17 @@ optimize: ## Оптимизировать приложение
 
 setup: ## Первоначальная настройка проекта
 	@echo "Настройка проекта..."
+	@if [ ! -f ./vendor/bin/sail ]; then \
+		echo "Установка зависимостей Composer..."; \
+		composer install --no-interaction --prefer-dist --optimize-autoloader; \
+	fi
+	@if [ ! -f ./vendor/bin/sail ]; then \
+		echo "Ошибка: vendor/bin/sail не найден. Убедитесь, что зависимости установлены."; \
+		exit 1; \
+	fi
 	./vendor/bin/sail up -d
+	@echo "Ожидание запуска контейнеров..."
+	@sleep 5
 	./vendor/bin/sail composer install
 	./vendor/bin/sail npm install
 	@echo "Ожидание запуска MySQL..."
