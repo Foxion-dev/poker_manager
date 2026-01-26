@@ -127,7 +127,10 @@ const pageTitles = {
 };
 
 router.beforeEach(async (to, from, next) => {
+	console.log('Router beforeEach:', { to: to.name, path: to.path, meta: to.meta });
+	
 	if (to.meta.public) {
+		console.log('Public route, allowing access');
 		next();
 		return;
 	}
@@ -136,19 +139,23 @@ router.beforeEach(async (to, from, next) => {
 	const token = localStorage.getItem('auth_token');
 
 	if (to.meta.requiresAuth && !token) {
+		console.log('Requires auth but no token, redirecting to login');
 		next({ name: 'Login' });
 		return;
 	}
 
 	if (to.meta.guest && token) {
+		console.log('Guest route but has token, redirecting to dashboard');
 		next({ name: 'Dashboard' });
 		return;
 	}
 
 	if (token && !authStore.isAuthenticated && to.meta.requiresAuth) {
+		console.log('Has token but not authenticated, fetching user');
 		try {
 			await authStore.fetchUser();
 		} catch (error) {
+			console.log('Failed to fetch user:', error);
 			localStorage.removeItem('auth_token');
 			if (to.meta.requiresAuth) {
 				next({ name: 'Login' });
@@ -158,10 +165,12 @@ router.beforeEach(async (to, from, next) => {
 	}
 
 	if (to.meta.requiresAdmin && (!authStore.user || !authStore.user.is_admin)) {
+		console.log('Requires admin but not admin, redirecting to dashboard');
 		next({ name: 'Dashboard' });
 		return;
 	}
 
+	console.log('Allowing navigation');
 	next();
 });
 
