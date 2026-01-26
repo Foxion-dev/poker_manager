@@ -23,7 +23,7 @@
 								🎯 {{ tournament?.format_label }}
 							</span>
 							<span class="text-sm text-gray-600 dark:text-gray-400">
-								💰 ИТМ: {{ tournament?.itm_percentage || 100 }}%
+								💰 ИТМ: {{ tournament?.itm_percentage || 15 }}%
 							</span>
 							<span
 								v-if="tournament?.is_finished"

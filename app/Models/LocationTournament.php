@@ -68,7 +68,7 @@ class LocationTournament extends Model
 	public function getPrizePoolAttribute(): float
 	{
 		$totalBuyin = $this->total_buyin;
-		$itmPercentage = (float) ($this->itm_percentage ?? 100);
+		$itmPercentage = (float) ($this->itm_percentage ?? 15);
 		return round($totalBuyin * ($itmPercentage / 100), 2);
 	}
 

@@ -10,7 +10,7 @@ return new class extends Migration
 	{
 		if (!Schema::hasColumn('location_tournaments', 'itm_percentage')) {
 			Schema::table('location_tournaments', function (Blueprint $table) {
-				$table->decimal('itm_percentage', 5, 2)->default(100.00)->after('format');
+				$table->decimal('itm_percentage', 5, 2)->default(15.00)->after('format');
 			});
 		}
 	}

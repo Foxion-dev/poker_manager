@@ -996,7 +996,7 @@ const openTournamentForm = () => {
 		buyin: 0,
 		currency_id: availableCurrencies.value.length === 1 ? availableCurrencies.value[0].id : null,
 		format: 'classic',
-		itm_percentage: 100,
+		itm_percentage: 15,
 		participants: [{ user_id: '', name: '', place: 1, prize: null }],
 	};
 	showTournamentForm.value = true;
@@ -1010,7 +1010,7 @@ const editTournament = (tournament) => {
 		buyin: tournament.buyin,
 		currency_id: tournament.currency_id,
 		format: tournament.format,
-		itm_percentage: tournament.itm_percentage ?? 100,
+		itm_percentage: tournament.itm_percentage ?? 15,
 		participants: tournament.participants.map(p => ({
 			user_id: p.user_id ? String(p.user_id) : '',
 			name: p.name || '',
