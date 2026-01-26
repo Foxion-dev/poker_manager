@@ -1020,7 +1020,7 @@ watch(() => tournamentForm.value.participants.length, () => {
 const saveTournament = async () => {
 	const uniqueUserIds = tournamentForm.value.participants
 		.map(p => p.user_id)
-		.filter(id => id);
+		.filter(id => id !== null && id !== undefined && id !== '');
 	if (new Set(uniqueUserIds).size !== uniqueUserIds.length) {
 		alert('Каждый пользователь может быть добавлен только один раз.');
 		return;
@@ -1045,10 +1045,19 @@ const saveTournament = async () => {
 
 	savingTournament.value = true;
 	try {
+		const data = {
+			...tournamentForm.value,
+			participants: tournamentForm.value.participants.map(p => ({
+				user_id: p.user_id && p.user_id !== '' ? (typeof p.user_id === 'string' ? parseInt(p.user_id) : p.user_id) : null,
+				name: p.name && p.name.trim() !== '' ? p.name.trim() : null,
+				place: p.place,
+			})).filter(p => p.user_id || p.name),
+		};
+
 		if (editingTournament.value) {
-			await locationService.updateTournament(route.params.id, editingTournament.value.id, tournamentForm.value);
+			await locationService.updateTournament(route.params.id, editingTournament.value.id, data);
 		} else {
-			await locationService.createTournament(route.params.id, tournamentForm.value);
+			await locationService.createTournament(route.params.id, data);
 		}
 		closeTournamentForm();
 		await fetchLocation();

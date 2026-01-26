@@ -36,17 +36,16 @@ class StoreLocationTournamentRequest extends FormRequest
 			$places = array_column($participants, 'place');
 
 			$userIds = [];
-			$names = [];
 			foreach ($participants as $index => $participant) {
-				if (empty($participant['user_id']) && empty($participant['name'])) {
+				$hasUserId = !empty($participant['user_id']) && $participant['user_id'] !== null && $participant['user_id'] !== '';
+				$hasName = !empty($participant['name']) && trim($participant['name']) !== '';
+
+				if (!$hasUserId && !$hasName) {
 					$validator->errors()->add("participants.{$index}", 'Необходимо указать либо пользователя, либо имя участника.');
 				}
 
-				if (!empty($participant['user_id'])) {
+				if ($hasUserId) {
 					$userIds[] = $participant['user_id'];
-				}
-				if (!empty($participant['name'])) {
-					$names[] = $participant['name'];
 				}
 			}
 
