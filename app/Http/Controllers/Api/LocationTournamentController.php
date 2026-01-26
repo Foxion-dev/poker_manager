@@ -268,8 +268,20 @@ class LocationTournamentController extends Controller
 
 		$participant = $locationTournament->participants()->create($participantData);
 
-		if ($request->user_id && !$location->users()->where('user_id', $request->user_id)->exists()) {
-			$location->users()->attach($request->user_id);
+		if ($request->user_id) {
+			$locationUser = $location->locationUsers()->where('user_id', $request->user_id)->first();
+			if (!$locationUser) {
+				$location->locationUsers()->create([
+					'user_id' => $request->user_id,
+				]);
+			}
+		} elseif ($request->name) {
+			$locationUser = $location->locationUsers()->where('name', $request->name)->whereNull('user_id')->first();
+			if (!$locationUser) {
+				$location->locationUsers()->create([
+					'name' => $request->name,
+				]);
+			}
 		}
 
 		$locationTournament->load(['participants.user', 'currency']);
