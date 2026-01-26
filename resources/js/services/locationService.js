@@ -105,4 +105,9 @@ export const locationService = {
 		const response = await api.post(`/locations/${locationId}/tournaments/${tournamentId}/participants`, data);
 		return response.data;
 	},
+
+	async removeTournamentParticipant(locationId, tournamentId, participantId) {
+		const response = await api.delete(`/locations/${locationId}/tournaments/${tournamentId}/participants/${participantId}`);
+		return response.data;
+	},
 };

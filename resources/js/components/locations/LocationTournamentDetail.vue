@@ -138,7 +138,7 @@
 						class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 					>
 						<option value="">Выберите пользователя локации (опционально)</option>
-						<option v-for="locationUser in locationUsers" :key="locationUser.id" :value="locationUser.user_id || locationUser.id">
+						<option v-for="locationUser in availableLocationUsers" :key="locationUser.id" :value="locationUser.user_id || locationUser.id">
 							{{ locationUser.display_name || locationUser.name }}
 						</option>
 					</select>
@@ -210,6 +210,13 @@
 								@change="updateParticipant(participant)"
 							/>
 						</div>
+						<button
+							@click="removeParticipant(participant)"
+							class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors mt-6"
+							title="Удалить участника"
+						>
+							🗑️
+						</button>
 					</div>
 					<div v-else class="flex items-center space-x-4">
 						<div v-if="participant.rebuy > 0" class="text-sm text-gray-600 dark:text-gray-400">
@@ -500,6 +507,30 @@ const fetchLocation = async () => {
 	}
 };
 
+const availableLocationUsers = computed(() => {
+	if (!location.value || !location.value.users || !tournament.value || !tournament.value.participants) {
+		return locationUsers.value || [];
+	}
+
+	const participantUserIds = tournament.value.participants
+		.map(p => p.user_id)
+		.filter(id => id !== null && id !== undefined);
+	
+	const participantNames = tournament.value.participants
+		.map(p => p.name)
+		.filter(name => name && name.trim() !== '');
+
+	return (locationUsers.value || []).filter(locationUser => {
+		if (locationUser.user_id) {
+			return !participantUserIds.includes(locationUser.user_id);
+		}
+		if (locationUser.name) {
+			return !participantNames.includes(locationUser.name);
+		}
+		return true;
+	});
+});
+
 const addParticipant = async () => {
 	if (!newParticipantUserId.value && !newParticipantName.value?.trim()) {
 		alert('Необходимо указать либо пользователя, либо имя участника');
@@ -529,6 +560,25 @@ const addParticipant = async () => {
 		alert(errorMessage);
 	} finally {
 		addingParticipant.value = false;
+	}
+};
+
+const removeParticipant = async (participant) => {
+	if (!confirm(`Вы уверены, что хотите удалить участника "${participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник'}" из турнира?`)) {
+		return;
+	}
+
+	saving.value = true;
+	try {
+		await locationService.removeTournamentParticipant(route.params.locationId, route.params.id, participant.id);
+		await fetchTournament();
+		await fetchLocation();
+	} catch (error) {
+		console.error('Error removing participant:', error);
+		const errorMessage = error.response?.data?.message || 'Ошибка при удалении участника';
+		alert(errorMessage);
+	} finally {
+		saving.value = false;
 	}
 };
 

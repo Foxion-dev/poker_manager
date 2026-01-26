@@ -289,6 +289,29 @@ class LocationTournamentController extends Controller
 		return response()->json($locationTournament);
 	}
 
+	public function removeParticipant(Request $request, Location $location, $locationTournamentId, $participantId): JsonResponse
+	{
+		$user = $request->user();
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
+
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can remove participants'], 403);
+		}
+
+		if ($locationTournament->is_finished) {
+			return response()->json(['message' => 'Cannot remove participants from finished tournament'], 400);
+		}
+
+		$participant = $locationTournament->participants()->findOrFail($participantId);
+		$participant->delete();
+
+		$locationTournament->load(['participants.user', 'currency']);
+
+		return response()->json($locationTournament);
+	}
+
 	public function finish(Request $request, Location $location, $locationTournamentId): JsonResponse
 	{
 		$user = $request->user();
