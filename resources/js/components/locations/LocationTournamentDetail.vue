@@ -342,7 +342,7 @@
 								<input
 									v-model.number="prize.percentage"
 									type="number"
-									step="0.01"
+									step="5"
 									min="0"
 									max="100"
 									class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
