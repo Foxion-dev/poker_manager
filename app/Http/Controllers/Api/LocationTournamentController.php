@@ -227,7 +227,11 @@ class LocationTournamentController extends Controller
 
 		$locationTournament->load(['participants.user', 'currency']);
 
-		return response()->json($locationTournament);
+		return response()->json([
+			'participants' => $locationTournament->participants,
+			'total_buyin' => $locationTournament->total_buyin,
+			'prize_pool' => $locationTournament->prize_pool,
+		]);
 	}
 
 	public function addParticipant(Request $request, Location $location, $locationTournamentId): JsonResponse
