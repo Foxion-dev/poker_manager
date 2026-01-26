@@ -615,7 +615,10 @@ const addParticipant = async () => {
 		const response = await locationService.addTournamentParticipant(route.params.locationId, route.params.id, data);
 		
 		if (response && response.participants) {
-			tournament.value.participants = response.participants;
+			tournament.value.participants = response.participants.map(p => ({
+				...p,
+				display_name: p.display_name || p.name || p.user?.name || 'Неизвестный участник',
+			}));
 		}
 		
 		if (response && response.users) {
@@ -657,23 +660,18 @@ const removeParticipant = async (participant) => {
 	try {
 		await locationService.removeTournamentParticipant(route.params.locationId, route.params.id, participant.id);
 		
-		if (tournament.value && tournament.value.participants) {
-			const index = tournament.value.participants.findIndex(p => p.id === participant.id);
-			if (index !== -1) {
-				tournament.value.participants.splice(index, 1);
-			}
+		const response = await locationService.removeTournamentParticipant(route.params.locationId, route.params.id, participant.id);
+		
+		if (response && response.participants) {
+			tournament.value.participants = response.participants.map(p => ({
+				...p,
+				display_name: p.display_name || p.name || p.user?.name || 'Неизвестный участник',
+			}));
 		}
 		
-		if (location.value && location.value.users) {
-			const locationUser = locationUsers.value.find(lu => {
-				if (participant.user_id) {
-					return (lu.user_id || lu.id) == participant.user_id;
-				}
-				return lu.name === participant.name;
-			});
-			if (locationUser && !locationUsers.value.includes(locationUser)) {
-				locationUsers.value.push(locationUser);
-			}
+		if (response && response.users) {
+			location.value.users = response.users;
+			locationUsers.value = response.users;
 		}
 	} catch (error) {
 		console.error('Error removing participant:', error);
