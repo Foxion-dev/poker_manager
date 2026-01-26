@@ -49,6 +49,16 @@ const routes = [
 				name: 'PackDetail',
 				component: () => import('../components/packs/PackDetail.vue'),
 			},
+			{
+				path: '/locations',
+				name: 'Locations',
+				component: () => import('../components/locations/LocationList.vue'),
+			},
+			{
+				path: '/locations/:id',
+				name: 'LocationDetail',
+				component: () => import('../components/locations/LocationDetail.vue'),
+			},
 		],
 	},
 	{
@@ -95,6 +105,8 @@ const pageTitles = {
 	TournamentEdit: 'Редактировать турнир - Poker Manager',
 	Packs: 'Паки турниров - Poker Manager',
 	PackDetail: 'Детали пака - Poker Manager',
+	Locations: 'Локации - Poker Manager',
+	LocationDetail: 'Детали локации - Poker Manager',
 	AdminRooms: 'Управление румами - Админ-панель',
 	AdminCurrencies: 'Управление валютами - Админ-панель',
 	AdminUsers: 'Управление пользователями - Админ-панель',

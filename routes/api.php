@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\LocationController;
+use App\Http\Controllers\Api\LocationTournamentController;
 use App\Http\Controllers\Api\PackController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\TournamentController;
@@ -35,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
 	});
 
 	Route::apiResource('packs', PackController::class);
+
+	Route::apiResource('locations', LocationController::class);
+	Route::apiResource('locations.tournaments', LocationTournamentController::class)->shallow();
 
 	Route::prefix('admin')->middleware('admin')->group(function () {
 		Route::get('/users', [\App\Http\Controllers\Api\AdminUserController::class, 'index']);

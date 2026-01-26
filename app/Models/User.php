@@ -86,4 +86,14 @@ class User extends Authenticatable
 	{
 		return $this->hasMany(Pack::class);
 	}
+
+	public function locations(): HasMany
+	{
+		return $this->hasMany(Location::class);
+	}
+
+	public function locationTournamentParticipants(): HasMany
+	{
+		return $this->hasMany(LocationTournamentParticipant::class);
+	}
 }
