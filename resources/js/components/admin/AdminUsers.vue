@@ -44,7 +44,8 @@
 		</div>
 
 		<div v-else class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-			<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+			<div class="overflow-x-auto">
+				<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
 				<thead class="bg-gray-50 dark:bg-gray-700">
 					<tr>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -162,6 +163,7 @@
 					</tr>
 				</tbody>
 			</table>
+			</div>
 
 			<div v-if="users.last_page > 1" class="bg-gray-50 dark:bg-gray-700 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-600">
 				<div class="flex-1 flex justify-between sm:hidden">
