@@ -195,7 +195,8 @@
 							</label>
 							<div class="flex items-center space-x-1">
 								<button
-									@click="decrementRebuy(participant)"
+									type="button"
+									@click.prevent="decrementRebuy(participant)"
 									class="w-8 h-8 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
 									:disabled="(participant.rebuy || 0) <= 0"
 								>
@@ -209,7 +210,8 @@
 									@change="updateParticipant(participant)"
 								/>
 								<button
-									@click="incrementRebuy(participant)"
+									type="button"
+									@click.prevent="incrementRebuy(participant)"
 									class="w-8 h-8 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
 								>
 									+
@@ -629,6 +631,7 @@ const addParticipant = async () => {
 const incrementRebuy = (participant) => {
 	participant.rebuy = (participant.rebuy || 0) + 1;
 	updateParticipant(participant);
+	return false;
 };
 
 const decrementRebuy = (participant) => {
@@ -636,6 +639,7 @@ const decrementRebuy = (participant) => {
 		participant.rebuy = (participant.rebuy || 0) - 1;
 		updateParticipant(participant);
 	}
+	return false;
 };
 
 const removeParticipant = async (participant) => {
