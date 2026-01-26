@@ -82,10 +82,12 @@ class LocationTournamentController extends Controller
 		return response()->json($tournament->load('participants.user'), 201);
 	}
 
-	public function show(LocationTournament $locationTournament, Request $request): JsonResponse
+	public function show(Location $location, $locationTournamentId, Request $request): JsonResponse
 	{
 		$user = $request->user();
-		$location = $locationTournament->location;
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
 
 		if (!$location->is_public && $location->user_id !== $user->id) {
 			return response()->json(['message' => 'Unauthorized'], 403);
@@ -120,10 +122,12 @@ class LocationTournamentController extends Controller
 		]);
 	}
 
-	public function update(UpdateLocationTournamentRequest $request, LocationTournament $locationTournament): JsonResponse
+	public function update(UpdateLocationTournamentRequest $request, Location $location, $locationTournamentId): JsonResponse
 	{
 		$user = $request->user();
-		$location = $locationTournament->location;
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
 
 		if (!$location->isAdmin($user)) {
 			return response()->json(['message' => 'Only location admins can update tournaments'], 403);
@@ -169,10 +173,12 @@ class LocationTournamentController extends Controller
 		return response()->json(['message' => 'Tournament deleted successfully']);
 	}
 
-	public function updateParticipants(Request $request, LocationTournament $locationTournament): JsonResponse
+	public function updateParticipants(Request $request, Location $location, $locationTournamentId): JsonResponse
 	{
 		$user = $request->user();
-		$location = $locationTournament->location;
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
 
 		if (!$location->isAdmin($user)) {
 			return response()->json(['message' => 'Only location admins can update participants'], 403);
@@ -196,10 +202,12 @@ class LocationTournamentController extends Controller
 		return response()->json($locationTournament);
 	}
 
-	public function finish(Request $request, LocationTournament $locationTournament): JsonResponse
+	public function finish(Request $request, Location $location, $locationTournamentId): JsonResponse
 	{
 		$user = $request->user();
-		$location = $locationTournament->location;
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
 
 		if (!$location->isAdmin($user)) {
 			return response()->json(['message' => 'Only location admins can finish tournaments'], 403);
