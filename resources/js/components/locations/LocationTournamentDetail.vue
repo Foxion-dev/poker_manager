@@ -252,7 +252,8 @@ const formatBuyin = (tournament) => {
 	}
 
 	const buyinInCurrency = parseFloat(tournament.buyin) || 0;
-	const buyinInUSD = buyinInCurrency * parseFloat(tournament.currency.rate_to_usd || 1);
+	const rate = parseFloat(tournament.currency.rate_to_usd || 1);
+	const buyinInUSD = buyinInCurrency / rate;
 
 	return `${formatCurrency(buyinInCurrency, tournament.currency)} (${formatCurrency(buyinInUSD)})`;
 };
