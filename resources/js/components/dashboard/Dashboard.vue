@@ -40,6 +40,15 @@
 						Год
 					</button>
 					<button
+						@click="setPeriod('all')"
+						class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+						:class="selectedPeriod === 'all' 
+							? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+							: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+					>
+						За всё время
+					</button>
+					<button
 						@click="setPeriod('custom')"
 						class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
 						:class="selectedPeriod === 'custom' 
@@ -293,6 +302,8 @@ const getDateRange = (period) => {
 		case 'year':
 			startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1).toISOString().split('T')[0];
 			break;
+		case 'all':
+			return {};
 		case 'custom':
 			return {
 				start_date: customDateFrom.value || null,

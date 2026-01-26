@@ -3,7 +3,7 @@
 		<nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-50">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div class="flex justify-between h-16">
-					<div class="flex">
+					<div class="flex items-center">
 						<div class="flex-shrink-0 flex items-center">
 							<div class="flex items-center space-x-2">
 								<div class="h-8 w-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -57,11 +57,11 @@
 							</router-link>
 						</div>
 					</div>
-					<div class="flex items-center space-x-4">
+					<div class="flex items-center space-x-2 sm:space-x-4">
 						<router-link
 							v-if="user?.is_admin"
 							to="/admin/rooms"
-							class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700"
+							class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700"
 							:class="$route.name === 'AdminRooms' || $route.name === 'AdminCurrencies' || $route.name === 'AdminUsers'
 								? 'ring-2 ring-offset-2 ring-indigo-500' 
 								: ''"
@@ -79,7 +79,119 @@
 						</div>
 						<button
 							@click="handleLogout"
-							class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200"
+							class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200"
+						>
+							<span class="mr-2">🚪</span>
+							Выход
+						</button>
+						<button
+							@click="mobileMenuOpen = !mobileMenuOpen"
+							class="sm:hidden inline-flex items-center justify-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+							aria-label="Меню"
+						>
+							<svg
+								class="h-6 w-6"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+								:class="mobileMenuOpen ? 'hidden' : 'block'"
+							>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+							</svg>
+							<svg
+								class="h-6 w-6"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+								:class="mobileMenuOpen ? 'block' : 'hidden'"
+							>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+				</div>
+			</div>
+			<transition
+				enter-active-class="transition ease-out duration-200"
+				enter-from-class="opacity-0 -translate-y-1"
+				enter-to-class="opacity-100 translate-y-0"
+				leave-active-class="transition ease-in duration-150"
+				leave-from-class="opacity-100 translate-y-0"
+				leave-to-class="opacity-0 -translate-y-1"
+			>
+				<div
+					v-show="mobileMenuOpen"
+					class="sm:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+				>
+				<div class="px-2 pt-2 pb-3 space-y-1">
+					<router-link
+						to="/"
+						@click="mobileMenuOpen = false"
+						class="block px-3 py-2 text-base font-medium rounded-lg transition-all duration-200"
+						:class="$route.name === 'Dashboard' 
+							? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
+							: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+					>
+						<span class="mr-2">📊</span>
+						Дашборд
+					</router-link>
+					<router-link
+						to="/tournaments"
+						@click="mobileMenuOpen = false"
+						class="block px-3 py-2 text-base font-medium rounded-lg transition-all duration-200"
+						:class="$route.name === 'Tournaments' || $route.name === 'TournamentCreate' || $route.name === 'TournamentEdit'
+							? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
+							: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+					>
+						<span class="mr-2">🎯</span>
+						Турниры
+					</router-link>
+					<router-link
+						to="/packs"
+						@click="mobileMenuOpen = false"
+						class="block px-3 py-2 text-base font-medium rounded-lg transition-all duration-200"
+						:class="$route.name === 'Packs' || $route.name === 'PackDetail'
+							? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
+							: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+					>
+						<span class="mr-2">📦</span>
+						Паки
+					</router-link>
+					<router-link
+						to="/locations"
+						@click="mobileMenuOpen = false"
+						class="block px-3 py-2 text-base font-medium rounded-lg transition-all duration-200"
+						:class="$route.name === 'Locations' || $route.name === 'LocationDetail'
+							? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
+							: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+					>
+						<span class="mr-2">📍</span>
+						Локации
+					</router-link>
+					<router-link
+						v-if="user?.is_admin"
+						to="/admin/rooms"
+						@click="mobileMenuOpen = false"
+						class="block px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
+						:class="$route.name === 'AdminRooms' || $route.name === 'AdminCurrencies' || $route.name === 'AdminUsers'
+							? 'ring-2 ring-offset-2 ring-indigo-500' 
+							: ''"
+					>
+						<span class="mr-2">🛠️</span>
+						Админка
+					</router-link>
+					<div class="px-3 py-2 border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+						<div class="flex items-center space-x-3 mb-3">
+							<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+								{{ user?.name?.charAt(0).toUpperCase() }}
+							</div>
+							<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+								{{ user?.name }}
+							</span>
+						</div>
+						<button
+							@click="handleLogout"
+							class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200"
 						>
 							<span class="mr-2">🚪</span>
 							Выход
@@ -87,6 +199,7 @@
 					</div>
 				</div>
 			</div>
+			</transition>
 		</nav>
 
 		<main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -96,15 +209,24 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
+const mobileMenuOpen = ref(false);
+
+watch(() => route.path, () => {
+	mobileMenuOpen.value = false;
+});
+
 const handleLogout = async () => {
+	mobileMenuOpen.value = false;
 	await authStore.logout();
 	router.push({ name: 'Login' });
 };

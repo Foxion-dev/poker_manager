@@ -256,8 +256,7 @@ class StatisticsService
 
 	public function getTotalProfit(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
 	{
-		$tournamentsQuery = $user->tournaments()
-			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
+		$tournamentsQuery = $user->tournaments()->withUsd();
 
 		if ($startDate) {
 			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
@@ -267,11 +266,15 @@ class StatisticsService
 			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
 		}
 
-		$tournamentsProfit = $tournamentsQuery->selectRaw('SUM(' . \App\Models\Tournament::getProfitUsdExpression() . ') as profit')
-			->value('profit');
+		$tournaments = $tournamentsQuery->get();
+		$tournamentsProfit = $tournaments->sum(function ($tournament) {
+			return (float)($tournament->profit_usd ?? 0);
+		});
 
 		$packsQuery = $user->packs()
-			->leftJoin('currencies', 'packs.currency_id', '=', 'currencies.id');
+			->leftJoin('currencies', 'packs.currency_id', '=', 'currencies.id')
+			->select('packs.*')
+			->selectRaw(\App\Models\Pack::getProfitUsdExpression() . ' as profit_usd');
 
 		if ($startDate) {
 			$packsQuery->where('packs.start_date', '>=', $startDate);
@@ -281,10 +284,12 @@ class StatisticsService
 			$packsQuery->where('packs.start_date', '<=', $endDate);
 		}
 
-		$packsProfit = $packsQuery->selectRaw('SUM(' . \App\Models\Pack::getProfitUsdExpression() . ') as profit')
-			->value('profit');
+		$packs = $packsQuery->get();
+		$packsProfit = $packs->sum(function ($pack) {
+			return (float)($pack->profit_usd ?? 0);
+		});
 
-		return round(($tournamentsProfit ?? 0) + ($packsProfit ?? 0), 2);
+		return round($tournamentsProfit + $packsProfit, 2);
 	}
 
 	public function getAverageCashout(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
