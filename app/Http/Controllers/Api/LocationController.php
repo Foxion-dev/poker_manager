@@ -278,8 +278,11 @@ class LocationController extends Controller
 
 		if ($location->password) {
 			$password = $request->get('password');
-			if (!$password || !$location->checkPassword($password)) {
+			if (!$password) {
 				return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+			}
+			if (!$location->checkPassword($password)) {
+				return response()->json(['message' => 'Invalid password', 'requires_password' => true], 403);
 			}
 		}
 

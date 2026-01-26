@@ -290,10 +290,16 @@ const fetchLocation = async (password = null) => {
 	} catch (error) {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
 			showPasswordForm.value = true;
+		} else if (error.response?.status === 404) {
+			if (error.response?.data?.message === 'Location is not public') {
+				alert('Эта локация не является публичной');
+				router.push('/');
+			} else {
+				showPasswordForm.value = true;
+			}
 		} else {
 			console.error('Error fetching location:', error);
-			alert('Ошибка при загрузке локации');
-			router.push('/');
+			showPasswordForm.value = true;
 		}
 	} finally {
 		loading.value = false;
@@ -309,6 +315,11 @@ const fetchTournaments = async (password = null) => {
 };
 
 const submitPassword = async () => {
+	if (!locationPassword.value.trim()) {
+		alert('Введите пароль');
+		return;
+	}
+	
 	checkingPassword.value = true;
 	try {
 		await fetchLocation(locationPassword.value);
@@ -317,6 +328,7 @@ const submitPassword = async () => {
 	} catch (error) {
 		if (error.response?.status === 403) {
 			alert('Неверный пароль');
+			locationPassword.value = '';
 		} else {
 			console.error('Error submitting password:', error);
 			alert('Ошибка при проверке пароля');
