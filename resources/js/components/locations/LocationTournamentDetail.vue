@@ -979,16 +979,24 @@ const dynamicPrizeDistribution = computed(() => {
 		return [];
 	}
 	
+	const totalRebuys = validParticipants.reduce((sum, p) => sum + (p.rebuy || 0), 0);
+	const totalAddons = validParticipants.filter(p => p.addon === true).length;
+	const totalEntries = participantsCount + totalRebuys + totalAddons;
+	
+	if (totalEntries === 0) {
+		return [];
+	}
+	
 	const itmPercentage = tournament.value.itm_percentage || 15;
-	const itmPlacesFloat = participantsCount * (itmPercentage / 100);
+	const itmPlacesFloat = totalEntries * (itmPercentage / 100);
 	
 	if (itmPlacesFloat < 0.5) {
 		return [];
 	}
 	
-	const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
+	const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), totalEntries));
 	
-	if (itmPlaces === 0 || itmPlaces > participantsCount) {
+	if (itmPlaces === 0 || itmPlaces > totalEntries) {
 		return [];
 	}
 	

@@ -115,16 +115,24 @@ class LocationTournament extends Model
 			return [];
 		}
 
+		$totalRebuys = $this->participants->sum('rebuy');
+		$totalAddons = $this->participants->where('addon', true)->count();
+		$totalEntries = $participantsCount + $totalRebuys + $totalAddons;
+		
+		if ($totalEntries === 0) {
+			return [];
+		}
+
 		$itmPercentage = (float) ($this->itm_percentage ?? 15);
-		$itmPlacesFloat = $participantsCount * ($itmPercentage / 100);
+		$itmPlacesFloat = $totalEntries * ($itmPercentage / 100);
 		
 		if ($itmPlacesFloat < 0.5) {
 			return [];
 		}
 		
-		$itmPlaces = max(1, min((int) round($itmPlacesFloat), $participantsCount));
+		$itmPlaces = max(1, min((int) round($itmPlacesFloat), $totalEntries));
 		
-		if ($itmPlaces === 0 || $itmPlaces > $participantsCount) {
+		if ($itmPlaces === 0 || $itmPlaces > $totalEntries) {
 			return [];
 		}
 
