@@ -785,7 +785,7 @@ const openPrizeDistributionModal = () => {
 	const customDistribution = tournament.value.prize_distribution;
 	const hasCustomDistribution = customDistribution && Array.isArray(customDistribution) && customDistribution.length > 0 && customDistribution[0].hasOwnProperty('percentage');
 	
-	isFixedPrizeDistribution.value = hasCustomDistribution;
+	isFixedPrizeDistribution.value = false;
 	
 	if (hasCustomDistribution) {
 		prizeDistributionForm.value = customDistribution.map(p => ({
