@@ -12,7 +12,7 @@
 				<div class="flex items-center justify-between">
 					<div class="flex-1">
 						<h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ tournament?.name }}</h2>
-						<div class="flex items-center space-x-3">
+						<div class="flex items-center space-x-3 flex-wrap">
 							<span class="text-sm text-gray-600 dark:text-gray-400">
 								📅 {{ formatDate(tournament?.date) }}
 							</span>
@@ -21,6 +21,9 @@
 							</span>
 							<span class="text-sm text-gray-600 dark:text-gray-400">
 								🎯 {{ tournament?.format_label }}
+							</span>
+							<span class="text-sm text-gray-600 dark:text-gray-400">
+								💰 ИТМ: {{ tournament?.itm_percentage || 100 }}%
 							</span>
 							<span
 								v-if="tournament?.is_finished"
@@ -34,6 +37,63 @@
 							>
 								В процессе
 							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="tournament && tournament.prize_pool" class="mb-6">
+			<div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+				<div class="flex items-center justify-between">
+					<div>
+						<h3 class="text-lg font-semibold text-white mb-1">Призовой фонд</h3>
+						<p class="text-3xl font-bold text-white">
+							{{ formatCurrency(tournament.prize_pool, tournament.currency) }}
+						</p>
+						<p class="text-sm text-green-100 mt-1">
+							Всего входов: {{ formatCurrency(tournament.total_buyin, tournament.currency) }}
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="tournament && tournament.prize_distribution && tournament.prize_distribution.length > 0" class="mb-6">
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+				<h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Распределение призов</h3>
+				<div class="space-y-3">
+					<div
+						v-for="(prize, index) in tournament.prize_distribution"
+						:key="prize.place"
+						class="flex items-center justify-between p-4 rounded-lg"
+						:class="index === 0 
+							? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700' 
+							: index === 1 
+							? 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-300 dark:border-gray-600' 
+							: 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700'"
+					>
+						<div class="flex items-center space-x-4">
+							<div class="text-2xl font-bold"
+								:class="index === 0 
+									? 'text-yellow-600 dark:text-yellow-400' 
+									: index === 1 
+									? 'text-gray-600 dark:text-gray-400' 
+									: 'text-orange-600 dark:text-orange-400'"
+							>
+								{{ prize.place }} место
+							</div>
+							<div>
+								<p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+									{{ prize.participant_name }}
+								</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400">
+									{{ prize.percentage }}% от призового фонда
+								</p>
+							</div>
+						</div>
+						<div class="text-xl font-bold text-green-600 dark:text-green-400">
+							{{ formatCurrency(prize.prize, tournament.currency) }}
 						</div>
 					</div>
 				</div>

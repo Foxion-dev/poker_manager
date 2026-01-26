@@ -17,6 +17,7 @@ class LocationTournament extends Model
 		'buyin',
 		'currency_id',
 		'format',
+		'itm_percentage',
 		'date',
 		'is_finished',
 	];
@@ -25,6 +26,7 @@ class LocationTournament extends Model
 	{
 		return [
 			'buyin' => 'decimal:2',
+			'itm_percentage' => 'decimal:2',
 			'date' => 'date',
 			'is_finished' => 'boolean',
 		];
@@ -53,5 +55,52 @@ class LocationTournament extends Model
 			'progressive_bounty' => 'Прогрессив баунти',
 			default => $this->format,
 		};
+	}
+
+	public function getTotalBuyinAttribute(): float
+	{
+		$buyin = (float) $this->buyin;
+		$totalRebuys = $this->participants->sum('rebuy');
+		return $buyin + ($totalRebuys * $buyin);
+	}
+
+	public function getPrizePoolAttribute(): float
+	{
+		$totalBuyin = $this->total_buyin;
+		$itmPercentage = (float) ($this->itm_percentage ?? 100);
+		return round($totalBuyin * ($itmPercentage / 100), 2);
+	}
+
+	public function getPrizeDistributionAttribute(): array
+	{
+		$prizePool = $this->prize_pool;
+		$itmParticipants = $this->participants->where('place', '<=', 3)->sortBy('place')->values();
+		
+		if ($itmParticipants->isEmpty()) {
+			return [];
+		}
+
+		$distribution = [60, 30, 10];
+		$prizes = [];
+		
+		foreach ($itmParticipants as $index => $participant) {
+			if ($index >= 3) {
+				break;
+			}
+			
+			$percentage = $distribution[$index] ?? 0;
+			$prize = round($prizePool * ($percentage / 100), 2);
+			$prize = round($prize / 5) * 5;
+			
+			$prizes[] = [
+				'place' => $participant->place,
+				'participant_id' => $participant->id,
+				'participant_name' => $participant->display_name,
+				'percentage' => $percentage,
+				'prize' => $prize,
+			];
+		}
+
+		return $prizes;
 	}
 }

@@ -521,6 +521,23 @@
 									<option value="progressive_bounty">Прогрессив баунти</option>
 								</select>
 							</div>
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Процент ИТМ (%)
+								</label>
+								<input
+									v-model.number="tournamentForm.itm_percentage"
+									type="number"
+									step="0.01"
+									min="0"
+									max="100"
+									placeholder="100"
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								/>
+								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+									Процент от входов + ребаев, который идет в призовой фонд
+								</p>
+							</div>
 						</div>
 
 						<div>

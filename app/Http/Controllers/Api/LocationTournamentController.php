@@ -33,8 +33,12 @@ class LocationTournamentController extends Controller
 					'currency' => $tournament->currency,
 					'format' => $tournament->format,
 					'format_label' => $tournament->format_label,
+					'itm_percentage' => $tournament->itm_percentage ?? 100,
 					'date' => $tournament->date->format('Y-m-d'),
 					'is_finished' => $tournament->is_finished ?? false,
+					'total_buyin' => $tournament->total_buyin,
+					'prize_pool' => $tournament->prize_pool,
+					'prize_distribution' => $tournament->prize_distribution,
 					'participants' => $tournament->participants->map(function ($participant) {
 						return [
 							'id' => $participant->id,
@@ -103,9 +107,13 @@ class LocationTournamentController extends Controller
 			'currency' => $locationTournament->currency,
 			'format' => $locationTournament->format,
 			'format_label' => $locationTournament->format_label,
+			'itm_percentage' => $locationTournament->itm_percentage ?? 100,
 			'date' => $locationTournament->date->format('Y-m-d'),
 			'location' => $location,
 			'is_finished' => $locationTournament->is_finished ?? false,
+			'total_buyin' => $locationTournament->total_buyin,
+			'prize_pool' => $locationTournament->prize_pool,
+			'prize_distribution' => $locationTournament->prize_distribution,
 			'participants' => $locationTournament->participants->map(function ($participant) {
 				return [
 					'id' => $participant->id,
