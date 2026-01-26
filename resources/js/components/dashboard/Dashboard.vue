@@ -225,28 +225,8 @@
 						Динамика банкролла
 					</h3>
 				</div>
-				<div v-if="stats.bankroll_history && stats.bankroll_history.length > 0" class="space-y-3">
-					<div
-						v-for="(item, index) in stats.bankroll_history.slice(-10)"
-						:key="index"
-						class="flex justify-between items-center py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-					>
-						<div class="flex items-center space-x-3">
-							<div
-								class="h-2 w-2 rounded-full"
-								:class="item.balance >= 0 ? 'bg-green-500' : 'bg-red-500'"
-							></div>
-							<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-								{{ formatDate(item.date) }}
-							</span>
-						</div>
-						<span
-							class="text-sm font-bold"
-							:class="item.balance >= 0 ? 'text-green-600' : 'text-red-600'"
-						>
-							{{ formatCurrency(item.balance) }}
-						</span>
-					</div>
+				<div v-if="stats.bankroll_history && stats.bankroll_history.length > 0" class="relative" style="height: 400px;">
+					<canvas ref="chartCanvas"></canvas>
 				</div>
 				<div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
 					<span class="text-4xl mb-4 block">📭</span>
@@ -258,9 +238,31 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useStatisticsStore } from '../../stores/statistics';
+import {
+	Chart,
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	Title,
+	Tooltip,
+	Legend,
+	Filler,
+} from 'chart.js';
+
+Chart.register(
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	Title,
+	Tooltip,
+	Legend,
+	Filler
+);
 
 const statisticsStore = useStatisticsStore();
 const { stats, loading } = storeToRefs(statisticsStore);
@@ -268,6 +270,8 @@ const { stats, loading } = storeToRefs(statisticsStore);
 const selectedPeriod = ref('month');
 const customDateFrom = ref('');
 const customDateTo = ref('');
+const chartCanvas = ref(null);
+let chartInstance = null;
 
 const getDateRange = (period) => {
 	const today = new Date();
@@ -312,12 +316,6 @@ const fetchStats = () => {
 	statisticsStore.fetchStats(params);
 };
 
-watch([customDateFrom, customDateTo], () => {
-	if (selectedPeriod.value === 'custom') {
-		fetchStats();
-	}
-});
-
 const formatCurrency = (value) => {
 	return new Intl.NumberFormat('ru-RU', {
 		style: 'currency',
@@ -330,7 +328,116 @@ const formatDate = (dateString) => {
 	return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
+const updateChart = () => {
+	if (!chartCanvas.value || !stats.value?.bankroll_history || stats.value.bankroll_history.length === 0) {
+		return;
+	}
+
+	const history = stats.value.bankroll_history;
+	const labels = history.map(item => formatDate(item.date));
+	const balances = history.map(item => item.balance);
+
+	const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches || document.documentElement.classList.contains('dark');
+	const textColor = isDark ? '#e5e7eb' : '#374151';
+	const gridColor = isDark ? '#374151' : '#e5e7eb';
+	const pointColor = isDark ? '#818cf8' : '#6366f1';
+	const lineColor = balances[balances.length - 1] >= balances[0] ? '#10b981' : '#ef4444';
+
+	if (chartInstance) {
+		chartInstance.destroy();
+	}
+
+	chartInstance = new Chart(chartCanvas.value, {
+		type: 'line',
+		data: {
+			labels: labels,
+			datasets: [
+				{
+					label: 'Баланс',
+					data: balances,
+					borderColor: lineColor,
+					backgroundColor: lineColor + '20',
+					fill: true,
+					tension: 0.4,
+					pointRadius: 4,
+					pointHoverRadius: 6,
+					pointBackgroundColor: pointColor,
+					pointBorderColor: '#fff',
+					pointBorderWidth: 2,
+				},
+			],
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: {
+				legend: {
+					display: false,
+				},
+				tooltip: {
+					backgroundColor: isDark ? '#1f2937' : '#fff',
+					titleColor: textColor,
+					bodyColor: textColor,
+					borderColor: gridColor,
+					borderWidth: 1,
+					padding: 12,
+					callbacks: {
+						label: function(context) {
+							return formatCurrency(context.parsed.y);
+						},
+					},
+				},
+			},
+			scales: {
+				x: {
+					grid: {
+						color: gridColor,
+						display: true,
+					},
+					ticks: {
+						color: textColor,
+						maxRotation: 45,
+						minRotation: 45,
+					},
+				},
+				y: {
+					grid: {
+						color: gridColor,
+						display: true,
+					},
+					ticks: {
+						color: textColor,
+						callback: function(value) {
+							return formatCurrency(value);
+						},
+					},
+				},
+			},
+		},
+	});
+};
+
+watch([stats, loading], () => {
+	if (!loading.value && stats.value?.bankroll_history) {
+		nextTick(() => {
+			updateChart();
+		});
+	}
+}, { deep: true });
+
+watch([customDateFrom, customDateTo], () => {
+	if (selectedPeriod.value === 'custom') {
+		fetchStats();
+	}
+});
+
 onMounted(() => {
 	fetchStats();
+});
+
+onBeforeUnmount(() => {
+	if (chartInstance) {
+		chartInstance.destroy();
+	}
 });
 </script>
