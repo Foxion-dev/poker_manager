@@ -26,8 +26,11 @@ class DashboardController extends Controller
 			->when($endDate, fn($q) => $q->where('date', '<=', $endDate))
 			->count();
 
+		$totalTournamentsAll = $user->tournaments()->count();
+
 		return response()->json([
 			'total_tournaments' => $totalTournaments,
+			'total_tournaments_all' => $totalTournamentsAll,
 			'total_profit' => $this->statisticsService->getTotalProfit($user, $startDate, $endDate),
 			'itm_count' => $user->tournaments()
 				->when($startDate, fn($q) => $q->where('date', '>=', $startDate))
