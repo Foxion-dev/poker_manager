@@ -374,9 +374,16 @@
 						</button>
 						<button
 							@click="resetPrizeDistribution"
-							class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+							class="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
 						>
-							Сбросить к автоматическому
+							Пересчитать автоматически
+						</button>
+						<button
+							v-if="tournament?.prize_distribution && Array.isArray(tournament.prize_distribution) && tournament.prize_distribution.length > 0 && tournament.prize_distribution[0].hasOwnProperty('percentage')"
+							@click="clearPrizeDistribution"
+							class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+						>
+							Очистить кастомное
 						</button>
 					</div>
 
@@ -498,7 +505,9 @@ const openPrizeDistributionModal = () => {
 	if (!tournament.value) return;
 	
 	const customDistribution = tournament.value.prize_distribution;
-	if (customDistribution && Array.isArray(customDistribution) && customDistribution.length > 0 && customDistribution[0].hasOwnProperty('percentage')) {
+	const hasCustomDistribution = customDistribution && Array.isArray(customDistribution) && customDistribution.length > 0 && customDistribution[0].hasOwnProperty('percentage');
+	
+	if (hasCustomDistribution) {
 		prizeDistributionForm.value = customDistribution.map(p => ({
 			place: p.place,
 			percentage: p.percentage,
@@ -617,6 +626,24 @@ const savePrizeDistribution = async () => {
 	} catch (error) {
 		console.error('Error saving prize distribution:', error);
 		alert('Ошибка при сохранении распределения призов');
+	}
+};
+
+const clearPrizeDistribution = async () => {
+	if (!confirm('Вы уверены, что хотите сбросить кастомное распределение призов? Будет использоваться автоматический расчет на основе ИТМ%.')) {
+		return;
+	}
+
+	try {
+		await locationService.updateTournament(route.params.locationId, route.params.id, {
+			prize_distribution: null,
+		});
+
+		await fetchTournament();
+		showPrizeDistributionModal.value = false;
+	} catch (error) {
+		console.error('Error clearing prize distribution:', error);
+		alert('Ошибка при сбросе распределения призов');
 	}
 };
 
