@@ -26,15 +26,20 @@ class DatabaseSeeder extends Seeder
 
 		$rooms = collect();
 		foreach ($roomsData as $roomData) {
-			$rooms->push(Room::create($roomData));
+			$rooms->push(Room::firstOrCreate(
+				['name' => $roomData['name']],
+				$roomData
+			));
 		}
 
-		$testUser = User::create([
-			'name' => 'Test User',
-			'email' => 'test@example.com',
-			'password' => Hash::make('password'),
-			'balance' => 2500.75,
-		]);
+		$testUser = User::firstOrCreate(
+			['email' => 'test@example.com'],
+			[
+				'name' => 'Test User',
+				'password' => Hash::make('password'),
+				'balance' => 2500.75,
+			]
+		);
 
 		$userRoomBalances = [
 			'PokerStars' => 450.50,
@@ -48,17 +53,23 @@ class DatabaseSeeder extends Seeder
 		];
 
 		foreach ($rooms as $room) {
-			UserRoom::create([
-				'user_id' => $testUser->id,
-				'room_id' => $room->id,
-				'balance' => $userRoomBalances[$room->name] ?? fake()->randomFloat(2, 100, 500),
-			]);
+			UserRoom::firstOrCreate(
+				[
+					'user_id' => $testUser->id,
+					'room_id' => $room->id,
+				],
+				[
+					'balance' => $userRoomBalances[$room->name] ?? fake()->randomFloat(2, 100, 500),
+				]
+			);
 		}
 
 		$buyins = [5.50, 11, 22, 33, 55, 109, 215, 530];
 		$startDate = now()->subMonths(6);
 		$tournamentCount = 0;
 		$totalProfit = 0;
+
+		Tournament::where('user_id', $testUser->id)->delete();
 
 		for ($i = 0; $i < 180; $i++) {
 			$date = $startDate->copy()->addDays($i);
