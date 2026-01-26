@@ -32,4 +32,26 @@ class LocationUser extends Model
 	{
 		return $this->name ?? $this->user?->name ?? 'Неизвестный пользователь';
 	}
+
+	public function getTournamentsCountAttribute(): int
+	{
+		if ($this->user_id) {
+			return \App\Models\LocationTournamentParticipant::where('location_tournament_id', function($query) {
+				$query->select('id')
+					->from('location_tournaments')
+					->where('location_id', $this->location_id);
+			})
+			->where('user_id', $this->user_id)
+			->count();
+		} else {
+			return \App\Models\LocationTournamentParticipant::where('location_tournament_id', function($query) {
+				$query->select('id')
+					->from('location_tournaments')
+					->where('location_id', $this->location_id);
+			})
+			->where('name', $this->name)
+			->whereNull('user_id')
+			->count();
+		}
+	}
 }

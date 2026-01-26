@@ -78,12 +78,25 @@ class LocationController extends Controller
 		$location->load(['user', 'admins', 'users', 'locationUsers', 'currencies']);
 		$location->loadCount('tournaments');
 
-		$usersFromSystem = $location->users->map(function ($user) {
+		$usersFromSystem = $location->users->map(function ($user) use ($location) {
+			$locationUser = $location->locationUsers()->where('user_id', $user->id)->first();
+			$tournamentsCount = 0;
+			if ($locationUser) {
+				$tournamentsCount = $locationUser->tournaments_count;
+			} else {
+				$tournamentsCount = \App\Models\LocationTournamentParticipant::whereHas('tournament', function($query) use ($location) {
+					$query->where('location_id', $location->id);
+				})
+				->where('user_id', $user->id)
+				->count();
+			}
+			
 			return [
 				'id' => $user->pivot->id ?? $user->id,
 				'name' => $user->pivot->name ?? $user->name,
 				'user_id' => $user->id,
 				'display_name' => $user->pivot->name ?? $user->name,
+				'tournaments_count' => $tournamentsCount,
 			];
 		});
 
@@ -93,10 +106,11 @@ class LocationController extends Controller
 				'name' => $locationUser->name,
 				'user_id' => null,
 				'display_name' => $locationUser->name,
+				'tournaments_count' => $locationUser->tournaments_count,
 			];
 		});
 
-		$allLocationUsers = $usersFromSystem->concat($usersByName);
+		$allLocationUsers = $usersFromSystem->concat($usersByName)->sortByDesc('tournaments_count')->values();
 
 		return response()->json([
 			'id' => $location->id,
