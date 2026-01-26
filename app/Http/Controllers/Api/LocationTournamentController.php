@@ -287,8 +287,31 @@ class LocationTournamentController extends Controller
 		}
 
 		$locationTournament->load(['participants.user', 'currency']);
+		
+		$usersFromSystem = $location->users()->get()->map(function($user) {
+			return [
+				'id' => $user->pivot->id ?? $user->id,
+				'user_id' => $user->id,
+				'name' => null,
+				'display_name' => $user->name,
+			];
+		});
+		
+		$usersByName = $location->locationUsers()->whereNull('user_id')->get()->map(function($locationUser) {
+			return [
+				'id' => $locationUser->id,
+				'user_id' => null,
+				'name' => $locationUser->name,
+				'display_name' => $locationUser->name,
+			];
+		});
+		
+		$allLocationUsers = $usersFromSystem->concat($usersByName);
 
-		return response()->json($locationTournament);
+		return response()->json([
+			'participants' => $locationTournament->participants,
+			'users' => $allLocationUsers->values(),
+		]);
 	}
 
 	public function removeParticipant(Request $request, Location $location, $locationTournamentId, $participantId): JsonResponse
