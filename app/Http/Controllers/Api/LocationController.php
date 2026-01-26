@@ -75,8 +75,24 @@ class LocationController extends Controller
 			}
 		}
 
-		$location->load(['user', 'admins', 'users']);
+		$location->load(['user', 'admins', 'users', 'locationUsers']);
 		$location->loadCount('tournaments');
+
+		$allLocationUsers = $location->users->map(function ($user) {
+			return [
+				'id' => $user->id,
+				'name' => $user->pivot->name ?? $user->name,
+				'user_id' => $user->id,
+				'display_name' => $user->pivot->name ?? $user->name,
+			];
+		})->merge($location->locationUsers->whereNull('user_id')->map(function ($locationUser) {
+			return [
+				'id' => $locationUser->id,
+				'name' => $locationUser->name,
+				'user_id' => null,
+				'display_name' => $locationUser->name,
+			];
+		}));
 
 		return response()->json([
 			'id' => $location->id,
@@ -89,7 +105,7 @@ class LocationController extends Controller
 			'is_admin' => $location->isAdmin($user),
 			'can_manage_admins' => $location->canManageAdmins($user),
 			'admins' => $location->admins,
-			'users' => $location->users,
+			'users' => $allLocationUsers->values(),
 			'tournaments_count' => $location->tournaments_count,
 			'average_buyin' => $location->average_buyin,
 			'top_players_by_wins' => $location->top_players_by_wins,
@@ -177,15 +193,23 @@ class LocationController extends Controller
 		}
 
 		$userId = $request->input('user_id');
-		if (!$userId) {
-			return response()->json(['message' => 'User ID is required'], 422);
+		$name = $request->input('name');
+
+		if (!$userId && !$name) {
+			return response()->json(['message' => 'Either user_id or name is required'], 422);
 		}
 
-		if ($location->users()->where('user_id', $userId)->exists()) {
-			return response()->json(['message' => 'User is already added'], 422);
+		if ($userId) {
+			if ($location->users()->where('user_id', $userId)->exists()) {
+				return response()->json(['message' => 'User is already added'], 422);
+			}
+			$location->users()->attach($userId);
+		} else {
+			if ($location->locationUsers()->where('name', $name)->whereNull('user_id')->exists()) {
+				return response()->json(['message' => 'User with this name is already added'], 422);
+			}
+			$location->locationUsers()->create(['name' => $name]);
 		}
-
-		$location->users()->attach($userId);
 
 		return response()->json(['message' => 'User added successfully']);
 	}
@@ -198,7 +222,16 @@ class LocationController extends Controller
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
-		$location->users()->detach($userId);
+		$locationUser = $location->locationUsers()->find($userId);
+		if ($locationUser) {
+			if ($locationUser->user_id) {
+				$location->users()->detach($locationUser->user_id);
+			} else {
+				$locationUser->delete();
+			}
+		} else {
+			$location->users()->detach($userId);
+		}
 
 		return response()->json(['message' => 'User removed successfully']);
 	}

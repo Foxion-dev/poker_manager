@@ -52,7 +52,13 @@ class Location extends Model
 	public function users(): BelongsToMany
 	{
 		return $this->belongsToMany(User::class, 'location_users')
+			->withPivot('name')
 			->withTimestamps();
+	}
+
+	public function locationUsers(): HasMany
+	{
+		return $this->hasMany(LocationUser::class);
 	}
 
 	public function isAdmin(User $user): bool

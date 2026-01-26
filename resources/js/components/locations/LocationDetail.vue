@@ -649,7 +649,7 @@
 									<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
 										{{ locationUser.name?.charAt(0).toUpperCase() }}
 									</div>
-									<span class="text-sm font-medium text-gray-900 dark:text-white">{{ locationUser.name }}</span>
+									<span class="text-sm font-medium text-gray-900 dark:text-white">{{ locationUser.display_name || locationUser.name }}</span>
 									<span v-if="locationUser.id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
 										Создатель
 									</span>
@@ -670,23 +670,33 @@
 
 					<div>
 						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Добавить пользователя:</h4>
-						<div class="flex items-center space-x-2">
-							<select
-								v-model="newUserId"
-								class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-							>
-								<option value="">Выберите пользователя</option>
-								<option v-for="user in availableUsersForLocation" :key="user.id" :value="user.id">
-									{{ user.name }}
-								</option>
-							</select>
-							<button
-								@click="addUser"
-								:disabled="!newUserId || addingUser"
-								class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
-							>
-								{{ addingUser ? 'Добавление...' : 'Добавить' }}
-							</button>
+						<div class="space-y-3">
+							<div class="flex items-center space-x-2">
+								<select
+									v-model="newUserId"
+									class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								>
+									<option value="">Выберите пользователя системы (опционально)</option>
+									<option v-for="user in availableUsersForLocation" :key="user.id" :value="user.id">
+										{{ user.name }}
+									</option>
+								</select>
+							</div>
+							<div class="flex items-center space-x-2">
+								<input
+									v-model="newUserName"
+									type="text"
+									placeholder="Или введите имя нового пользователя"
+									class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								/>
+								<button
+									@click="addUser"
+									:disabled="(!newUserId && !newUserName) || addingUser"
+									class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
+								>
+									{{ addingUser ? 'Добавление...' : 'Добавить' }}
+								</button>
+							</div>
 						</div>
 					</div>
 
@@ -735,6 +745,7 @@ const addingAdmin = ref(false);
 const newAdminUserId = ref('');
 const addingUser = ref(false);
 const newUserId = ref('');
+const newUserName = ref('');
 
 const locationForm = ref({
 	name: '',
@@ -983,7 +994,7 @@ const availableUsersForLocation = computed(() => {
 	const existingUserIds = [
 		location.value.user_id,
 		...(location.value.admins?.map(a => a.id) || []),
-		...(location.value.users?.map(u => u.id) || [])
+		...(location.value.users?.filter(u => u.user_id).map(u => u.user_id) || [])
 	];
 	return allUsers.value.filter(user => !existingUserIds.includes(user.id));
 });
@@ -1019,12 +1030,20 @@ const removeAdmin = async (adminId) => {
 };
 
 const addUser = async () => {
-	if (!newUserId.value) return;
+	if (!newUserId.value && !newUserName.value) return;
 
 	addingUser.value = true;
 	try {
-		await locationService.addUser(route.params.id, { user_id: newUserId.value });
+		const data = {};
+		if (newUserId.value) {
+			data.user_id = newUserId.value;
+		}
+		if (newUserName.value) {
+			data.name = newUserName.value.trim();
+		}
+		await locationService.addUser(route.params.id, data);
 		newUserId.value = '';
+		newUserName.value = '';
 		await fetchLocation();
 	} catch (error) {
 		console.error('Error adding user:', error);
