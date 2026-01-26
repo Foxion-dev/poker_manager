@@ -283,14 +283,6 @@ const tournament = ref(null);
 const location = ref(null);
 const loading = ref(false);
 const saving = ref(false);
-const showFinishModal = ref(false);
-const finishForm = ref({
-	winners: [
-		{ place: 1, participant_id: null, prize: 0 },
-		{ place: 2, participant_id: null, prize: 0 },
-		{ place: 3, participant_id: null, prize: 0 },
-	],
-});
 
 const locationId = computed(() => route.params.locationId);
 
