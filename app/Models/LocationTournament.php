@@ -170,10 +170,10 @@ class LocationTournament extends Model
 			4 => [50, 25, 15, 10],
 			5 => [45, 25, 15, 10, 5],
 			6 => [40, 23, 15, 10, 7, 5],
-			7 => [37, 22, 14, 10, 7, 5, 5],
-			8 => [35, 21, 14, 10, 7, 5, 4, 4],
-			9 => [33, 20, 14, 10, 7, 5, 4, 4, 3],
-			10 => [31, 20, 13, 10, 7, 5, 4, 4, 3, 3],
+			7 => [40, 22, 14, 10, 7, 4, 3],
+			8 => [40, 21, 14, 10, 6, 4, 3, 2],
+			9 => [40, 20, 14, 10, 6, 4, 3, 2, 1],
+			10 => [40, 19, 13, 10, 6, 4, 3, 2, 2, 1],
 		];
 
 		if ($totalPlaces <= 10 && isset($distributions[$totalPlaces])) {
@@ -182,17 +182,28 @@ class LocationTournament extends Model
 
 		if ($totalPlaces > 10) {
 			if ($place === 1) {
-				return 31.0;
+				return 40.0;
 			} elseif ($place === 2) {
-				return 20.0;
+				return 19.0;
 			} elseif ($place === 3) {
 				return 13.0;
-			} elseif ($place <= 6) {
-				$percentages = [10, 7, 5];
-				return (float) ($percentages[$place - 4] ?? 0);
+			} elseif ($place === 4) {
+				return 10.0;
+			} elseif ($place === 5) {
+				return 6.0;
+			} elseif ($place === 6) {
+				return 4.0;
+			} elseif ($place === 7) {
+				return 3.0;
+			} elseif ($place === 8) {
+				return 2.0;
+			} elseif ($place === 9) {
+				return 2.0;
+			} elseif ($place === 10) {
+				return 1.0;
 			} else {
-				$remainingPlaces = $totalPlaces - 6;
-				$remainingPercentage = 100 - 31 - 20 - 13 - 10 - 7 - 5;
+				$remainingPlaces = $totalPlaces - 10;
+				$remainingPercentage = 100 - 40 - 19 - 13 - 10 - 6 - 4 - 3 - 2 - 2 - 1;
 				return round($remainingPercentage / $remainingPlaces, 2);
 			}
 		}
