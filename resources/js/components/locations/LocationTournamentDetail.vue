@@ -728,7 +728,7 @@ const updateParticipant = async (participant) => {
 			};
 		});
 
-		await locationService.updateTournamentParticipants(
+		const response = await locationService.updateTournamentParticipants(
 			route.params.locationId,
 			route.params.id,
 			{ participants: participantsData }
@@ -740,6 +740,13 @@ const updateParticipant = async (participant) => {
 				updatedParticipant.rebuy = participant.rebuy ?? 0;
 				updatedParticipant.addon = participant.addon ?? false;
 				updatedParticipant.is_paid = participant.is_paid ?? false;
+			}
+			
+			if (response && response.total_buyin !== undefined) {
+				tournament.value.total_buyin = response.total_buyin;
+			}
+			if (response && response.prize_pool !== undefined) {
+				tournament.value.prize_pool = response.prize_pool;
 			}
 		}
 	} catch (error) {
