@@ -15,7 +15,7 @@
 						<div v-if="location?.description" class="text-sm text-gray-600 dark:text-gray-400 mb-2">
 							{{ location.description }}
 						</div>
-						<div class="flex items-center space-x-3">
+						<div class="flex items-center space-x-3 flex-wrap">
 							<span
 								class="px-2 py-1 text-xs font-semibold rounded-full"
 								:class="location?.is_public 
@@ -27,6 +27,20 @@
 							<span class="text-sm text-gray-600 dark:text-gray-400">
 								Создатель: {{ location?.user?.name }}
 							</span>
+							<button
+								v-if="location?.is_public"
+								@click="copyPublicLink"
+								class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+								:title="copied ? 'Скопировано!' : 'Копировать публичную ссылку'"
+							>
+								<svg v-if="!copied" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+								</svg>
+								<svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+								</svg>
+								{{ copied ? 'Скопировано!' : 'Копировать ссылку' }}
+							</button>
 						</div>
 					</div>
 					<div class="ml-6" v-if="location?.can_manage_admins || location?.is_admin">
@@ -897,6 +911,7 @@ const savingLocation = ref(false);
 const savingTournament = ref(false);
 const addingAdmin = ref(false);
 const newAdminUserId = ref('');
+const copied = ref(false);
 const addingUser = ref(false);
 const newUserId = ref('');
 const newUserName = ref('');
@@ -1022,6 +1037,39 @@ const deleteLocation = async () => {
 	} catch (error) {
 		console.error('Error deleting location:', error);
 		alert('Ошибка при удалении локации');
+	}
+};
+
+const copyPublicLink = async () => {
+	if (!location.value) return;
+	
+	const publicUrl = `${window.location.origin}/public/locations/${location.value.id}`;
+	
+	try {
+		await navigator.clipboard.writeText(publicUrl);
+		copied.value = true;
+		setTimeout(() => {
+			copied.value = false;
+		}, 2000);
+	} catch (error) {
+		console.error('Error copying to clipboard:', error);
+		const textArea = document.createElement('textarea');
+		textArea.value = publicUrl;
+		textArea.style.position = 'fixed';
+		textArea.style.left = '-999999px';
+		document.body.appendChild(textArea);
+		textArea.select();
+		try {
+			document.execCommand('copy');
+			copied.value = true;
+			setTimeout(() => {
+				copied.value = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Fallback copy failed:', err);
+			alert(`Ссылка: ${publicUrl}`);
+		}
+		document.body.removeChild(textArea);
 	}
 };
 
