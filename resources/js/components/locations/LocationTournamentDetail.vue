@@ -54,6 +54,9 @@
 						<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
 							Всего входов: {{ formatCurrency(tournament.total_buyin, tournament.currency) }}
 						</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+							Количество входов: {{ totalEntriesCount }}
+						</p>
 					</div>
 				</div>
 			</div>
@@ -594,6 +597,23 @@ const canFinishTournament = computed(() => {
 	}
 	
 	return validParticipants.every(p => p.is_paid === true);
+});
+
+const totalEntriesCount = computed(() => {
+	if (!tournament.value || !tournament.value.participants) {
+		return 0;
+	}
+	
+	const validParticipants = tournament.value.participants.filter(p => {
+		const name = p.display_name || p.name || p.user?.name || '';
+		return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+	});
+	
+	const participantsCount = validParticipants.length;
+	const totalRebuys = validParticipants.reduce((sum, p) => sum + (p.rebuy || 0), 0);
+	const totalAddons = validParticipants.filter(p => p.addon === true).length;
+	
+	return participantsCount + totalRebuys + totalAddons;
 });
 
 const addParticipant = async () => {
