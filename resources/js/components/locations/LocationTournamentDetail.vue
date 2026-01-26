@@ -193,56 +193,82 @@
 				<div class="p-6">
 					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Завершение турнира</h3>
 					<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-						Выберите победителей и распределите призы согласно расчету
+						Выберите участников в порядке призовых мест (первый выбранный - 3 место, последний - 1 место)
 					</p>
 
-					<div v-if="tournament && tournament.prize_distribution" class="space-y-4 mb-6">
-						<div
-							v-for="(winner, index) in finishForm.winners"
-							:key="winner.place"
-							class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg"
-							:class="index === 0 
-								? 'bg-yellow-50 dark:bg-yellow-900/20' 
-								: index === 1 
-								? 'bg-gray-50 dark:bg-gray-700/50' 
-								: 'bg-orange-50 dark:bg-orange-900/20'"
-						>
-							<div class="flex items-center justify-between mb-3">
-								<div>
-									<h4 class="text-lg font-bold"
-										:class="index === 0 
-											? 'text-yellow-600 dark:text-yellow-400' 
-											: index === 1 
-											? 'text-gray-600 dark:text-gray-400' 
-											: 'text-orange-600 dark:text-orange-400'"
-									>
-										{{ winner.place }} место
-									</h4>
-									<p class="text-sm text-gray-600 dark:text-gray-400">
-										Приз: {{ formatCurrency(winner.prize, tournament.currency) }}
-									</p>
+					<div v-if="tournament && tournament.prize_distribution" class="mb-6">
+						<div class="grid grid-cols-3 gap-4 mb-6">
+							<div
+								v-for="(prize, index) in tournament.prize_distribution"
+								:key="prize.place"
+								class="p-4 rounded-lg text-center"
+								:class="index === 2 
+									? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700' 
+									: index === 1 
+									? 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-300 dark:border-gray-600' 
+									: 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700'"
+							>
+								<div class="text-2xl font-bold mb-2"
+									:class="index === 2 
+										? 'text-yellow-600 dark:text-yellow-400' 
+										: index === 1 
+										? 'text-gray-600 dark:text-gray-400' 
+										: 'text-orange-600 dark:text-orange-400'"
+								>
+									{{ prize.place }} место
+								</div>
+								<div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+									{{ formatCurrency(prize.prize, tournament.currency) }}
+								</div>
+								<div v-if="selectedWinners.length > 0 && getWinnerPlace(selectedWinners[selectedWinners.length - index - 1]) === prize.place" class="mt-2 text-xs text-green-600 dark:text-green-400">
+									✓ Выбран
 								</div>
 							</div>
-							<div>
-								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-									Выберите участника
-								</label>
-								<select
-									v-model="winner.participant_id"
-									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-								>
-									<option :value="null">Не выбрано</option>
-									<option
-										v-for="participant in tournament.participants.filter(p => {
-											const name = p.display_name || p.name || p.user?.name || '';
-											return name && name !== 'Без имени' && name !== 'Неизвестный участник';
-										})"
-										:key="participant.id"
-										:value="participant.id"
+						</div>
+
+						<div class="space-y-2">
+							<p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+								Участники ({{ selectedWinners.length }}/3 выбрано):
+							</p>
+							<div
+								v-for="participant in tournament.participants.filter(p => {
+									const name = p.display_name || p.name || p.user?.name || '';
+									return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+								})"
+								:key="participant.id"
+								@click="toggleWinner(participant.id)"
+								class="flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors"
+								:class="selectedWinners.includes(participant.id)
+									? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700'
+									: 'bg-gray-50 dark:bg-gray-700/50 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'"
+							>
+								<div class="flex items-center space-x-3">
+									<div class="h-10 w-10 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+										{{ (participant.display_name || participant.name || participant.user?.name || '?')?.charAt(0).toUpperCase() }}
+									</div>
+									<div>
+										<p class="text-sm font-medium text-gray-900 dark:text-white">
+											{{ participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник' }}
+										</p>
+										<p v-if="selectedWinners.includes(participant.id)" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1">
+											{{ getWinnerPlace(participant.id) }} место - {{ formatCurrency(getWinnerPrize(getWinnerPlace(participant.id)), tournament.currency) }}
+										</p>
+									</div>
+								</div>
+								<div v-if="selectedWinners.includes(participant.id)" class="flex items-center space-x-2">
+									<span class="text-lg font-bold"
+										:class="getWinnerPlace(participant.id) === 1
+											? 'text-yellow-600 dark:text-yellow-400'
+											: getWinnerPlace(participant.id) === 2
+											? 'text-gray-600 dark:text-gray-400'
+											: 'text-orange-600 dark:text-orange-400'"
 									>
-										{{ participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник' }}
-									</option>
-								</select>
+										{{ getWinnerPlace(participant.id) }}
+									</span>
+									<svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+									</svg>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -345,24 +371,35 @@ const updateParticipant = async (participant) => {
 };
 
 const showFinishModal = ref(false);
-const finishForm = ref({
-	winners: [
-		{ place: 1, participant_id: null, prize: 0 },
-		{ place: 2, participant_id: null, prize: 0 },
-		{ place: 3, participant_id: null, prize: 0 },
-	],
-});
+const selectedWinners = ref([]);
 
 const openFinishModal = () => {
 	if (!tournament.value || !tournament.value.prize_distribution) return;
-	
-	finishForm.value.winners = tournament.value.prize_distribution.map((prize, index) => ({
-		place: prize.place,
-		participant_id: null,
-		prize: prize.prize,
-	}));
-	
+	selectedWinners.value = [];
 	showFinishModal.value = true;
+};
+
+const toggleWinner = (participantId) => {
+	const index = selectedWinners.value.indexOf(participantId);
+	if (index === -1) {
+		if (selectedWinners.value.length < 3) {
+			selectedWinners.value.push(participantId);
+		}
+	} else {
+		selectedWinners.value.splice(index, 1);
+	}
+};
+
+const getWinnerPlace = (participantId) => {
+	const index = selectedWinners.value.indexOf(participantId);
+	if (index === -1) return null;
+	return 3 - index;
+};
+
+const getWinnerPrize = (place) => {
+	if (!tournament.value || !tournament.value.prize_distribution) return 0;
+	const prizeInfo = tournament.value.prize_distribution.find(p => p.place === place);
+	return prizeInfo ? prizeInfo.prize : 0;
 };
 
 const closeFinishModal = () => {
@@ -370,8 +407,7 @@ const closeFinishModal = () => {
 };
 
 const finishTournament = async () => {
-	const validWinners = finishForm.value.winners.filter(w => w.participant_id);
-	if (validWinners.length === 0) {
+	if (selectedWinners.value.length === 0) {
 		alert('Необходимо выбрать хотя бы одного победителя');
 		return;
 	}
@@ -384,10 +420,12 @@ const finishTournament = async () => {
 			prize: null,
 		}));
 
-		validWinners.forEach(winner => {
-			const participant = participantsData.find(p => p.id === winner.participant_id);
+		selectedWinners.value.forEach((participantId, index) => {
+			const place = 3 - index;
+			const prize = getWinnerPrize(place);
+			const participant = participantsData.find(p => p.id === participantId);
 			if (participant) {
-				participant.prize = winner.prize;
+				participant.prize = prize;
 			}
 		});
 
