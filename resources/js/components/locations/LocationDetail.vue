@@ -283,7 +283,7 @@
 												? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' 
 												: 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400'"
 										>
-											{{ participant.place }}. {{ participant.user.name }}
+											{{ participant.place }}. {{ participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник' }}
 											<span v-if="participant.prize" class="ml-1 font-semibold text-green-600">
 												({{ formatCurrency(participant.prize) }})
 											</span>
@@ -787,7 +787,8 @@ const editTournament = (tournament) => {
 		buyin: tournament.buyin,
 		format: tournament.format,
 		participants: tournament.participants.map(p => ({
-			user_id: p.user.id,
+			user_id: p.user_id || '',
+			name: p.name || '',
 			place: p.place,
 			prize: p.prize || null,
 		})),
@@ -804,7 +805,7 @@ const addParticipant = () => {
 	const maxPlace = tournamentForm.value.participants.length > 0
 		? Math.max(...tournamentForm.value.participants.map(p => p.place || 0))
 		: 0;
-	tournamentForm.value.participants.push({ user_id: '', place: maxPlace + 1, prize: null });
+	tournamentForm.value.participants.push({ user_id: '', name: '', place: maxPlace + 1, prize: null });
 };
 
 const removeParticipant = (index) => {
@@ -824,21 +825,22 @@ watch(() => tournamentForm.value.participants.length, () => {
 });
 
 const saveTournament = async () => {
-	const uniqueUserIds = new Set(tournamentForm.value.participants.map(p => p.user_id));
-	const uniquePlaces = new Set(tournamentForm.value.participants.map(p => p.place));
-
-	if (uniqueUserIds.size !== tournamentForm.value.participants.length) {
-		alert('Каждый участник может быть добавлен только один раз.');
+	const uniqueUserIds = tournamentForm.value.participants
+		.map(p => p.user_id)
+		.filter(id => id);
+	if (new Set(uniqueUserIds).size !== uniqueUserIds.length) {
+		alert('Каждый пользователь может быть добавлен только один раз.');
 		return;
 	}
 
+	const uniquePlaces = new Set(tournamentForm.value.participants.map(p => p.place));
 	if (uniquePlaces.size !== tournamentForm.value.participants.length) {
 		alert('Места участников должны быть уникальными.');
 		return;
 	}
 
-	if (tournamentForm.value.participants.some(p => !p.user_id)) {
-		alert('Все участники должны быть выбраны.');
+	if (tournamentForm.value.participants.some(p => !p.user_id && !p.name)) {
+		alert('Необходимо указать либо пользователя, либо имя участника для всех участников.');
 		return;
 	}
 
