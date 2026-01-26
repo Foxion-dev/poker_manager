@@ -89,7 +89,7 @@ class LocationTournamentController extends Controller
 			->where('location_id', $location->id)
 			->firstOrFail();
 
-		if (!$location->is_public && $location->user_id !== $user->id) {
+		if (!$location->is_public && $location->user_id !== $user->id && !$location->isAdmin($user)) {
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
@@ -159,10 +159,12 @@ class LocationTournamentController extends Controller
 		return response()->json($locationTournament);
 	}
 
-	public function destroy(LocationTournament $locationTournament, Request $request): JsonResponse
+	public function destroy(Location $location, $locationTournamentId): JsonResponse
 	{
-		$user = $request->user();
-		$location = $locationTournament->location;
+		$user = request()->user();
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
 
 		if (!$location->isAdmin($user)) {
 			return response()->json(['message' => 'Only location admins can delete tournaments'], 403);
