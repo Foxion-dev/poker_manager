@@ -125,7 +125,7 @@
 			</div>
 		</div>
 
-		<div v-if="loading" class="flex items-center justify-center py-20">
+		<div v-if="loading && !showPasswordForm" class="flex items-center justify-center py-20">
 			<div class="text-center">
 				<svg class="animate-spin h-12 w-12 text-indigo-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -135,7 +135,7 @@
 			</div>
 		</div>
 
-		<div v-else-if="location" class="space-y-6">
+		<div v-else-if="location && !showPasswordForm" class="space-y-6">
 			<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
 					<div class="p-6">
@@ -934,13 +934,15 @@ const fetchLocation = async (password = null) => {
 	} catch (error) {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
 			showPasswordForm.value = true;
+			loading.value = false;
 		} else {
 			console.error('Error fetching location:', error);
 			alert('Ошибка при загрузке локации');
+			loading.value = false;
 		}
-	} finally {
-		loading.value = false;
+		return;
 	}
+	loading.value = false;
 };
 
 const submitPassword = async () => {
