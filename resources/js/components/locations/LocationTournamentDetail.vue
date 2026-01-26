@@ -163,10 +163,20 @@
 				</div>
 			</div>
 
+			<div v-if="saving" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 flex flex-col items-center space-y-4">
+					<div class="relative w-16 h-16">
+						<div class="absolute inset-0 border-4 border-indigo-200 dark:border-indigo-800 rounded-full"></div>
+						<div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin"></div>
+					</div>
+					<p class="text-sm font-medium text-gray-700 dark:text-gray-300">Обновление данных...</p>
+				</div>
+			</div>
+
 			<div v-if="tournament.participants && tournament.participants.filter(p => {
 				const name = p.display_name || p.name || p.user?.name || '';
 				return name && name !== 'Без имени' && name !== 'Неизвестный участник';
-			}).length > 0" class="space-y-3">
+			}).length > 0" class="space-y-3" :class="{ 'opacity-50 pointer-events-none': saving }">
 				<div
 					v-for="participant in tournament.participants.filter(p => {
 						const name = p.display_name || p.name || p.user?.name || '';
@@ -690,7 +700,10 @@ const updateParticipant = async (participant) => {
 			route.params.id,
 			{ participants: participantsData }
 		);
+		
 		await fetchTournament();
+		
+		await new Promise(resolve => setTimeout(resolve, 100));
 		
 		requestAnimationFrame(() => {
 			window.scrollTo(0, scrollPosition);
