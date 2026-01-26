@@ -477,6 +477,41 @@
 							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 								Участники *
 							</label>
+							<div class="mb-3">
+								<select
+									v-model="selectedLocationUsers"
+									multiple
+									size="8"
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								>
+									<option v-for="locationUser in locationUsers" :key="locationUser.id || locationUser.user_id" :value="locationUser.user_id || locationUser.id">
+										{{ locationUser.display_name || locationUser.name }}
+									</option>
+								</select>
+								<div class="mt-2 flex items-center space-x-2">
+									<button
+										type="button"
+										@click="selectAllLocationUsers"
+										class="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+									>
+										Выбрать всех
+									</button>
+									<button
+										type="button"
+										@click="clearSelectedUsers"
+										class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+									>
+										Очистить
+									</button>
+									<button
+										type="button"
+										@click="addSelectedUsersAsParticipants"
+										class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors"
+									>
+										Добавить выбранных
+									</button>
+								</div>
+							</div>
 							<div class="space-y-2">
 								<div
 									v-for="(participant, index) in tournamentForm.participants"
@@ -488,9 +523,9 @@
 											v-model="participant.user_id"
 											class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 										>
-											<option value="">Выберите пользователя (опционально)</option>
-											<option v-for="user in allUsers" :key="user.id" :value="user.id">
-												{{ user.name }}
+											<option value="">Выберите пользователя локации (опционально)</option>
+											<option v-for="locationUser in locationUsers" :key="locationUser.id || locationUser.user_id" :value="locationUser.user_id || locationUser.id">
+												{{ locationUser.display_name || locationUser.name }}
 											</option>
 										</select>
 									</div>
@@ -531,7 +566,7 @@
 									@click="addParticipant"
 									class="w-full px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
 								>
-									➕ Добавить участника
+									➕ Добавить участника вручную
 								</button>
 							</div>
 						</div>
@@ -730,6 +765,7 @@ const { user: currentUser } = storeToRefs(authStore);
 const location = ref(null);
 const tournaments = ref([]);
 const allUsers = ref([]);
+const selectedLocationUsers = ref([]);
 const loading = ref(false);
 const showLocationForm = ref(false);
 const showTournamentForm = ref(false);
@@ -998,6 +1034,42 @@ const availableUsersForLocation = computed(() => {
 	];
 	return allUsers.value.filter(user => !existingUserIds.includes(user.id));
 });
+
+const locationUsers = computed(() => {
+	if (!location.value) return [];
+	return location.value.users || [];
+});
+
+const selectAllLocationUsers = () => {
+	if (!location.value || !location.value.users) return;
+	selectedLocationUsers.value = location.value.users.map(u => u.user_id || u.id).filter(id => id);
+};
+
+const clearSelectedUsers = () => {
+	selectedLocationUsers.value = [];
+};
+
+const addSelectedUsersAsParticipants = () => {
+	if (!selectedLocationUsers.value.length) return;
+
+	const maxPlace = tournamentForm.value.participants.length > 0
+		? Math.max(...tournamentForm.value.participants.map(p => p.place || 0))
+		: 0;
+
+	selectedLocationUsers.value.forEach((userId, index) => {
+		const locationUser = locationUsers.value.find(u => (u.user_id || u.id) == userId);
+		if (locationUser) {
+			tournamentForm.value.participants.push({
+				user_id: locationUser.user_id || '',
+				name: locationUser.user_id ? '' : (locationUser.name || ''),
+				place: maxPlace + index + 1,
+				prize: null,
+			});
+		}
+	});
+
+	selectedLocationUsers.value = [];
+};
 
 const addAdmin = async () => {
 	if (!newAdminUserId.value) return;
