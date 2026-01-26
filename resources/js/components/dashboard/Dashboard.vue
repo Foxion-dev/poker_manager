@@ -291,7 +291,7 @@ const getDateRange = (period) => {
 			startDate = new Date(today.getFullYear(), today.getMonth() - 5, 1).toISOString().split('T')[0];
 			break;
 		case 'year':
-			startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+			startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1).toISOString().split('T')[0];
 			break;
 		case 'custom':
 			return {
@@ -361,11 +361,8 @@ const updateChart = () => {
 					backgroundColor: lineColor + '20',
 					fill: true,
 					tension: 0.4,
-					pointRadius: 4,
-					pointHoverRadius: 6,
-					pointBackgroundColor: pointColor,
-					pointBorderColor: '#fff',
-					pointBorderWidth: 2,
+					pointRadius: 0,
+					pointHoverRadius: 0,
 				},
 			],
 		},
