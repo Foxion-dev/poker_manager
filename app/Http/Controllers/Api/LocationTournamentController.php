@@ -371,7 +371,7 @@ class LocationTournamentController extends Controller
 			];
 		});
 		
-		$allLocationUsers = $usersFromSystem->concat($usersByName);
+		$allLocationUsers = $usersFromSystem->concat($usersByName)->sortByDesc('tournaments_count')->values();
 
 		return response()->json([
 			'participants' => $locationTournament->participants,
