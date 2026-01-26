@@ -647,18 +647,18 @@
 							>
 								<div class="flex items-center">
 									<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
-										{{ locationUser.name?.charAt(0).toUpperCase() }}
+										{{ (locationUser.display_name || locationUser.name)?.charAt(0).toUpperCase() }}
 									</div>
 									<span class="text-sm font-medium text-gray-900 dark:text-white">{{ locationUser.display_name || locationUser.name }}</span>
-									<span v-if="locationUser.id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+									<span v-if="locationUser.user_id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
 										Создатель
 									</span>
-									<span v-if="location.admins?.some(a => a.id === locationUser.id)" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+									<span v-else-if="location.admins?.some(a => a.id === locationUser.user_id)" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
 										Админ
 									</span>
 								</div>
 								<button
-									v-if="locationUser.id !== location.user_id && !location.admins?.some(a => a.id === locationUser.id)"
+									v-if="locationUser.user_id !== location.user_id && !location.admins?.some(a => a.id === locationUser.user_id)"
 									@click="removeUser(locationUser.id)"
 									class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
 								>
