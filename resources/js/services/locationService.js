@@ -60,4 +60,19 @@ export const locationService = {
 		const response = await api.delete(`/locations/${locationId}/admins/${adminId}`);
 		return response.data;
 	},
+
+	async getPublicLocation(id, password = null) {
+		const params = password ? { password } : {};
+		const response = await api.get(`/public/locations/${id}`, { params });
+		return response.data;
+	},
+
+	async getPublicTournaments(locationId, password = null, limit = 10) {
+		const params = { limit };
+		if (password) {
+			params.password = password;
+		}
+		const response = await api.get(`/public/locations/${locationId}/tournaments`, { params });
+		return response.data;
+	},
 };

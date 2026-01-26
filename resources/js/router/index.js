@@ -15,6 +15,12 @@ const routes = [
 		meta: { guest: true },
 	},
 	{
+		path: '/public/locations/:id',
+		name: 'PublicLocationView',
+		component: () => import('../components/locations/PublicLocationView.vue'),
+		meta: { public: true },
+	},
+	{
 		path: '/',
 		component: () => import('../components/layout/AppLayout.vue'),
 		meta: { requiresAuth: true },
@@ -107,6 +113,7 @@ const pageTitles = {
 	PackDetail: 'Детали пака - Poker Manager',
 	Locations: 'Локации - Poker Manager',
 	LocationDetail: 'Детали локации - Poker Manager',
+	PublicLocationView: 'Публичная локация - Poker Manager',
 	AdminRooms: 'Управление румами - Админ-панель',
 	AdminCurrencies: 'Управление валютами - Админ-панель',
 	AdminUsers: 'Управление пользователями - Админ-панель',
@@ -116,6 +123,11 @@ const pageTitles = {
 router.beforeEach(async (to, from, next) => {
 	const authStore = useAuthStore();
 	const token = localStorage.getItem('auth_token');
+
+	if (to.meta.public) {
+		next();
+		return;
+	}
 
 	if (to.meta.requiresAuth && !token) {
 		next({ name: 'Login' });

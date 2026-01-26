@@ -138,4 +138,48 @@ class LocationTournamentController extends Controller
 
 		return response()->json(['message' => 'Tournament deleted successfully']);
 	}
+
+	public function publicIndex(Request $request, Location $location): JsonResponse
+	{
+		if (!$location->is_public) {
+			return response()->json(['message' => 'Location is not public'], 404);
+		}
+
+		if ($location->password) {
+			$password = $request->get('password');
+			if (!$password || !$location->checkPassword($password)) {
+				return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+			}
+		}
+
+		$limit = $request->get('limit', 10);
+		$tournaments = $location->tournaments()
+			->with('participants.user')
+			->orderBy('date', 'desc')
+			->limit($limit)
+			->get()
+			->map(function ($tournament) {
+				return [
+					'id' => $tournament->id,
+					'name' => $tournament->name,
+					'buyin' => $tournament->buyin,
+					'format' => $tournament->format,
+					'format_label' => $tournament->format_label,
+					'date' => $tournament->date->format('Y-m-d'),
+					'participants' => $tournament->participants->map(function ($participant) {
+						return [
+							'id' => $participant->id,
+							'user' => [
+								'id' => $participant->user->id,
+								'name' => $participant->user->name,
+							],
+							'place' => $participant->place,
+							'prize' => $participant->prize,
+						];
+					})->sortBy('place')->values(),
+				];
+			});
+
+		return response()->json($tournaments);
+	}
 }
