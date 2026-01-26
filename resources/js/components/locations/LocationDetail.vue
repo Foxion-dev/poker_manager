@@ -1043,7 +1043,7 @@ const deleteLocation = async () => {
 const copyPublicLink = async () => {
 	if (!location.value) return;
 	
-	const publicUrl = `${window.location.origin}/public/locations/${location.value.id}`;
+	const publicUrl = `${window.location.origin}/#/public/locations/${location.value.id}`;
 	
 	try {
 		await navigator.clipboard.writeText(publicUrl);

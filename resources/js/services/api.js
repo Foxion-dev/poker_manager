@@ -29,14 +29,6 @@ api.interceptors.response.use(
 	(error) => {
 		const isPublicRoute = error.config?.url?.includes('/public/');
 		
-		console.log('API response error:', {
-			url: error.config?.url,
-			status: error.response?.status,
-			isPublicRoute,
-			hash: window.location.hash,
-			pathname: window.location.pathname
-		});
-		
 		if (error.response?.status === 401 && !isPublicRoute) {
 			localStorage.removeItem('auth_token');
 			const currentHash = window.location.hash || '';
@@ -46,13 +38,8 @@ api.interceptors.response.use(
 			const isPublicPage = fullPath.includes('/public/') || fullPath.includes('publiclocationview');
 			const isAuthPage = fullPath.includes('/login') || fullPath.includes('/register');
 			
-			console.log('401 error check:', { fullPath, isPublicPage, isAuthPage });
-			
 			if (!isAuthPage && !isPublicPage) {
-				console.log('Redirecting to login');
 				window.location.hash = '/login';
-			} else {
-				console.log('Not redirecting - public or auth page');
 			}
 		}
 		return Promise.reject(error);
