@@ -110,13 +110,22 @@
 		<div v-if="!loading && tournament" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
 			<div class="flex items-center justify-between mb-6">
 				<h3 class="text-xl font-bold text-gray-900 dark:text-white">Участники</h3>
-				<button
-					v-if="!tournament.is_finished && location?.is_admin"
-					@click="openFinishModal"
-					class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors"
-				>
-					Завершить турнир
-				</button>
+				<div class="flex space-x-2">
+					<button
+						v-if="!tournament.is_finished && location?.is_admin"
+						@click="openPrizeDistributionModal"
+						class="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+					>
+						Настроить призы
+					</button>
+					<button
+						v-if="!tournament.is_finished && location?.is_admin"
+						@click="openFinishModal"
+						class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors"
+					>
+						Завершить турнир
+					</button>
+				</div>
 			</div>
 
 			<div v-if="tournament.participants && tournament.participants.filter(p => {
@@ -299,6 +308,101 @@
 				</div>
 			</div>
 		</div>
+
+		<div v-if="showPrizeDistributionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+				<div class="p-6">
+					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Настройка распределения призов</h3>
+					<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+						Настройте количество призовых мест и процент распределения. Сумма процентов должна быть равна 100%.
+					</p>
+
+					<div class="space-y-3 mb-6">
+						<div
+							v-for="(prize, index) in prizeDistributionForm"
+							:key="index"
+							class="flex items-center space-x-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg"
+						>
+							<div class="w-20">
+								<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+									Место
+								</label>
+								<input
+									v-model.number="prize.place"
+									type="number"
+									min="1"
+									class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
+									readonly
+								/>
+							</div>
+							<div class="flex-1">
+								<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+									Процент (%)
+								</label>
+								<input
+									v-model.number="prize.percentage"
+									type="number"
+									step="0.01"
+									min="0"
+									max="100"
+									class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
+								/>
+							</div>
+							<div class="w-32">
+								<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+									Приз
+								</label>
+								<div class="px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg">
+									{{ formatCurrency((tournament?.prize_pool || 0) * ((prize.percentage || 0) / 100), tournament?.currency) }}
+								</div>
+							</div>
+							<button
+								@click="removePrizePlace(index)"
+								class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors mt-6"
+							>
+								Удалить
+							</button>
+						</div>
+					</div>
+
+					<div class="mb-6">
+						<button
+							@click="addPrizePlace"
+							class="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+						>
+							+ Добавить место
+						</button>
+					</div>
+
+					<div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+						<p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+							Сумма процентов: 
+							<span :class="Math.abs(prizeDistributionForm.reduce((sum, p) => sum + (parseFloat(p.percentage) || 0), 0) - 100) < 0.01 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+								{{ prizeDistributionForm.reduce((sum, p) => sum + (parseFloat(p.percentage) || 0), 0).toFixed(2) }}%
+							</span>
+						</p>
+						<p class="text-xs text-gray-500 dark:text-gray-400">
+							Призовой фонд: {{ formatCurrency(tournament?.prize_pool || 0, tournament?.currency) }}
+						</p>
+					</div>
+
+					<div class="flex space-x-3">
+						<button
+							@click="savePrizeDistribution"
+							class="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors font-medium"
+						>
+							Сохранить
+						</button>
+						<button
+							@click="showPrizeDistributionModal = false"
+							class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+						>
+							Отмена
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -380,7 +484,90 @@ const updateParticipant = async (participant) => {
 };
 
 const showFinishModal = ref(false);
+const showPrizeDistributionModal = ref(false);
 const selectedWinners = ref([]);
+const prizeDistributionForm = ref([]);
+
+const openPrizeDistributionModal = () => {
+	if (!tournament.value) return;
+	
+	if (tournament.value.prize_distribution && tournament.value.prize_distribution.length > 0) {
+		prizeDistributionForm.value = tournament.value.prize_distribution.map(p => ({
+			place: p.place,
+			percentage: p.percentage,
+		}));
+	} else {
+		const participantsCount = tournament.value.participants?.length || 0;
+		const itmPercentage = tournament.value.itm_percentage || 15;
+		const itmPlaces = Math.max(1, Math.ceil(participantsCount * (itmPercentage / 100)));
+		
+		prizeDistributionForm.value = [];
+		for (let place = 1; place <= itmPlaces; place++) {
+			let percentage = 0;
+			if (itmPlaces === 1) {
+				percentage = 100;
+			} else if (itmPlaces === 2) {
+				percentage = place === 1 ? 60 : 40;
+			} else if (itmPlaces === 3) {
+				percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
+			} else {
+				if (place === 1) percentage = 50;
+				else if (place === 2) percentage = 25;
+				else if (place === 3) percentage = 12.5;
+				else percentage = 12.5 / (itmPlaces - 3);
+			}
+			
+			prizeDistributionForm.value.push({
+				place: place,
+				percentage: percentage,
+			});
+		}
+	}
+	
+	showPrizeDistributionModal.value = true;
+};
+
+const addPrizePlace = () => {
+	const maxPlace = prizeDistributionForm.value.length > 0
+		? Math.max(...prizeDistributionForm.value.map(p => p.place))
+		: 0;
+	prizeDistributionForm.value.push({
+		place: maxPlace + 1,
+		percentage: 0,
+	});
+};
+
+const removePrizePlace = (index) => {
+	prizeDistributionForm.value.splice(index, 1);
+	prizeDistributionForm.value.forEach((p, i) => {
+		p.place = i + 1;
+	});
+};
+
+const savePrizeDistribution = async () => {
+	const totalPercentage = prizeDistributionForm.value.reduce((sum, p) => sum + (parseFloat(p.percentage) || 0), 0);
+	if (Math.abs(totalPercentage - 100) > 0.01) {
+		alert(`Сумма процентов должна быть равна 100%. Текущая сумма: ${totalPercentage.toFixed(2)}%`);
+		return;
+	}
+
+	try {
+		const distribution = prizeDistributionForm.value.map(p => ({
+			place: p.place,
+			percentage: parseFloat(p.percentage) || 0,
+		}));
+
+		await locationService.updateTournament(route.params.locationId, route.params.id, {
+			prize_distribution: distribution,
+		});
+
+		await fetchTournament();
+		showPrizeDistributionModal.value = false;
+	} catch (error) {
+		console.error('Error saving prize distribution:', error);
+		alert('Ошибка при сохранении распределения призов');
+	}
+};
 
 const openFinishModal = () => {
 	if (!tournament.value || !tournament.value.prize_distribution) return;
