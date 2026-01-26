@@ -1180,7 +1180,8 @@ const fetchCurrencies = async () => {
 };
 
 const availableCurrencies = computed(() => {
-	if (!location.value || !location.value.currencies || !location.value.currencies.length) {
+	if (!location.value) return [];
+	if (!location.value.currencies || !location.value.currencies.length) {
 		return allCurrencies.value;
 	}
 	return location.value.currencies;
