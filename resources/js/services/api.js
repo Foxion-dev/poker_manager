@@ -32,10 +32,13 @@ api.interceptors.response.use(
 		if (error.response?.status === 401 && !isPublicRoute) {
 			localStorage.removeItem('auth_token');
 			const currentHash = window.location.hash || '';
-			const currentPath = window.location.pathname || '';
-			const fullPath = currentHash + currentPath;
+			const currentPathname = window.location.pathname || '';
+			const fullPath = (currentHash + currentPathname).toLowerCase();
 			
-			if (!fullPath.includes('/login') && !fullPath.includes('/register') && !fullPath.includes('/public/')) {
+			const isPublicPage = fullPath.includes('/public/') || fullPath.includes('publiclocationview');
+			const isAuthPage = fullPath.includes('/login') || fullPath.includes('/register');
+			
+			if (!isAuthPage && !isPublicPage) {
 				window.location.hash = '/login';
 			}
 		}
