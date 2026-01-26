@@ -353,12 +353,25 @@ class LocationTournamentController extends Controller
 
 		$locationTournament->load(['participants.user', 'currency']);
 		
-		$usersFromSystem = $location->users()->get()->map(function($user) {
+		$usersFromSystem = $location->users()->get()->map(function($user) use ($location) {
+			$locationUser = $location->locationUsers()->where('user_id', $user->id)->first();
+			$tournamentsCount = 0;
+			if ($locationUser) {
+				$tournamentsCount = $locationUser->tournaments_count;
+			} else {
+				$tournamentsCount = \App\Models\LocationTournamentParticipant::whereHas('tournament', function($query) use ($location) {
+					$query->where('location_id', $location->id);
+				})
+				->where('user_id', $user->id)
+				->count();
+			}
+			
 			return [
-				'id' => $user->pivot->id,
+				'id' => $user->pivot->id ?? $user->id,
 				'user_id' => $user->id,
 				'name' => null,
 				'display_name' => $user->name,
+				'tournaments_count' => $tournamentsCount,
 			];
 		});
 		
@@ -368,6 +381,7 @@ class LocationTournamentController extends Controller
 				'user_id' => null,
 				'name' => $locationUser->name,
 				'display_name' => $locationUser->name,
+				'tournaments_count' => $locationUser->tournaments_count,
 			];
 		});
 		
