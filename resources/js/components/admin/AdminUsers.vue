@@ -55,12 +55,6 @@
 							Email
 						</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-							Баланс
-						</th>
-						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-							Статус
-						</th>
-						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 							Админ
 						</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -83,19 +77,6 @@
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 							{{ user.email }}
-						</td>
-						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-							{{ formatCurrency(user.balance) }}
-						</td>
-						<td class="px-6 py-4 whitespace-nowrap">
-							<span
-								class="px-2 py-1 text-xs font-semibold rounded-full"
-								:class="user.banned_at 
-									? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
-									: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'"
-							>
-								{{ user.banned_at ? 'Забанен' : 'Активен' }}
-							</span>
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap">
 							<span
@@ -150,7 +131,7 @@
 						</td>
 					</tr>
 					<tr v-if="users.data.length === 0">
-						<td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+						<td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
 							Нет пользователей
 						</td>
 					</tr>
