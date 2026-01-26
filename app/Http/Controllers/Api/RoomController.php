@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreRoomRequest;
+use App\Http\Requests\Api\UpdateRoomRequest;
 use App\Models\Room;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
@@ -41,14 +41,9 @@ class RoomController extends Controller
 		return response()->json($room);
 	}
 
-	public function update(Request $request, Room $room): JsonResponse
+	public function update(UpdateRoomRequest $request, Room $room): JsonResponse
 	{
-		$validated = $request->validate([
-			'name' => ['sometimes', 'required', 'string', 'max:255'],
-			'icon' => ['nullable', 'string', 'max:10'],
-		]);
-
-		$room->update($validated);
+		$room->update($request->validated());
 
 		return response()->json($room);
 	}

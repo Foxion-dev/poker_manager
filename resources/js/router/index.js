@@ -41,6 +41,23 @@ const routes = [
 			},
 		],
 	},
+	{
+		path: '/admin',
+		component: () => import('../components/admin/AdminLayout.vue'),
+		meta: { requiresAuth: true },
+		children: [
+			{
+				path: 'rooms',
+				name: 'AdminRooms',
+				component: () => import('../components/admin/AdminRooms.vue'),
+			},
+			{
+				path: 'currencies',
+				name: 'AdminCurrencies',
+				component: () => import('../components/admin/AdminCurrencies.vue'),
+			},
+		],
+	},
 ];
 
 const router = createRouter({

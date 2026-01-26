@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	Route::apiResource('rooms', RoomController::class);
 	Route::apiResource('tournaments', TournamentController::class);
+	Route::apiResource('currencies', CurrencyController::class)->except(['index']);
 	Route::get('currencies', [CurrencyController::class, 'index']);
 
 	Route::prefix('user-rooms')->group(function () {
