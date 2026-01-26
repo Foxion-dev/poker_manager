@@ -1053,7 +1053,18 @@ watch(() => tournamentForm.value.participants.length, () => {
 });
 
 const saveTournament = async () => {
-	const uniqueUserIds = tournamentForm.value.participants
+	const validParticipants = tournamentForm.value.participants.filter(p => {
+		const hasUserId = p.user_id !== null && p.user_id !== undefined && p.user_id !== '';
+		const hasName = p.name && p.name.trim() !== '' && p.name.trim() !== 'Без имени';
+		return hasUserId || hasName;
+	});
+
+	if (validParticipants.length === 0) {
+		alert('Необходимо добавить хотя бы одного участника.');
+		return;
+	}
+
+	const uniqueUserIds = validParticipants
 		.map(p => p.user_id)
 		.filter(id => id !== null && id !== undefined && id !== '');
 	if (new Set(uniqueUserIds).size !== uniqueUserIds.length) {
@@ -1061,20 +1072,9 @@ const saveTournament = async () => {
 		return;
 	}
 
-	const uniquePlaces = new Set(tournamentForm.value.participants.map(p => p.place));
-	if (uniquePlaces.size !== tournamentForm.value.participants.length) {
+	const uniquePlaces = new Set(validParticipants.map(p => p.place));
+	if (uniquePlaces.size !== validParticipants.length) {
 		alert('Места участников должны быть уникальными.');
-		return;
-	}
-
-	const invalidParticipants = tournamentForm.value.participants.filter(p => {
-		const hasUserId = p.user_id !== null && p.user_id !== undefined && p.user_id !== '';
-		const hasName = p.name && p.name.trim() !== '';
-		return !hasUserId && !hasName;
-	});
-
-	if (invalidParticipants.length > 0) {
-		alert('Необходимо указать либо пользователя, либо имя участника для всех участников.');
 		return;
 	}
 
@@ -1082,9 +1082,9 @@ const saveTournament = async () => {
 	try {
 		const data = {
 			...tournamentForm.value,
-			participants: tournamentForm.value.participants.map(p => ({
+			participants: validParticipants.map(p => ({
 				user_id: p.user_id && p.user_id !== '' ? (typeof p.user_id === 'string' ? parseInt(p.user_id) : p.user_id) : null,
-				name: p.name && p.name.trim() !== '' ? p.name.trim() : null,
+				name: p.name && p.name.trim() !== '' && p.name.trim() !== 'Без имени' ? p.name.trim() : null,
 				place: p.place,
 			})).filter(p => p.user_id || p.name),
 		};
@@ -1202,12 +1202,15 @@ const addSelectedUsersAsParticipants = () => {
 			});
 
 			if (!isDuplicate) {
-				tournamentForm.value.participants.push({
-					user_id: locationUser.user_id ? String(locationUser.user_id) : '',
-					name: locationUser.user_id ? '' : (locationUser.display_name || locationUser.name || ''),
-					place: maxPlace + index + 1,
-					prize: null,
-				});
+				const displayName = locationUser.display_name || locationUser.name || '';
+				if (displayName && displayName !== 'Без имени') {
+					tournamentForm.value.participants.push({
+						user_id: locationUser.user_id ? String(locationUser.user_id) : '',
+						name: locationUser.user_id ? '' : displayName,
+						place: maxPlace + index + 1,
+						prize: null,
+					});
+				}
 			}
 		}
 	});
