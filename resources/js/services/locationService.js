@@ -26,8 +26,8 @@ export const locationService = {
 		return response.data;
 	},
 
-	async getTournaments(locationId) {
-		const response = await api.get(`/locations/${locationId}/tournaments`);
+	async getTournaments(locationId, params = {}) {
+		const response = await api.get(`/locations/${locationId}/tournaments`, { params });
 		return response.data;
 	},
 

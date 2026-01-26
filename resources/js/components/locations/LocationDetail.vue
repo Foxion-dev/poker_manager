@@ -928,7 +928,9 @@ const fetchLocation = async (password = null) => {
 			password: '',
 			selected_currencies: location.value.currencies?.map(c => c.id) || [],
 		};
-		await fetchTournaments();
+		const storedPassword = getStoredPassword(route.params.id);
+		const passwordForTournaments = storedPassword || password;
+		await fetchTournaments(passwordForTournaments);
 		await fetchUsers();
 		await fetchCurrencies();
 	} catch (error) {
@@ -944,6 +946,11 @@ const fetchLocation = async (password = null) => {
 };
 
 const submitPassword = async () => {
+	if (!locationPassword.value.trim()) {
+		alert('Введите пароль');
+		return;
+	}
+	
 	checkingPassword.value = true;
 	try {
 		await fetchLocation(locationPassword.value);
@@ -952,6 +959,8 @@ const submitPassword = async () => {
 	} catch (error) {
 		if (error.response?.status === 403) {
 			alert('Неверный пароль');
+			clearPassword(route.params.id);
+			locationPassword.value = '';
 		} else {
 			console.error('Error submitting password:', error);
 			alert('Ошибка при проверке пароля');
@@ -961,9 +970,14 @@ const submitPassword = async () => {
 	}
 };
 
-const fetchTournaments = async () => {
+const fetchTournaments = async (password = null) => {
 	try {
-		tournaments.value = await locationService.getTournaments(route.params.id);
+		if (password) {
+			const params = { password };
+			tournaments.value = await locationService.getTournaments(route.params.id, params);
+		} else {
+			tournaments.value = await locationService.getTournaments(route.params.id);
+		}
 	} catch (error) {
 		console.error('Error fetching tournaments:', error);
 	}
@@ -1400,6 +1414,11 @@ const removeUser = async (userId) => {
 };
 
 onMounted(() => {
-	fetchLocation();
+	const storedPassword = getStoredPassword(route.params.id);
+	if (storedPassword) {
+		fetchLocation(storedPassword);
+	} else {
+		fetchLocation();
+	}
 });
 </script>
