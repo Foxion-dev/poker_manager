@@ -531,11 +531,28 @@
 									step="0.01"
 									min="0"
 									max="100"
-									placeholder="100"
+									placeholder="15"
 									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 								/>
 								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
 									Процент от входов + ребаев, который идет в призовой фонд
+								</p>
+							</div>
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Рейк (%)
+								</label>
+								<input
+									v-model.number="tournamentForm.rake"
+									type="number"
+									step="0.01"
+									min="0"
+									max="100"
+									placeholder="30"
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								/>
+								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+									Процент рейка от призового фонда (отнимается пропорционально)
 								</p>
 							</div>
 						</div>
@@ -1006,6 +1023,7 @@ const openTournamentForm = () => {
 		currency_id: availableCurrencies.value.length === 1 ? availableCurrencies.value[0].id : null,
 		format: 'classic',
 		itm_percentage: 15,
+		rake: 30,
 		participants: [{ user_id: '', name: '', place: 1, prize: null }],
 	};
 	showTournamentForm.value = true;
@@ -1020,6 +1038,7 @@ const editTournament = (tournament) => {
 		currency_id: tournament.currency_id,
 		format: tournament.format,
 		itm_percentage: tournament.itm_percentage ?? 15,
+		rake: tournament.rake ?? 30,
 		participants: tournament.participants.map(p => ({
 			user_id: p.user_id ? String(p.user_id) : '',
 			name: p.name || '',

@@ -22,6 +22,7 @@ class UpdateLocationTournamentRequest extends FormRequest
 			'currency_id' => ['nullable', 'exists:currencies,id'],
 			'format' => ['sometimes', 'required', 'in:classic,classic_bounty,progressive_bounty'],
 			'itm_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+			'rake' => ['nullable', 'numeric', 'min:0', 'max:100'],
 			'date' => ['sometimes', 'required', 'date'],
 			'participants' => ['sometimes', 'array', 'min:1'],
 			'participants.*.name' => ['required_without:participants.*.user_id', 'nullable', 'string', 'max:255'],

@@ -112,7 +112,7 @@
 				<h3 class="text-xl font-bold text-gray-900 dark:text-white">Участники</h3>
 				<button
 					v-if="!tournament.is_finished && location?.is_admin"
-					@click="finishTournament"
+					@click="openFinishModal"
 					class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors"
 				>
 					Завершить турнир
@@ -168,20 +168,6 @@
 								@change="updateParticipant(participant)"
 							/>
 						</div>
-						<div>
-							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-								Приз
-							</label>
-							<input
-								v-model.number="participant.prize"
-								type="number"
-								step="0.01"
-								min="0"
-								class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
-								placeholder="0.00"
-								@change="updateParticipant(participant)"
-							/>
-						</div>
 					</div>
 					<div v-else class="flex items-center space-x-4">
 						<div v-if="participant.rebuy > 0" class="text-sm text-gray-600 dark:text-gray-400">
@@ -199,6 +185,83 @@
 			<div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
 				<span class="text-4xl mb-4 block">📭</span>
 				<p>Нет участников в этом турнире</p>
+			</div>
+		</div>
+
+		<div v-if="showFinishModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+				<div class="p-6">
+					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Завершение турнира</h3>
+					<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+						Выберите победителей и распределите призы согласно расчету
+					</p>
+
+					<div v-if="tournament && tournament.prize_distribution" class="space-y-4 mb-6">
+						<div
+							v-for="(winner, index) in finishForm.winners"
+							:key="winner.place"
+							class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg"
+							:class="index === 0 
+								? 'bg-yellow-50 dark:bg-yellow-900/20' 
+								: index === 1 
+								? 'bg-gray-50 dark:bg-gray-700/50' 
+								: 'bg-orange-50 dark:bg-orange-900/20'"
+						>
+							<div class="flex items-center justify-between mb-3">
+								<div>
+									<h4 class="text-lg font-bold"
+										:class="index === 0 
+											? 'text-yellow-600 dark:text-yellow-400' 
+											: index === 1 
+											? 'text-gray-600 dark:text-gray-400' 
+											: 'text-orange-600 dark:text-orange-400'"
+									>
+										{{ winner.place }} место
+									</h4>
+									<p class="text-sm text-gray-600 dark:text-gray-400">
+										Приз: {{ formatCurrency(winner.prize, tournament.currency) }}
+									</p>
+								</div>
+							</div>
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Выберите участника
+								</label>
+								<select
+									v-model="winner.participant_id"
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								>
+									<option :value="null">Не выбрано</option>
+									<option
+										v-for="participant in tournament.participants.filter(p => {
+											const name = p.display_name || p.name || p.user?.name || '';
+											return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+										})"
+										:key="participant.id"
+										:value="participant.id"
+									>
+										{{ participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник' }}
+									</option>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div class="flex space-x-3">
+						<button
+							@click="finishTournament"
+							class="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors font-medium"
+						>
+							Завершить турнир
+						</button>
+						<button
+							@click="closeFinishModal"
+							class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+						>
+							Отмена
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -220,6 +283,14 @@ const tournament = ref(null);
 const location = ref(null);
 const loading = ref(false);
 const saving = ref(false);
+const showFinishModal = ref(false);
+const finishForm = ref({
+	winners: [
+		{ place: 1, participant_id: null, prize: 0 },
+		{ place: 2, participant_id: null, prize: 0 },
+		{ place: 3, participant_id: null, prize: 0 },
+	],
+});
 
 const locationId = computed(() => route.params.locationId);
 
@@ -281,14 +352,62 @@ const updateParticipant = async (participant) => {
 	}
 };
 
+const showFinishModal = ref(false);
+const finishForm = ref({
+	winners: [
+		{ place: 1, participant_id: null, prize: 0 },
+		{ place: 2, participant_id: null, prize: 0 },
+		{ place: 3, participant_id: null, prize: 0 },
+	],
+});
+
+const openFinishModal = () => {
+	if (!tournament.value || !tournament.value.prize_distribution) return;
+	
+	finishForm.value.winners = tournament.value.prize_distribution.map((prize, index) => ({
+		place: prize.place,
+		participant_id: null,
+		prize: prize.prize,
+	}));
+	
+	showFinishModal.value = true;
+};
+
+const closeFinishModal = () => {
+	showFinishModal.value = false;
+};
+
 const finishTournament = async () => {
-	if (!confirm('Вы уверены, что хотите завершить этот турнир? После завершения редактирование ребаев и аддонов будет недоступно.')) {
+	const validWinners = finishForm.value.winners.filter(w => w.participant_id);
+	if (validWinners.length === 0) {
+		alert('Необходимо выбрать хотя бы одного победителя');
 		return;
 	}
 
 	try {
+		const participantsData = tournament.value.participants.map(p => ({
+			id: p.id,
+			rebuy: p.rebuy ?? 0,
+			addon: p.addon ?? false,
+			prize: null,
+		}));
+
+		validWinners.forEach(winner => {
+			const participant = participantsData.find(p => p.id === winner.participant_id);
+			if (participant) {
+				participant.prize = winner.prize;
+			}
+		});
+
+		await locationService.updateTournamentParticipants(
+			route.params.locationId,
+			route.params.id,
+			{ participants: participantsData }
+		);
+
 		await locationService.finishTournament(route.params.locationId, route.params.id);
 		await fetchTournament();
+		closeFinishModal();
 	} catch (error) {
 		console.error('Error finishing tournament:', error);
 		alert('Ошибка при завершении турнира');

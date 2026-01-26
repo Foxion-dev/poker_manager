@@ -18,6 +18,7 @@ class LocationTournament extends Model
 		'currency_id',
 		'format',
 		'itm_percentage',
+		'rake',
 		'date',
 		'is_finished',
 	];
@@ -27,6 +28,7 @@ class LocationTournament extends Model
 		return [
 			'buyin' => 'decimal:2',
 			'itm_percentage' => 'decimal:2',
+			'rake' => 'decimal:2',
 			'date' => 'date',
 			'is_finished' => 'boolean',
 		];
@@ -69,7 +71,10 @@ class LocationTournament extends Model
 	{
 		$totalBuyin = $this->total_buyin;
 		$itmPercentage = (float) ($this->itm_percentage ?? 15);
-		return round($totalBuyin * ($itmPercentage / 100), 2);
+		$rakePercentage = (float) ($this->rake ?? 30);
+		$prizePoolBeforeRake = $totalBuyin * ($itmPercentage / 100);
+		$rakeAmount = $prizePoolBeforeRake * ($rakePercentage / 100);
+		return round($prizePoolBeforeRake - $rakeAmount, 2);
 	}
 
 	public function getPrizeDistributionAttribute(): array
