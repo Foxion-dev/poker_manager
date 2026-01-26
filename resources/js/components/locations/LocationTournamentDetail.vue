@@ -507,7 +507,7 @@ const openPrizeDistributionModal = () => {
 			return;
 		}
 		
-		const itmPlaces = Math.max(1, Math.min(Math.ceil(itmPlacesFloat), participantsCount));
+		const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
 		
 		prizeDistributionForm.value = [];
 		for (let place = 1; place <= itmPlaces; place++) {
