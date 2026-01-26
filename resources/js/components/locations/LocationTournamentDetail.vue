@@ -62,12 +62,12 @@
 			</div>
 		</div>
 
-		<div v-if="tournament && tournament.prize_distribution && tournament.prize_distribution.length > 0" class="mb-6">
+		<div v-if="tournament && dynamicPrizeDistribution && dynamicPrizeDistribution.length > 0" class="mb-6">
 			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
 				<h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Распределение призов</h3>
 				<div class="space-y-3">
 					<div
-						v-for="(prize, index) in tournament.prize_distribution"
+						v-for="(prize, index) in dynamicPrizeDistribution"
 						:key="prize.place"
 						class="flex items-center justify-between p-4 rounded-lg"
 						:class="index === 0 
@@ -296,10 +296,10 @@
 						Выберите участников в порядке призовых мест (первый выбранный - последнее призовое место, последний - 1 место)
 					</p>
 
-					<div v-if="tournament && tournament.prize_distribution" class="mb-6">
-						<div class="grid gap-4 mb-6" :class="`grid-cols-${Math.min(tournament.prize_distribution.length, 5)}`">
+					<div v-if="tournament && dynamicPrizeDistribution && dynamicPrizeDistribution.length > 0" class="mb-6">
+						<div class="grid gap-4 mb-6" :class="`grid-cols-${Math.min(dynamicPrizeDistribution.length, 5)}`">
 							<div
-								v-for="(prize, index) in tournament.prize_distribution"
+								v-for="(prize, index) in dynamicPrizeDistribution"
 								:key="prize.place"
 								class="p-4 rounded-lg text-center"
 								:class="index === tournament.prize_distribution.length - 1
@@ -469,8 +469,21 @@
 						>
 							Пересчитать автоматически
 						</button>
+						<div class="flex items-center space-x-2">
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input
+									v-model="isFixedPrizeDistribution"
+									type="checkbox"
+									class="sr-only peer"
+								/>
+								<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+								<span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+									Зафиксировать
+								</span>
+							</label>
+						</div>
 						<button
-							v-if="tournament?.prize_distribution && Array.isArray(tournament.prize_distribution) && tournament.prize_distribution.length > 0 && tournament.prize_distribution[0].hasOwnProperty('percentage')"
+							v-if="hasFixedPrizeDistribution"
 							@click="clearPrizeDistribution"
 							class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
 						>
@@ -748,6 +761,9 @@ const updateParticipant = async (participant) => {
 			if (response && response.prize_pool !== undefined) {
 				tournament.value.prize_pool = response.prize_pool;
 			}
+			if (response && response.prize_distribution !== undefined) {
+				tournament.value.prize_distribution = response.prize_distribution;
+			}
 		}
 	} catch (error) {
 		console.error('Error updating participant:', error);
@@ -764,12 +780,15 @@ const showFinishModal = ref(false);
 const showPrizeDistributionModal = ref(false);
 const selectedWinners = ref([]);
 const prizeDistributionForm = ref([]);
+const isFixedPrizeDistribution = ref(false);
 
 const openPrizeDistributionModal = () => {
 	if (!tournament.value) return;
 	
 	const customDistribution = tournament.value.prize_distribution;
 	const hasCustomDistribution = customDistribution && Array.isArray(customDistribution) && customDistribution.length > 0 && customDistribution[0].hasOwnProperty('percentage');
+	
+	isFixedPrizeDistribution.value = hasCustomDistribution;
 	
 	if (hasCustomDistribution) {
 		prizeDistributionForm.value = customDistribution.map(p => ({
@@ -869,6 +888,15 @@ const resetPrizeDistribution = () => {
 };
 
 const savePrizeDistribution = async () => {
+	if (!isFixedPrizeDistribution.value) {
+		await locationService.updateTournament(route.params.locationId, route.params.id, {
+			prize_distribution: null,
+		});
+		await fetchTournament();
+		showPrizeDistributionModal.value = false;
+		return;
+	}
+	
 	const totalPercentage = prizeDistributionForm.value.reduce((sum, p) => sum + (parseFloat(p.percentage) || 0), 0);
 	if (Math.abs(totalPercentage - 100) > 0.01) {
 		alert(`Сумма процентов должна быть равна 100%. Текущая сумма: ${totalPercentage.toFixed(2)}%`);
@@ -925,9 +953,87 @@ const openFinishModal = () => {
 	showFinishModal.value = true;
 };
 
+const hasFixedPrizeDistribution = computed(() => {
+	if (!tournament.value) return false;
+	const customDistribution = tournament.value.prize_distribution;
+	return customDistribution && Array.isArray(customDistribution) && customDistribution.length > 0 && customDistribution[0].hasOwnProperty('percentage');
+});
+
+const dynamicPrizeDistribution = computed(() => {
+	if (!tournament.value) return [];
+	
+	if (hasFixedPrizeDistribution.value) {
+		return tournament.value.prize_distribution;
+	}
+	
+	const prizePool = tournament.value.prize_pool || 0;
+	if (prizePool <= 0) {
+		return [];
+	}
+	
+	const validParticipants = tournament.value.participants?.filter(p => {
+		const name = p.display_name || p.name || p.user?.name || '';
+		return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+	}) || [];
+	
+	const participantsCount = validParticipants.length;
+	if (participantsCount === 0) {
+		return [];
+	}
+	
+	const itmPercentage = tournament.value.itm_percentage || 15;
+	const itmPlacesFloat = participantsCount * (itmPercentage / 100);
+	
+	if (itmPlacesFloat < 0.5) {
+		return [];
+	}
+	
+	const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
+	
+	if (itmPlaces === 0 || itmPlaces > participantsCount) {
+		return [];
+	}
+	
+	const prizes = [];
+	let totalPercentage = 0;
+	
+	for (let place = 1; place <= itmPlaces; place++) {
+		let percentage = 0;
+		if (itmPlaces === 1) {
+			percentage = 100;
+		} else if (itmPlaces === 2) {
+			percentage = place === 1 ? 60 : 40;
+		} else if (itmPlaces === 3) {
+			percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
+		} else {
+			if (place === 1) percentage = 50;
+			else if (place === 2) percentage = 25;
+			else if (place === 3) percentage = 12.5;
+			else percentage = 12.5 / (itmPlaces - 3);
+		}
+		
+		totalPercentage += percentage;
+		const prizeAmount = Math.round((prizePool * (percentage / 100)) / 5) * 5;
+		
+		prizes.push({
+			place: place,
+			percentage: percentage,
+			prize: prizeAmount,
+		});
+	}
+	
+	if (totalPercentage < 100 && prizes.length > 0) {
+		const diff = 100 - totalPercentage;
+		prizes[0].percentage += diff;
+		prizes[0].prize = Math.round((prizePool * (prizes[0].percentage / 100)) / 5) * 5;
+	}
+	
+	return prizes;
+});
+
 const maxPrizePlaces = computed(() => {
-	if (!tournament.value || !tournament.value.prize_distribution) return 0;
-	return tournament.value.prize_distribution.length;
+	if (!dynamicPrizeDistribution.value || dynamicPrizeDistribution.value.length === 0) return 0;
+	return dynamicPrizeDistribution.value.length;
 });
 
 const toggleWinner = (participantId) => {
@@ -948,8 +1054,8 @@ const getWinnerPlace = (participantId) => {
 };
 
 const getWinnerPrize = (place) => {
-	if (!tournament.value || !tournament.value.prize_distribution) return 0;
-	const prizeInfo = tournament.value.prize_distribution.find(p => p.place === place);
+	if (!dynamicPrizeDistribution.value || dynamicPrizeDistribution.value.length === 0) return 0;
+	const prizeInfo = dynamicPrizeDistribution.value.find(p => p.place === place);
 	return prizeInfo ? prizeInfo.prize : 0;
 };
 

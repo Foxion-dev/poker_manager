@@ -231,6 +231,7 @@ class LocationTournamentController extends Controller
 			'participants' => $locationTournament->participants,
 			'total_buyin' => $locationTournament->total_buyin,
 			'prize_pool' => $locationTournament->prize_pool,
+			'prize_distribution' => $locationTournament->prize_distribution,
 		]);
 	}
 
