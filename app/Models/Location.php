@@ -61,6 +61,12 @@ class Location extends Model
 		return $this->hasMany(LocationUser::class);
 	}
 
+	public function currencies(): BelongsToMany
+	{
+		return $this->belongsToMany(\App\Models\Currency::class, 'location_currencies')
+			->withTimestamps();
+	}
+
 	public function isAdmin(User $user): bool
 	{
 		return $this->user_id === $user->id || $this->admins()->where('user_id', $user->id)->exists();

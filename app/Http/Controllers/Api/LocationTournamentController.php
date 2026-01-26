@@ -21,7 +21,7 @@ class LocationTournamentController extends Controller
 		}
 
 		$tournaments = $location->tournaments()
-			->with('participants.user')
+			->with(['participants.user', 'currency'])
 			->orderBy('date', 'desc')
 			->get()
 			->map(function ($tournament) {
@@ -29,6 +29,8 @@ class LocationTournamentController extends Controller
 					'id' => $tournament->id,
 					'name' => $tournament->name,
 					'buyin' => $tournament->buyin,
+					'currency_id' => $tournament->currency_id,
+					'currency' => $tournament->currency,
 					'format' => $tournament->format,
 					'format_label' => $tournament->format_label,
 					'date' => $tournament->date->format('Y-m-d'),
@@ -160,7 +162,7 @@ class LocationTournamentController extends Controller
 
 		$limit = $request->get('limit', 10);
 		$tournaments = $location->tournaments()
-			->with('participants.user')
+			->with(['participants.user', 'currency'])
 			->orderBy('date', 'desc')
 			->limit($limit)
 			->get()
@@ -169,18 +171,23 @@ class LocationTournamentController extends Controller
 					'id' => $tournament->id,
 					'name' => $tournament->name,
 					'buyin' => $tournament->buyin,
+					'currency_id' => $tournament->currency_id,
+					'currency' => $tournament->currency,
 					'format' => $tournament->format,
 					'format_label' => $tournament->format_label,
 					'date' => $tournament->date->format('Y-m-d'),
 					'participants' => $tournament->participants->map(function ($participant) {
 						return [
 							'id' => $participant->id,
-							'user' => [
+							'name' => $participant->name,
+							'user_id' => $participant->user_id,
+							'user' => $participant->user ? [
 								'id' => $participant->user->id,
 								'name' => $participant->user->name,
-							],
+							] : null,
 							'place' => $participant->place,
 							'prize' => $participant->prize,
+							'display_name' => $participant->display_name,
 						];
 					})->sortBy('place')->values(),
 				];

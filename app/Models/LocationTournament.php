@@ -15,6 +15,7 @@ class LocationTournament extends Model
 		'location_id',
 		'name',
 		'buyin',
+		'currency_id',
 		'format',
 		'date',
 	];
@@ -35,6 +36,11 @@ class LocationTournament extends Model
 	public function participants(): HasMany
 	{
 		return $this->hasMany(LocationTournamentParticipant::class);
+	}
+
+	public function currency(): BelongsTo
+	{
+		return $this->belongsTo(\App\Models\Currency::class);
 	}
 
 	public function getFormatLabelAttribute(): string

@@ -384,6 +384,34 @@
 							</p>
 						</div>
 
+						<div>
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								Доступные валюты для турниров
+							</label>
+							<div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50 max-h-48 overflow-y-auto">
+								<div class="space-y-2">
+									<label
+										v-for="currency in allCurrencies"
+										:key="currency.id"
+										class="flex items-center space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg cursor-pointer transition-colors"
+									>
+										<input
+											type="checkbox"
+											:value="currency.id"
+											v-model="locationForm.selected_currencies"
+											class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+										/>
+										<span class="text-sm font-medium text-gray-900 dark:text-white">
+											{{ currency.symbol }} {{ currency.name }} ({{ currency.code }})
+										</span>
+									</label>
+								</div>
+							</div>
+							<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+								Выберите валюты, которые будут доступны при создании турниров в этой локации
+							</p>
+						</div>
+
 						<div class="flex justify-end space-x-3 pt-4">
 							<button
 								type="button"
@@ -783,6 +811,7 @@ const { user: currentUser } = storeToRefs(authStore);
 const location = ref(null);
 const tournaments = ref([]);
 const allUsers = ref([]);
+const allCurrencies = ref([]);
 const selectedLocationUsers = ref([]);
 const newParticipantName = ref('');
 const addingNewUser = ref(false);
@@ -808,12 +837,14 @@ const locationForm = ref({
 	description: '',
 	is_public: false,
 	password: '',
+	selected_currencies: [],
 });
 
 const tournamentForm = ref({
 	name: '',
 	date: '',
 	buyin: 0,
+	currency_id: null,
 	format: 'classic',
 	participants: [{ user_id: '', name: '', place: 1, prize: null }],
 });
@@ -828,9 +859,11 @@ const fetchLocation = async (password = null) => {
 			description: location.value.description || '',
 			is_public: location.value.is_public,
 			password: '',
+			selected_currencies: location.value.currencies?.map(c => c.id) || [],
 		};
 		await fetchTournaments();
 		await fetchUsers();
+		await fetchCurrencies();
 	} catch (error) {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
 			showPasswordForm.value = true;
@@ -890,10 +923,15 @@ const saveLocation = async () => {
 	savingLocation.value = true;
 	try {
 		const data = { ...locationForm.value };
+		const currencyIds = data.selected_currencies || [];
+		delete data.selected_currencies;
+
 		if (!data.password) {
 			delete data.password;
 		}
+
 		await locationService.update(route.params.id, data);
+		await locationService.syncCurrencies(route.params.id, { currency_ids: currencyIds });
 		closeLocationForm();
 		await fetchLocation();
 	} catch (error) {
@@ -924,6 +962,7 @@ const openTournamentForm = () => {
 		name: '',
 		date: '',
 		buyin: 0,
+		currency_id: null,
 		format: 'classic',
 		participants: [{ user_id: '', name: '', place: 1, prize: null }],
 	};
@@ -1129,6 +1168,22 @@ const getParticipantDisplayName = (participant) => {
 	}
 	return participant.name || 'Без имени';
 };
+
+const fetchCurrencies = async () => {
+	try {
+		const response = await api.get('/currencies');
+		allCurrencies.value = response.data || [];
+	} catch (error) {
+		console.error('Error fetching currencies:', error);
+	}
+};
+
+const availableCurrencies = computed(() => {
+	if (!location.value || !location.value.currencies || !location.value.currencies.length) {
+		return allCurrencies.value;
+	}
+	return location.value.currencies;
+});
 
 const addAdmin = async () => {
 	if (!newAdminUserId.value) return;

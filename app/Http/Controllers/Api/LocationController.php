@@ -75,7 +75,7 @@ class LocationController extends Controller
 			}
 		}
 
-		$location->load(['user', 'admins', 'users', 'locationUsers']);
+		$location->load(['user', 'admins', 'users', 'locationUsers', 'currencies']);
 		$location->loadCount('tournaments');
 
 		$usersFromSystem = $location->users->map(function ($user) {
@@ -110,6 +110,7 @@ class LocationController extends Controller
 			'can_manage_admins' => $location->canManageAdmins($user),
 			'admins' => $location->admins,
 			'users' => $allLocationUsers->values(),
+			'currencies' => $location->currencies,
 			'tournaments_count' => $location->tournaments_count,
 			'average_buyin' => $location->average_buyin,
 			'top_players_by_wins' => $location->top_players_by_wins,
@@ -238,6 +239,21 @@ class LocationController extends Controller
 		}
 
 		return response()->json(['message' => 'User removed successfully']);
+	}
+
+	public function syncCurrencies(Location $location, Request $request): JsonResponse
+	{
+		$user = $request->user();
+
+		if (!$location->canManageAdmins($user)) {
+			return response()->json(['message' => 'Unauthorized'], 403);
+		}
+
+		$currencyIds = $request->input('currency_ids', []);
+
+		$location->currencies()->sync($currencyIds);
+
+		return response()->json(['message' => 'Currencies updated successfully']);
 	}
 
 	public function publicShow(Location $location, Request $request): JsonResponse

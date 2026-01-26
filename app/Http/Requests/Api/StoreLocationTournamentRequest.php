@@ -19,6 +19,7 @@ class StoreLocationTournamentRequest extends FormRequest
 		return [
 			'name' => ['required', 'string', 'max:255'],
 			'buyin' => ['required', 'numeric', 'min:0'],
+			'currency_id' => ['nullable', 'exists:currencies,id'],
 			'format' => ['required', 'in:classic,classic_bounty,progressive_bounty'],
 			'date' => ['required', 'date'],
 			'participants' => ['required', 'array', 'min:1'],

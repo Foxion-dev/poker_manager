@@ -19,6 +19,7 @@ class UpdateLocationTournamentRequest extends FormRequest
 		return [
 			'name' => ['sometimes', 'required', 'string', 'max:255'],
 			'buyin' => ['sometimes', 'required', 'numeric', 'min:0'],
+			'currency_id' => ['nullable', 'exists:currencies,id'],
 			'format' => ['sometimes', 'required', 'in:classic,classic_bounty,progressive_bounty'],
 			'date' => ['sometimes', 'required', 'date'],
 			'participants' => ['sometimes', 'array', 'min:1'],

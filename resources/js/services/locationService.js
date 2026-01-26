@@ -85,4 +85,9 @@ export const locationService = {
 		const response = await api.get(`/public/locations/${locationId}/tournaments`, { params });
 		return response.data;
 	},
+
+	async syncCurrencies(locationId, data) {
+		const response = await api.post(`/locations/${locationId}/currencies`, data);
+		return response.data;
+	},
 };
