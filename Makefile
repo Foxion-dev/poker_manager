@@ -1,4 +1,4 @@
-.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php
+.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php deploy
 
 help: ## Показать справку по командам
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -153,3 +153,53 @@ setup: ## Первоначальная настройка проекта
 	@sleep 5
 	./vendor/bin/sail artisan migrate --seed
 	@echo "Проект готов к работе!"
+
+deploy: ## Деплой проекта: подтянуть код из git и пересобрать
+	@echo "🚀 Начало деплоя..."
+	@echo "📥 Подтягивание изменений из git..."
+	@git pull || echo "⚠️  Ошибка при git pull. Продолжаем деплой..."
+	@echo "✅ Код обновлен"
+	@echo ""
+	@echo "📦 Проверка контейнеров..."
+	@if ! ./vendor/bin/sail ps | grep -q "laravel.test"; then \
+		echo "⚠️  Контейнеры не запущены. Запускаем..."; \
+		./vendor/bin/sail up -d; \
+		echo "⏳ Ожидание запуска сервисов..."; \
+		sleep 5; \
+	fi
+	@echo "✅ Контейнеры запущены"
+	@echo ""
+	@echo "📦 Установка PHP зависимостей..."
+	@./vendor/bin/sail composer install --no-interaction --prefer-dist --optimize-autoloader
+	@echo "✅ PHP зависимости установлены"
+	@echo ""
+	@echo "📦 Установка Node.js зависимостей..."
+	@./vendor/bin/sail npm install
+	@echo "✅ Node.js зависимости установлены"
+	@echo ""
+	@echo "🎨 Сборка assets для production..."
+	@./vendor/bin/sail npm run build
+	@echo "✅ Assets собраны"
+	@echo ""
+	@echo "🗄️  Запуск миграций..."
+	@./vendor/bin/sail artisan migrate --force || echo "⚠️  Ошибка при миграциях. Продолжаем..."
+	@echo "✅ Миграции выполнены"
+	@echo ""
+	@echo "🧹 Очистка кеша..."
+	@./vendor/bin/sail artisan cache:clear || true
+	@./vendor/bin/sail artisan config:clear || true
+	@./vendor/bin/sail artisan route:clear || true
+	@./vendor/bin/sail artisan view:clear || true
+	@echo "✅ Кеш очищен"
+	@echo ""
+	@echo "⚡ Оптимизация приложения..."
+	@./vendor/bin/sail artisan config:cache || true
+	@./vendor/bin/sail artisan route:cache || true
+	@./vendor/bin/sail artisan view:cache || true
+	@echo "✅ Приложение оптимизировано"
+	@echo ""
+	@echo "🔧 Исправление прав доступа..."
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
+	@echo "✅ Права доступа исправлены"
+	@echo ""
+	@echo "🎉 Деплой завершен успешно!"

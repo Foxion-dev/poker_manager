@@ -579,72 +579,72 @@
 								Участники *
 							</label>
 							<div class="mb-4">
-								<div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50 max-h-64 overflow-y-auto">
+								<div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 max-h-64 overflow-y-auto">
 									<div class="space-y-2">
 										<label
 											v-for="locationUser in locationUsers"
 											:key="locationUser.id || locationUser.user_id"
-											class="flex items-center space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg cursor-pointer transition-colors"
+											class="flex items-center space-x-2 sm:space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg cursor-pointer transition-colors"
 										>
 											<input
 												type="checkbox"
 												:value="locationUser.user_id || locationUser.id"
 												v-model="selectedLocationUsers"
-												class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+												class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 flex-shrink-0"
 											/>
-											<div class="flex-1 flex items-center">
-												<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
+											<div class="flex-1 flex items-center min-w-0">
+												<div class="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm mr-2 sm:mr-3 flex-shrink-0">
 													{{ (locationUser.display_name || locationUser.name)?.charAt(0).toUpperCase() }}
 												</div>
-												<span class="text-sm font-medium text-gray-900 dark:text-white">
+												<span class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
 													{{ locationUser.display_name || locationUser.name }}
 												</span>
 											</div>
 										</label>
 									</div>
 								</div>
-								<div class="mt-3 flex items-center space-x-2">
+								<div class="mt-3 flex flex-wrap items-center gap-2">
 									<button
 										type="button"
 										@click="selectAllLocationUsers"
-										class="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+										class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
 									>
 										Выбрать всех
 									</button>
 									<button
 										type="button"
 										@click="clearSelectedUsers"
-										class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+										class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
 									>
 										Очистить
 									</button>
 									<button
 										type="button"
 										@click="addSelectedUsersAsParticipants"
-										class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors"
+										class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors w-full sm:w-auto"
 									>
 										Добавить выбранных
 									</button>
 								</div>
 							</div>
 
-							<div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<div class="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+								<label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 									Добавить нового пользователя в локацию и турнир
 								</label>
-								<div class="flex items-center space-x-2">
+								<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
 									<input
 										v-model="newParticipantName"
 										type="text"
 										placeholder="Введите имя нового пользователя"
-										class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+										class="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 										@keyup.enter="addNewUserToLocationAndTournament"
 									/>
 									<button
 										type="button"
 										@click="addNewUserToLocationAndTournament"
 										:disabled="!newParticipantName || addingNewUser"
-										class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-colors"
+										class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-colors w-full sm:w-auto"
 									>
 										{{ addingNewUser ? 'Добавление...' : 'Добавить' }}
 									</button>
@@ -655,7 +655,7 @@
 								const name = getParticipantDisplayName(p);
 								return name && name !== 'Без имени';
 							}).length > 0" class="space-y-2">
-								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								<label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 									Выбранные участники ({{ tournamentForm.participants.filter(p => {
 										const name = getParticipantDisplayName(p);
 										return name && name !== 'Без имени';
@@ -667,9 +667,9 @@
 										return name && name !== 'Без имени';
 									})"
 									:key="index"
-									class="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+									class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
 								>
-									<span class="flex-1 text-sm font-medium text-gray-900 dark:text-white">
+									<span class="flex-1 text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
 										{{ getParticipantDisplayName(participant) }}
 									</span>
 									<input
@@ -678,12 +678,12 @@
 										min="1"
 										required
 										placeholder="Место"
-										class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm"
+										class="w-full sm:w-24 px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 									/>
 									<button
 										type="button"
 										@click="removeParticipant(index)"
-										class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+										class="px-3 py-2 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors w-full sm:w-auto"
 									>
 										Удалить
 									</button>
@@ -722,26 +722,26 @@
 					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Управление админами</h3>
 
 					<div v-if="location?.admins && location.admins.length > 0" class="mb-6">
-						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Текущие админы:</h4>
+						<h4 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Текущие админы:</h4>
 						<div class="space-y-2">
 							<div
 								v-for="admin in location.admins"
 								:key="admin.id"
-								class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+								class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
 							>
-								<div class="flex items-center">
-									<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
+								<div class="flex items-center min-w-0 flex-1">
+									<div class="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm mr-2 sm:mr-3 flex-shrink-0">
 										{{ admin.name?.charAt(0).toUpperCase() }}
 									</div>
-									<span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.name }}</span>
-									<span v-if="admin.id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+									<span class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">{{ admin.name }}</span>
+									<span v-if="admin.id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap">
 										Создатель
 									</span>
 								</div>
 								<button
 									v-if="admin.id !== location.user_id"
 									@click="removeAdmin(admin.id)"
-									class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+									class="px-3 py-1 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors w-full sm:w-auto"
 								>
 									Удалить
 								</button>
@@ -750,11 +750,11 @@
 					</div>
 
 					<div>
-						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Добавить админа:</h4>
-						<div class="flex items-center space-x-2">
+						<h4 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Добавить админа:</h4>
+						<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
 							<select
 								v-model="newAdminUserId"
-								class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								class="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 							>
 								<option value="">Выберите пользователя</option>
 								<option v-for="user in availableUsers" :key="user.id" :value="user.id">
@@ -764,7 +764,7 @@
 							<button
 								@click="addAdmin"
 								:disabled="!newAdminUserId || addingAdmin"
-								class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
+								class="px-4 sm:px-6 py-2 text-xs sm:text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors w-full sm:w-auto"
 							>
 								{{ addingAdmin ? 'Добавление...' : 'Добавить' }}
 							</button>
@@ -793,29 +793,31 @@
 					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Управление пользователями</h3>
 
 					<div v-if="location?.users && location.users.length > 0" class="mb-6">
-						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Текущие пользователи:</h4>
+						<h4 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Текущие пользователи:</h4>
 						<div class="space-y-2">
 							<div
 								v-for="locationUser in location.users"
 								:key="locationUser.id"
-								class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+								class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
 							>
-								<div class="flex items-center">
-									<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
+								<div class="flex items-center min-w-0 flex-1">
+									<div class="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm mr-2 sm:mr-3 flex-shrink-0">
 										{{ (locationUser.display_name || locationUser.name)?.charAt(0).toUpperCase() }}
 									</div>
-									<span class="text-sm font-medium text-gray-900 dark:text-white">{{ locationUser.display_name || locationUser.name }}</span>
-									<span v-if="locationUser.user_id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-										Создатель
-									</span>
-									<span v-else-if="location.admins?.some(a => a.id === locationUser.user_id)" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-										Админ
-									</span>
+									<span class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">{{ locationUser.display_name || locationUser.name }}</span>
+									<div class="flex flex-wrap items-center gap-1 sm:gap-2 ml-2">
+										<span v-if="locationUser.user_id === location.user_id" class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap">
+											Создатель
+										</span>
+										<span v-else-if="location.admins?.some(a => a.id === locationUser.user_id)" class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 whitespace-nowrap">
+											Админ
+										</span>
+									</div>
 								</div>
 								<button
 									v-if="locationUser.user_id !== location.user_id && !location.admins?.some(a => a.id === locationUser.user_id)"
 									@click="removeUser(locationUser.id)"
-									class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+									class="px-3 py-1 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors w-full sm:w-auto"
 								>
 									Удалить
 								</button>

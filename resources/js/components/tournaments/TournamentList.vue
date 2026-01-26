@@ -1,24 +1,24 @@
 <template>
 	<div>
-		<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+		<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 space-y-4 sm:space-y-0">
 			<div>
-				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">Турниры</h2>
-				<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+				<h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Турниры</h2>
+				<p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
 					Управление вашими турнирами
 				</p>
 			</div>
 			<router-link
 				to="/tournaments/create"
-				class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105"
+				class="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent rounded-lg shadow-sm text-xs sm:text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105 w-full sm:w-auto"
 			>
 				<span class="mr-2">➕</span>
 				Добавить турнир
 			</router-link>
 		</div>
 
-		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-100 dark:border-gray-700">
+		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-6 border border-gray-100 dark:border-gray-700">
 			<div class="space-y-4">
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 					<div>
 						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 							<span class="mr-2">📅</span>
@@ -70,7 +70,7 @@
 						/>
 					</div>
 				</div>
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 					<div>
 						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 							<span class="mr-2">💰</span>
@@ -128,16 +128,16 @@
 						</select>
 					</div>
 				</div>
-				<div class="flex gap-2">
+				<div class="flex flex-wrap gap-2">
 					<button
 						@click="applyTodayFilter"
-						class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+						class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
 					>
 						Сегодня
 					</button>
 					<button
 						@click="clearFilter"
-						class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+						class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
 					>
 						Сбросить
 					</button>
@@ -155,17 +155,17 @@
 			</div>
 		</div>
 
-		<div v-else-if="tournaments.length === 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center border border-gray-100 dark:border-gray-700">
-			<span class="text-6xl mb-4 block">🎰</span>
-			<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+		<div v-else-if="tournaments.length === 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 sm:p-12 text-center border border-gray-100 dark:border-gray-700">
+			<span class="text-4xl sm:text-6xl mb-4 block">🎰</span>
+			<h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
 				Нет турниров
 			</h3>
-			<p class="text-gray-600 dark:text-gray-400 mb-6">
+			<p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
 				Начните отслеживать свой прогресс, добавив первый турнир
 			</p>
 			<router-link
 				to="/tournaments/create"
-				class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200"
+				class="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent rounded-lg shadow-sm text-xs sm:text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 w-full sm:w-auto"
 			>
 				Добавить турнир
 			</router-link>
@@ -176,26 +176,26 @@
 				<div
 					v-for="tournament in tournaments"
 					:key="tournament.id"
-					class="px-6 py-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+					class="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
 				>
-					<div class="flex items-center justify-between">
-						<div class="flex items-center space-x-4 flex-1">
+					<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+						<div class="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0 w-full sm:w-auto">
 							<div class="flex-shrink-0">
-								<div v-if="tournament.room?.image" class="h-14 w-14 rounded-xl overflow-hidden shadow-md">
+								<div v-if="tournament.room?.image" class="h-12 w-12 sm:h-14 sm:w-14 rounded-xl overflow-hidden shadow-md">
 									<img :src="getRoomImageUrl(tournament.room.image)" :alt="tournament.room.name" class="h-full w-full object-cover" />
 								</div>
-								<div v-else class="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
-									<span class="text-2xl">{{ tournament.room?.icon || '🎰' }}</span>
+								<div v-else class="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
+									<span class="text-xl sm:text-2xl">{{ tournament.room?.icon || '🎰' }}</span>
 								</div>
 							</div>
 							<div class="flex-1 min-w-0">
-								<div class="flex items-center space-x-3">
-									<p class="text-lg font-semibold text-gray-900 dark:text-white">
+								<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+									<p class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
 										{{ tournament.room?.name }}
 									</p>
 									<span
 										v-if="tournament.place"
-										class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+										class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium self-start sm:self-auto"
 										:class="tournament.place <= 3 
 											? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
 											: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'"
@@ -203,7 +203,7 @@
 										{{ tournament.place }} место
 									</span>
 								</div>
-								<div class="mt-1 flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+								<div class="mt-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
 									<span class="flex items-center">
 										<span class="mr-1">📅</span>
 										{{ formatDate(tournament.date) }}
@@ -219,15 +219,15 @@
 								</div>
 							</div>
 						</div>
-						<div class="flex items-center space-x-6 ml-4">
-							<div class="text-right">
+						<div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 sm:gap-6 sm:ml-4 w-full sm:w-auto">
+							<div class="text-left sm:text-right w-full sm:w-auto">
 								<div
 									v-if="tournament.cashout"
-									class="text-lg font-bold text-green-600 dark:text-green-400"
+									class="text-base sm:text-lg font-bold text-green-600 dark:text-green-400"
 								>
 									{{ formatCashout(tournament) }}
 								</div>
-								<div v-else class="text-sm font-medium text-gray-500 dark:text-gray-400">
+								<div v-else class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
 									Не в деньгах
 								</div>
 								<div
@@ -239,10 +239,11 @@
 							</div>
 							<router-link
 								:to="`/tournaments/${tournament.id}/edit`"
-								class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+								class="inline-flex items-center justify-center px-4 py-2 text-xs sm:text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors w-full sm:w-auto"
 							>
 								<span class="mr-1">✏️</span>
-								Редактировать
+								<span class="hidden sm:inline">Редактировать</span>
+								<span class="sm:hidden">Редакт.</span>
 							</router-link>
 						</div>
 					</div>

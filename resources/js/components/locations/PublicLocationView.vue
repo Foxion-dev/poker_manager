@@ -113,96 +113,144 @@
 					</div>
 				</div>
 
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-					<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
-						<div class="flex items-center mb-6">
-							<div class="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3">
-								<span class="text-xl">🏆</span>
+				<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+					<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-gray-700">
+						<div class="flex items-center mb-4 sm:mb-6">
+							<div class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-2 sm:mr-3">
+								<span class="text-lg sm:text-xl">🏆</span>
 							</div>
-							<h3 class="text-xl font-bold text-gray-900 dark:text-white">
+							<h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
 								Лучшие игроки по победам
 							</h3>
 						</div>
-						<div class="overflow-x-auto">
+						<div class="hidden md:block overflow-x-auto">
 							<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
 								<thead class="bg-gray-50 dark:bg-gray-700">
 									<tr>
-										<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+										<th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 											Место
 										</th>
-										<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+										<th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 											Игрок
 										</th>
-										<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+										<th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 											Победы
 										</th>
 									</tr>
 								</thead>
 								<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
 									<tr v-for="(player, index) in location.top_players_by_wins" :key="player.user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-										<td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
+										<td class="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
 											{{ index + 1 }}
 										</td>
-										<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+										<td class="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
 											{{ player.user.name }}
 										</td>
-										<td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-yellow-600 dark:text-yellow-400">
+										<td class="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-yellow-600 dark:text-yellow-400">
 											{{ player.wins }}
 										</td>
 									</tr>
 									<tr v-if="location.top_players_by_wins.length === 0">
-										<td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+										<td colspan="3" class="px-4 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
 											Нет данных
 										</td>
 									</tr>
 								</tbody>
 							</table>
 						</div>
+						<div class="md:hidden space-y-2">
+							<div
+								v-for="(player, index) in location.top_players_by_wins"
+								:key="player.user.id"
+								class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+							>
+								<div class="flex items-center space-x-3 flex-1 min-w-0">
+									<div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+										{{ index + 1 }}
+									</div>
+									<span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+										{{ player.user.name }}
+									</span>
+								</div>
+								<div class="flex-shrink-0 ml-3">
+									<span class="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+										{{ player.wins }}
+									</span>
+								</div>
+							</div>
+							<div v-if="location.top_players_by_wins.length === 0" class="p-3 text-center text-sm text-gray-500 dark:text-gray-400">
+								Нет данных
+							</div>
+						</div>
 					</div>
 
-					<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
-						<div class="flex items-center mb-6">
-							<div class="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3">
-								<span class="text-xl">💵</span>
+					<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-gray-700">
+						<div class="flex items-center mb-4 sm:mb-6">
+							<div class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-2 sm:mr-3">
+								<span class="text-lg sm:text-xl">💵</span>
 							</div>
-							<h3 class="text-xl font-bold text-gray-900 dark:text-white">
+							<h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
 								Лучшие игроки по выигрышу
 							</h3>
 						</div>
-						<div class="overflow-x-auto">
+						<div class="hidden md:block overflow-x-auto">
 							<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
 								<thead class="bg-gray-50 dark:bg-gray-700">
 									<tr>
-										<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+										<th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 											Место
 										</th>
-										<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+										<th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 											Игрок
 										</th>
-										<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+										<th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 											Выигрыш
 										</th>
 									</tr>
 								</thead>
 								<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
 									<tr v-for="(player, index) in location.top_players_by_prize" :key="player.user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-										<td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
+										<td class="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
 											{{ index + 1 }}
 										</td>
-										<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+										<td class="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
 											{{ player.user.name }}
 										</td>
-										<td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 dark:text-green-400">
+										<td class="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-green-600 dark:text-green-400">
 											{{ formatCurrency(player.total_prize) }}
 										</td>
 									</tr>
 									<tr v-if="location.top_players_by_prize.length === 0">
-										<td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+										<td colspan="3" class="px-4 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
 											Нет данных
 										</td>
 									</tr>
 								</tbody>
 							</table>
+						</div>
+						<div class="md:hidden space-y-2">
+							<div
+								v-for="(player, index) in location.top_players_by_prize"
+								:key="player.user.id"
+								class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+							>
+								<div class="flex items-center space-x-3 flex-1 min-w-0">
+									<div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+										{{ index + 1 }}
+									</div>
+									<span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+										{{ player.user.name }}
+									</span>
+								</div>
+								<div class="flex-shrink-0 ml-3">
+									<span class="text-sm font-bold text-green-600 dark:text-green-400">
+										{{ formatCurrency(player.total_prize) }}
+									</span>
+								</div>
+							</div>
+							<div v-if="location.top_players_by_prize.length === 0" class="p-3 text-center text-sm text-gray-500 dark:text-gray-400">
+								Нет данных
+							</div>
 						</div>
 					</div>
 				</div>
