@@ -131,13 +131,15 @@ const tournamentStore = useTournamentStore();
 const { tournaments, loading } = storeToRefs(tournamentStore);
 
 const formatCurrency = (value, currencyCode = 'USD', symbol = '$') => {
+	const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+	
 	if (currencyCode === 'USD') {
 		return new Intl.NumberFormat('ru-RU', {
 			style: 'currency',
 			currency: 'USD',
-		}).format(value);
+		}).format(numValue);
 	}
-	return `${symbol}${value.toFixed(2)}`;
+	return `${symbol}${numValue.toFixed(2)}`;
 };
 
 const formatBuyin = (tournament) => {
@@ -145,33 +147,40 @@ const formatBuyin = (tournament) => {
 		return formatCurrency(tournament.buyin);
 	}
 
-	const buyinInCurrency = tournament.buyin;
-	const buyinInUSD = buyinInCurrency / tournament.currency.rate_to_usd;
+	const buyinInCurrency = parseFloat(tournament.buyin) || 0;
+	const buyinInUSD = buyinInCurrency / parseFloat(tournament.currency.rate_to_usd);
 
 	return `${formatCurrency(buyinInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(buyinInUSD)})`;
 };
 
 const formatCashout = (tournament) => {
+	if (!tournament.cashout) {
+		return '';
+	}
+	
 	if (!tournament.currency || tournament.currency.code === 'USD') {
 		return formatCurrency(tournament.cashout);
 	}
 
-	const cashoutInCurrency = tournament.cashout;
-	const cashoutInUSD = cashoutInCurrency / tournament.currency.rate_to_usd;
+	const cashoutInCurrency = parseFloat(tournament.cashout) || 0;
+	const cashoutInUSD = cashoutInCurrency / parseFloat(tournament.currency.rate_to_usd);
 
 	return `${formatCurrency(cashoutInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(cashoutInUSD)})`;
 };
 
 const formatProfit = (tournament) => {
-	const totalBuyin = tournament.buyin + (tournament.bounty_count * tournament.buyin);
-	const profit = (tournament.cashout || 0) - totalBuyin;
+	const buyin = parseFloat(tournament.buyin) || 0;
+	const bountyCount = parseInt(tournament.bounty_count) || 0;
+	const cashout = parseFloat(tournament.cashout) || 0;
+	const totalBuyin = buyin + (bountyCount * buyin);
+	const profit = cashout - totalBuyin;
 
 	if (!tournament.currency || tournament.currency.code === 'USD') {
 		return formatCurrency(profit);
 	}
 
 	const profitInCurrency = profit;
-	const profitInUSD = profitInCurrency / tournament.currency.rate_to_usd;
+	const profitInUSD = profitInCurrency / parseFloat(tournament.currency.rate_to_usd);
 
 	return `${formatCurrency(profitInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(profitInUSD)})`;
 };
