@@ -28,7 +28,7 @@
 					>
 						<option value="">Выберите рум</option>
 						<option v-for="room in roomStore.rooms" :key="room.id" :value="room.id">
-							{{ room.icon }} {{ room.name }}
+							{{ room.name }}
 						</option>
 					</select>
 				</div>

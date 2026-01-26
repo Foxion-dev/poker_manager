@@ -14,6 +14,7 @@ class Room extends Model
 	protected $fillable = [
 		'name',
 		'icon',
+		'image',
 	];
 
 	public function users(): BelongsToMany

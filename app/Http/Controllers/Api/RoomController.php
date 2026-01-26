@@ -7,6 +7,7 @@ use App\Http\Requests\Api\StoreRoomRequest;
 use App\Http\Requests\Api\UpdateRoomRequest;
 use App\Models\Room;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class RoomController extends Controller
 {
@@ -31,7 +32,13 @@ class RoomController extends Controller
 
 	public function store(StoreRoomRequest $request): JsonResponse
 	{
-		$room = Room::create($request->validated());
+		$data = $request->validated();
+
+		if ($request->hasFile('image')) {
+			$data['image'] = $request->file('image')->store('rooms', 'public');
+		}
+
+		$room = Room::create($data);
 
 		return response()->json($room, 201);
 	}
@@ -43,13 +50,26 @@ class RoomController extends Controller
 
 	public function update(UpdateRoomRequest $request, Room $room): JsonResponse
 	{
-		$room->update($request->validated());
+		$data = $request->validated();
+
+		if ($request->hasFile('image')) {
+			if ($room->image) {
+				Storage::disk('public')->delete($room->image);
+			}
+			$data['image'] = $request->file('image')->store('rooms', 'public');
+		}
+
+		$room->update($data);
 
 		return response()->json($room);
 	}
 
 	public function destroy(Room $room): JsonResponse
 	{
+		if ($room->image) {
+			Storage::disk('public')->delete($room->image);
+		}
+
 		$room->delete();
 
 		return response()->json(['message' => 'Room deleted successfully']);

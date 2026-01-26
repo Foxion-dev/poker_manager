@@ -37,6 +37,24 @@
 						class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
 					/>
 				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						Изображение
+					</label>
+					<input
+						ref="imageInput"
+						type="file"
+						accept="image/*"
+						@change="handleImageChange"
+						class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+					/>
+					<div v-if="form.imagePreview" class="mt-2">
+						<img :src="form.imagePreview" alt="Preview" class="h-20 w-20 object-cover rounded-lg" />
+					</div>
+					<div v-else-if="editingRoom && editingRoom.image" class="mt-2">
+						<img :src="getImageUrl(editingRoom.image)" alt="Current" class="h-20 w-20 object-cover rounded-lg" />
+					</div>
+				</div>
 				<div class="flex space-x-3">
 					<button
 						type="submit"
@@ -71,7 +89,7 @@
 				<thead class="bg-gray-50 dark:bg-gray-700">
 					<tr>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-							Иконка
+							Изображение
 						</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 							Название
@@ -83,8 +101,13 @@
 				</thead>
 				<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
 					<tr v-for="room in rooms" :key="room.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-						<td class="px-6 py-4 whitespace-nowrap text-2xl">
-							{{ room.icon || '🏠' }}
+						<td class="px-6 py-4 whitespace-nowrap">
+							<div v-if="room.image" class="h-12 w-12 rounded-lg overflow-hidden">
+								<img :src="getImageUrl(room.image)" :alt="room.name" class="h-full w-full object-cover" />
+							</div>
+							<div v-else class="text-2xl">
+								{{ room.icon || '🏠' }}
+							</div>
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
 							{{ room.name }}
@@ -123,9 +146,12 @@ const rooms = ref([]);
 const loading = ref(false);
 const showForm = ref(false);
 const editingRoom = ref(null);
+const imageInput = ref(null);
 const form = ref({
 	name: '',
 	icon: '',
+	image: null,
+	imagePreview: null,
 });
 
 const fetchRooms = async () => {
@@ -140,13 +166,48 @@ const fetchRooms = async () => {
 	}
 };
 
+const handleImageChange = (event) => {
+	const file = event.target.files[0];
+	if (file) {
+		form.value.image = file;
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			form.value.imagePreview = e.target.result;
+		};
+		reader.readAsDataURL(file);
+	}
+};
+
+const getImageUrl = (imagePath) => {
+	if (!imagePath) return null;
+	if (imagePath.startsWith('http')) return imagePath;
+	return `/storage/${imagePath}`;
+};
+
 const saveRoom = async () => {
 	loading.value = true;
 	try {
+		const formData = new FormData();
+		formData.append('name', form.value.name);
+		if (form.value.icon) {
+			formData.append('icon', form.value.icon);
+		}
+		if (form.value.image) {
+			formData.append('image', form.value.image);
+		}
+
 		if (editingRoom.value) {
-			await api.put(`/rooms/${editingRoom.value.id}`, form.value);
+			await api.put(`/rooms/${editingRoom.value.id}`, formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
+			});
 		} else {
-			await api.post('/rooms', form.value);
+			await api.post('/rooms', formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
+			});
 		}
 		await fetchRooms();
 		cancelForm();
@@ -163,7 +224,12 @@ const editRoom = (room) => {
 	form.value = {
 		name: room.name,
 		icon: room.icon || '',
+		image: null,
+		imagePreview: null,
 	};
+	if (imageInput.value) {
+		imageInput.value.value = '';
+	}
 	showForm.value = true;
 };
 
@@ -187,7 +253,12 @@ const cancelForm = () => {
 	form.value = {
 		name: '',
 		icon: '',
+		image: null,
+		imagePreview: null,
 	};
+	if (imageInput.value) {
+		imageInput.value.value = '';
+	}
 };
 
 onMounted(() => {

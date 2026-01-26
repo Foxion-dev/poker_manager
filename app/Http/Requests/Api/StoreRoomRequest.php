@@ -19,6 +19,7 @@ class StoreRoomRequest extends FormRequest
 		return [
 			'name' => ['required', 'string', 'max:255'],
 			'icon' => ['nullable', 'string', 'max:10'],
+			'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
 		];
 	}
 }

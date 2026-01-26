@@ -181,7 +181,10 @@
 					<div class="flex items-center justify-between">
 						<div class="flex items-center space-x-4 flex-1">
 							<div class="flex-shrink-0">
-								<div class="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
+								<div v-if="tournament.room?.image" class="h-14 w-14 rounded-xl overflow-hidden shadow-md">
+									<img :src="getRoomImageUrl(tournament.room.image)" :alt="tournament.room.name" class="h-full w-full object-cover" />
+								</div>
+								<div v-else class="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
 									<span class="text-2xl">{{ tournament.room?.icon || '🎰' }}</span>
 								</div>
 							</div>
@@ -381,6 +384,12 @@ const formatProfit = (tournament) => {
 
 const formatDate = (date) => {
 	return new Date(date).toLocaleDateString('ru-RU');
+};
+
+const getRoomImageUrl = (imagePath) => {
+	if (!imagePath) return null;
+	if (imagePath.startsWith('http')) return imagePath;
+	return `/storage/${imagePath}`;
 };
 
 const getProfit = (tournament) => {
