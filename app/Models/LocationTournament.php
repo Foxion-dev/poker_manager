@@ -163,37 +163,40 @@ class LocationTournament extends Model
 
 	private function calculatePrizePercentage(int $place, int $totalPlaces): float
 	{
-		if ($totalPlaces === 1) {
-			return 100.0;
-		}
-
-		if ($totalPlaces === 2) {
-			return $place === 1 ? 60.0 : 40.0;
-		}
-
-		if ($totalPlaces === 3) {
-			return match($place) {
-				1 => 60.0,
-				2 => 30.0,
-				3 => 10.0,
-				default => 0.0,
-			};
-		}
-
-		$basePercentages = [
-			1 => 50.0,
-			2 => 25.0,
-			3 => 12.5,
+		$distributions = [
+			1 => [100],
+			2 => [70, 30],
+			3 => [60, 30, 10],
+			4 => [50, 25, 15, 10],
+			5 => [45, 25, 15, 10, 5],
+			6 => [40, 23, 15, 10, 7, 5],
+			7 => [37, 22, 14, 10, 7, 5, 5],
+			8 => [35, 21, 14, 10, 7, 5, 4, 4],
+			9 => [33, 20, 14, 10, 7, 5, 4, 4, 3],
+			10 => [31, 20, 13, 10, 7, 5, 4, 4, 3, 3],
 		];
 
-		if ($place <= 3) {
-			$percentage = $basePercentages[$place] ?? 0;
-		} else {
-			$remainingPlaces = $totalPlaces - 3;
-			$remainingPercentage = 12.5;
-			$percentage = $remainingPercentage / $remainingPlaces;
+		if ($totalPlaces <= 10 && isset($distributions[$totalPlaces])) {
+			return (float) ($distributions[$totalPlaces][$place - 1] ?? 0);
 		}
 
-		return round($percentage, 2);
+		if ($totalPlaces > 10) {
+			if ($place === 1) {
+				return 31.0;
+			} elseif ($place === 2) {
+				return 20.0;
+			} elseif ($place === 3) {
+				return 13.0;
+			} elseif ($place <= 6) {
+				$percentages = [10, 7, 5];
+				return (float) ($percentages[$place - 4] ?? 0);
+			} else {
+				$remainingPlaces = $totalPlaces - 6;
+				$remainingPercentage = 100 - 31 - 20 - 13 - 10 - 7 - 5;
+				return round($remainingPercentage / $remainingPlaces, 2);
+			}
+		}
+
+		return 0.0;
 	}
 }

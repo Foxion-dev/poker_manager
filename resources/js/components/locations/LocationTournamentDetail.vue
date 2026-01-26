@@ -810,20 +810,43 @@ const openPrizeDistributionModal = () => {
 		
 		const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), totalEntries));
 		
+		const distributions = {
+			1: [100],
+			2: [70, 30],
+			3: [60, 30, 10],
+			4: [50, 25, 15, 10],
+			5: [45, 25, 15, 10, 5],
+			6: [40, 23, 15, 10, 7, 5],
+			7: [37, 22, 14, 10, 7, 5, 5],
+			8: [35, 21, 14, 10, 7, 5, 4, 4],
+			9: [33, 20, 14, 10, 7, 5, 4, 4, 3],
+			10: [31, 20, 13, 10, 7, 5, 4, 4, 3, 3],
+		};
+		
 		prizeDistributionForm.value = [];
 		for (let place = 1; place <= itmPlaces; place++) {
 			let percentage = 0;
-			if (itmPlaces === 1) {
-				percentage = 100;
-			} else if (itmPlaces === 2) {
-				percentage = place === 1 ? 60 : 40;
-			} else if (itmPlaces === 3) {
-				percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
-			} else {
-				if (place === 1) percentage = 50;
-				else if (place === 2) percentage = 25;
-				else if (place === 3) percentage = 12.5;
-				else percentage = 12.5 / (itmPlaces - 3);
+			
+			if (itmPlaces <= 10 && distributions[itmPlaces]) {
+				percentage = distributions[itmPlaces][place - 1] || 0;
+			} else if (itmPlaces > 10) {
+				if (place === 1) {
+					percentage = 31;
+				} else if (place === 2) {
+					percentage = 20;
+				} else if (place === 3) {
+					percentage = 13;
+				} else if (place === 4) {
+					percentage = 10;
+				} else if (place === 5) {
+					percentage = 7;
+				} else if (place === 6) {
+					percentage = 5;
+				} else {
+					const remainingPlaces = itmPlaces - 6;
+					const remainingPercentage = 100 - 31 - 20 - 13 - 10 - 7 - 5;
+					percentage = Math.round((remainingPercentage / remainingPlaces) * 100) / 100;
+				}
 			}
 			
 			prizeDistributionForm.value.push({
@@ -860,21 +883,43 @@ const recalculatePrizePercentages = () => {
 	}
 	
 	const placesCount = prizeDistributionForm.value.length;
+	const distributions = {
+		1: [100],
+		2: [70, 30],
+		3: [60, 30, 10],
+		4: [50, 25, 15, 10],
+		5: [45, 25, 15, 10, 5],
+		6: [40, 23, 15, 10, 7, 5],
+		7: [37, 22, 14, 10, 7, 5, 5],
+		8: [35, 21, 14, 10, 7, 5, 4, 4],
+		9: [33, 20, 14, 10, 7, 5, 4, 4, 3],
+		10: [31, 20, 13, 10, 7, 5, 4, 4, 3, 3],
+	};
 	
 	prizeDistributionForm.value = [];
 	for (let place = 1; place <= placesCount; place++) {
 		let percentage = 0;
-		if (placesCount === 1) {
-			percentage = 100;
-		} else if (placesCount === 2) {
-			percentage = place === 1 ? 60 : 40;
-		} else if (placesCount === 3) {
-			percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
-		} else {
-			if (place === 1) percentage = 50;
-			else if (place === 2) percentage = 25;
-			else if (place === 3) percentage = 12.5;
-			else percentage = 12.5 / (placesCount - 3);
+		
+		if (placesCount <= 10 && distributions[placesCount]) {
+			percentage = distributions[placesCount][place - 1] || 0;
+		} else if (placesCount > 10) {
+			if (place === 1) {
+				percentage = 31;
+			} else if (place === 2) {
+				percentage = 20;
+			} else if (place === 3) {
+				percentage = 13;
+			} else if (place === 4) {
+				percentage = 10;
+			} else if (place === 5) {
+				percentage = 7;
+			} else if (place === 6) {
+				percentage = 5;
+			} else {
+				const remainingPlaces = placesCount - 6;
+				const remainingPercentage = 100 - 31 - 20 - 13 - 10 - 7 - 5;
+				percentage = Math.round((remainingPercentage / remainingPlaces) * 100) / 100;
+			}
 		}
 		
 		prizeDistributionForm.value.push({
@@ -905,20 +950,43 @@ const resetPrizeDistribution = () => {
 	
 	const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), totalEntries));
 	
+	const distributions = {
+		1: [100],
+		2: [70, 30],
+		3: [60, 30, 10],
+		4: [50, 25, 15, 10],
+		5: [45, 25, 15, 10, 5],
+		6: [40, 23, 15, 10, 7, 5],
+		7: [37, 22, 14, 10, 7, 5, 5],
+		8: [35, 21, 14, 10, 7, 5, 4, 4],
+		9: [33, 20, 14, 10, 7, 5, 4, 4, 3],
+		10: [31, 20, 13, 10, 7, 5, 4, 4, 3, 3],
+	};
+	
 	prizeDistributionForm.value = [];
 	for (let place = 1; place <= itmPlaces; place++) {
 		let percentage = 0;
-		if (itmPlaces === 1) {
-			percentage = 100;
-		} else if (itmPlaces === 2) {
-			percentage = place === 1 ? 60 : 40;
-		} else if (itmPlaces === 3) {
-			percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
-		} else {
-			if (place === 1) percentage = 50;
-			else if (place === 2) percentage = 25;
-			else if (place === 3) percentage = 12.5;
-			else percentage = 12.5 / (itmPlaces - 3);
+		
+		if (itmPlaces <= 10 && distributions[itmPlaces]) {
+			percentage = distributions[itmPlaces][place - 1] || 0;
+		} else if (itmPlaces > 10) {
+			if (place === 1) {
+				percentage = 31;
+			} else if (place === 2) {
+				percentage = 20;
+			} else if (place === 3) {
+				percentage = 13;
+			} else if (place === 4) {
+				percentage = 10;
+			} else if (place === 5) {
+				percentage = 7;
+			} else if (place === 6) {
+				percentage = 5;
+			} else {
+				const remainingPlaces = itmPlaces - 6;
+				const remainingPercentage = 100 - 31 - 20 - 13 - 10 - 7 - 5;
+				percentage = Math.round((remainingPercentage / remainingPlaces) * 100) / 100;
+			}
 		}
 		
 		prizeDistributionForm.value.push({
@@ -1043,22 +1111,45 @@ const dynamicPrizeDistribution = computed(() => {
 		return [];
 	}
 	
+	const distributions = {
+		1: [100],
+		2: [70, 30],
+		3: [60, 30, 10],
+		4: [50, 25, 15, 10],
+		5: [45, 25, 15, 10, 5],
+		6: [40, 23, 15, 10, 7, 5],
+		7: [37, 22, 14, 10, 7, 5, 5],
+		8: [35, 21, 14, 10, 7, 5, 4, 4],
+		9: [33, 20, 14, 10, 7, 5, 4, 4, 3],
+		10: [31, 20, 13, 10, 7, 5, 4, 4, 3, 3],
+	};
+	
 	const prizes = [];
 	let totalPercentage = 0;
 	
 	for (let place = 1; place <= itmPlaces; place++) {
 		let percentage = 0;
-		if (itmPlaces === 1) {
-			percentage = 100;
-		} else if (itmPlaces === 2) {
-			percentage = place === 1 ? 60 : 40;
-		} else if (itmPlaces === 3) {
-			percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
-		} else {
-			if (place === 1) percentage = 50;
-			else if (place === 2) percentage = 25;
-			else if (place === 3) percentage = 12.5;
-			else percentage = 12.5 / (itmPlaces - 3);
+		
+		if (itmPlaces <= 10 && distributions[itmPlaces]) {
+			percentage = distributions[itmPlaces][place - 1] || 0;
+		} else if (itmPlaces > 10) {
+			if (place === 1) {
+				percentage = 31;
+			} else if (place === 2) {
+				percentage = 20;
+			} else if (place === 3) {
+				percentage = 13;
+			} else if (place === 4) {
+				percentage = 10;
+			} else if (place === 5) {
+				percentage = 7;
+			} else if (place === 6) {
+				percentage = 5;
+			} else {
+				const remainingPlaces = itmPlaces - 6;
+				const remainingPercentage = 100 - 31 - 20 - 13 - 10 - 7 - 5;
+				percentage = Math.round((remainingPercentage / remainingPlaces) * 100) / 100;
+			}
 		}
 		
 		totalPercentage += percentage;
