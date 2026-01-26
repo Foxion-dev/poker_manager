@@ -365,12 +365,18 @@
 						</div>
 					</div>
 
-					<div class="mb-6">
+					<div class="mb-6 flex space-x-2">
 						<button
 							@click="addPrizePlace"
 							class="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
 						>
 							+ Добавить место
+						</button>
+						<button
+							@click="resetPrizeDistribution"
+							class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+						>
+							Сбросить к автоматическому
 						</button>
 					</div>
 
@@ -550,6 +556,43 @@ const removePrizePlace = (index) => {
 	prizeDistributionForm.value.forEach((p, i) => {
 		p.place = i + 1;
 	});
+};
+
+const resetPrizeDistribution = () => {
+	if (!tournament.value) return;
+	
+	const participantsCount = tournament.value.participants?.length || 0;
+	const itmPercentage = tournament.value.itm_percentage || 15;
+	const itmPlacesFloat = participantsCount * (itmPercentage / 100);
+	
+	if (itmPlacesFloat < 0.5) {
+		alert('Недостаточно участников для расчета призовых мест');
+		return;
+	}
+	
+	const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
+	
+	prizeDistributionForm.value = [];
+	for (let place = 1; place <= itmPlaces; place++) {
+		let percentage = 0;
+		if (itmPlaces === 1) {
+			percentage = 100;
+		} else if (itmPlaces === 2) {
+			percentage = place === 1 ? 60 : 40;
+		} else if (itmPlaces === 3) {
+			percentage = place === 1 ? 60 : place === 2 ? 30 : 10;
+		} else {
+			if (place === 1) percentage = 50;
+			else if (place === 2) percentage = 25;
+			else if (place === 3) percentage = 12.5;
+			else percentage = 12.5 / (itmPlaces - 3);
+		}
+		
+		prizeDistributionForm.value.push({
+			place: place,
+			percentage: percentage,
+		});
+	}
 };
 
 const savePrizeDistribution = async () => {

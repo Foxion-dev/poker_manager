@@ -71,6 +71,10 @@ class LocationTournamentController extends Controller
 		$data = $request->validated();
 		$participants = $data['participants'];
 		unset($data['participants']);
+		
+		if (!isset($data['prize_distribution']) || empty($data['prize_distribution'])) {
+			unset($data['prize_distribution']);
+		}
 
 		$tournament = $location->tournaments()->create($data);
 
@@ -164,6 +168,14 @@ class LocationTournamentController extends Controller
 				];
 				$locationTournament->participants()->create($participantData);
 			}
+		}
+		
+		if (isset($data['prize_distribution'])) {
+			if (empty($data['prize_distribution'])) {
+				$data['prize_distribution'] = null;
+			}
+		} else {
+			unset($data['prize_distribution']);
 		}
 
 		$locationTournament->update($data);
