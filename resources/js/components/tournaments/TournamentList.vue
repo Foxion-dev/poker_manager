@@ -17,8 +17,8 @@
 		</div>
 
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-100 dark:border-gray-700">
-			<div class="flex flex-col sm:flex-row gap-4 items-end">
-				<div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+			<div class="space-y-4">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					<div>
 						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 							<span class="mr-2">📅</span>
@@ -40,6 +40,92 @@
 							type="date"
 							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 						/>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">💵</span>
+							Байин от
+						</label>
+						<input
+							v-model.number="buyinMin"
+							type="number"
+							step="0.01"
+							min="0"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							placeholder="0.00"
+						/>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">💵</span>
+							Байин до
+						</label>
+						<input
+							v-model.number="buyinMax"
+							type="number"
+							step="0.01"
+							min="0"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							placeholder="∞"
+						/>
+					</div>
+				</div>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">💰</span>
+							Кэшаут от
+						</label>
+						<input
+							v-model.number="cashoutMin"
+							type="number"
+							step="0.01"
+							min="0"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							placeholder="0.00"
+						/>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">💰</span>
+							Кэшаут до
+						</label>
+						<input
+							v-model.number="cashoutMax"
+							type="number"
+							step="0.01"
+							min="0"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							placeholder="∞"
+						/>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">🔀</span>
+							Сортировать по
+						</label>
+						<select
+							v-model="sortBy"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						>
+							<option value="date">Дате</option>
+							<option value="buyin">Байину</option>
+							<option value="cashout">Кэшауту</option>
+							<option value="place">Месту</option>
+						</select>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">📊</span>
+							Направление
+						</label>
+						<select
+							v-model="sortOrder"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						>
+							<option value="desc">По убыванию</option>
+							<option value="asc">По возрастанию</option>
+						</select>
 					</div>
 				</div>
 				<div class="flex gap-2">
@@ -174,16 +260,34 @@ const { tournaments, loading } = storeToRefs(tournamentStore);
 const today = new Date().toISOString().split('T')[0];
 const dateFrom = ref(today);
 const dateTo = ref(today);
+const buyinMin = ref(null);
+const buyinMax = ref(null);
+const cashoutMin = ref(null);
+const cashoutMax = ref(null);
+const sortBy = ref('date');
+const sortOrder = ref('desc');
 
 const applyTodayFilter = () => {
 	dateFrom.value = today;
 	dateTo.value = today;
+	buyinMin.value = null;
+	buyinMax.value = null;
+	cashoutMin.value = null;
+	cashoutMax.value = null;
+	sortBy.value = 'date';
+	sortOrder.value = 'desc';
 	fetchTournaments();
 };
 
 const clearFilter = () => {
 	dateFrom.value = '';
 	dateTo.value = '';
+	buyinMin.value = null;
+	buyinMax.value = null;
+	cashoutMin.value = null;
+	cashoutMax.value = null;
+	sortBy.value = 'date';
+	sortOrder.value = 'desc';
 	fetchTournaments();
 };
 
@@ -195,10 +299,28 @@ const fetchTournaments = () => {
 	if (dateTo.value) {
 		params.date_to = dateTo.value;
 	}
+	if (buyinMin.value !== null && buyinMin.value !== '') {
+		params.buyin_min = buyinMin.value;
+	}
+	if (buyinMax.value !== null && buyinMax.value !== '') {
+		params.buyin_max = buyinMax.value;
+	}
+	if (cashoutMin.value !== null && cashoutMin.value !== '') {
+		params.cashout_min = cashoutMin.value;
+	}
+	if (cashoutMax.value !== null && cashoutMax.value !== '') {
+		params.cashout_max = cashoutMax.value;
+	}
+	if (sortBy.value) {
+		params.sort_by = sortBy.value;
+	}
+	if (sortOrder.value) {
+		params.sort_order = sortOrder.value;
+	}
 	tournamentStore.fetchTournaments(params);
 };
 
-watch([dateFrom, dateTo], () => {
+watch([dateFrom, dateTo, buyinMin, buyinMax, cashoutMin, cashoutMax, sortBy, sortOrder], () => {
 	fetchTournaments();
 });
 

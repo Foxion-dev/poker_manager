@@ -27,9 +27,35 @@ class TournamentController extends Controller
 			$query->where('date', '<=', $request->date_to);
 		}
 
-		$tournaments = $query->orderBy('date', 'desc')
-			->orderBy('id', 'desc')
-			->paginate($request->get('per_page', 15));
+		if ($request->has('buyin_min')) {
+			$query->where('buyin', '>=', $request->buyin_min);
+		}
+
+		if ($request->has('buyin_max')) {
+			$query->where('buyin', '<=', $request->buyin_max);
+		}
+
+		if ($request->has('cashout_min')) {
+			$query->where('cashout', '>=', $request->cashout_min);
+		}
+
+		if ($request->has('cashout_max')) {
+			$query->where('cashout', '<=', $request->cashout_max);
+		}
+
+		$sortBy = $request->get('sort_by', 'date');
+		$sortOrder = $request->get('sort_order', 'desc');
+
+		$allowedSortFields = ['date', 'buyin', 'cashout', 'place'];
+		if (in_array($sortBy, $allowedSortFields)) {
+			$query->orderBy($sortBy, $sortOrder);
+		} else {
+			$query->orderBy('date', 'desc');
+		}
+
+		$query->orderBy('id', 'desc');
+
+		$tournaments = $query->paginate($request->get('per_page', 15));
 
 		return response()->json($tournaments);
 	}
