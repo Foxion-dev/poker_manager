@@ -127,13 +127,27 @@ const pageTitles = {
 };
 
 router.beforeEach(async (to, from, next) => {
+	const authStore = useAuthStore();
+	const token = localStorage.getItem('auth_token');
+
+	if (to.meta.public && to.name === 'PublicLocationView' && token) {
+		if (token && !authStore.isAuthenticated) {
+			try {
+				await authStore.fetchUser();
+			} catch (error) {
+				localStorage.removeItem('auth_token');
+			}
+		}
+		if (authStore.isAuthenticated) {
+			next({ name: 'LocationDetail', params: { id: to.params.id } });
+			return;
+		}
+	}
+
 	if (to.meta.public) {
 		next();
 		return;
 	}
-
-	const authStore = useAuthStore();
-	const token = localStorage.getItem('auth_token');
 
 	if (to.meta.requiresAuth && !token) {
 		next({ name: 'Login' });

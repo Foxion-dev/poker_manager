@@ -17,8 +17,12 @@
 								type="password"
 								required
 								autofocus
-								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								:class="passwordError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500'"
+								class="w-full px-4 py-2 rounded-lg shadow-sm focus:ring-2 dark:bg-gray-700 dark:text-white transition duration-200"
 							/>
+							<div v-if="passwordError" class="mt-2 text-sm text-red-600 dark:text-red-400">
+								{{ passwordError }}
+							</div>
 						</div>
 						<div class="flex justify-end space-x-3 pt-4">
 							<button
@@ -267,6 +271,7 @@ const loading = ref(false);
 const showPasswordForm = ref(false);
 const locationPassword = ref('');
 const checkingPassword = ref(false);
+const passwordError = ref('');
 
 const getStoredPassword = (locationId) => {
 	return sessionStorage.getItem(`location_password_${locationId}`);
@@ -294,6 +299,7 @@ const fetchLocation = async (password = null) => {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
 			clearPassword(route.params.id);
 			showPasswordForm.value = true;
+			passwordError.value = '';
 		} else if (error.response?.status === 404) {
 			if (error.response?.data?.message === 'Location is not public') {
 				alert('Эта локация не является публичной');
@@ -320,23 +326,26 @@ const fetchTournaments = async (password = null) => {
 
 const submitPassword = async () => {
 	if (!locationPassword.value.trim()) {
-		alert('Введите пароль');
+		passwordError.value = 'Введите пароль';
 		return;
 	}
 	
+	passwordError.value = '';
 	checkingPassword.value = true;
 	try {
 		await fetchLocation(locationPassword.value);
 		showPasswordForm.value = false;
 		locationPassword.value = '';
+		passwordError.value = '';
 	} catch (error) {
 		if (error.response?.status === 403) {
-			alert('Неверный пароль');
+			const errorMessage = error.response?.data?.message || 'Неверный пароль';
+			passwordError.value = errorMessage;
 			clearPassword(route.params.id);
 			locationPassword.value = '';
 		} else {
 			console.error('Error submitting password:', error);
-			alert('Ошибка при проверке пароля');
+			passwordError.value = error.response?.data?.message || 'Ошибка при проверке пароля';
 		}
 	} finally {
 		checkingPassword.value = false;

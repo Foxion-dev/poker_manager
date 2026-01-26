@@ -104,13 +104,25 @@ class Location extends Model
 
 	public function getAverageBuyinAttribute(): float
 	{
-		$avgBuyin = $this->tournaments()->avg('buyin');
-		return round($avgBuyin ?? 0, 2);
+		$result = $this->tournaments()
+			->leftJoin('currencies', 'location_tournaments.currency_id', '=', 'currencies.id')
+			->selectRaw('
+				AVG(
+					CASE 
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
+						THEN location_tournaments.buyin
+						ELSE location_tournaments.buyin / currencies.rate_to_usd
+					END
+				) as avg_buyin_usd
+			')
+			->first();
+		
+		return round($result->avg_buyin_usd ?? 0, 2);
 	}
 
 	public function getTopPlayersByWinsAttribute(): array
 	{
-		return \DB::table('location_tournament_participants')
+		return DB::table('location_tournament_participants')
 			->join('location_tournaments', 'location_tournament_participants.location_tournament_id', '=', 'location_tournaments.id')
 			->where('location_tournaments.location_id', $this->id)
 			->where('location_tournament_participants.place', 1)
@@ -132,7 +144,7 @@ class Location extends Model
 
 	public function getTopPlayersByPrizeAttribute(): array
 	{
-		return \DB::table('location_tournament_participants')
+		return DB::table('location_tournament_participants')
 			->join('location_tournaments', 'location_tournament_participants.location_tournament_id', '=', 'location_tournaments.id')
 			->where('location_tournaments.location_id', $this->id)
 			->selectRaw('location_tournament_participants.user_id, SUM(location_tournament_participants.prize) as total_prize')

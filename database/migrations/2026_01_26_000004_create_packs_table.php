@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
 	public function up(): void
 	{
 		Schema::create('packs', function (Blueprint $table) {
@@ -17,6 +14,9 @@ return new class extends Migration
 			$table->string('name');
 			$table->date('start_date');
 			$table->date('end_date')->nullable();
+			$table->decimal('buyin', 10, 2);
+			$table->decimal('cashout', 10, 2)->nullable();
+			$table->foreignId('currency_id')->nullable()->constrained()->onDelete('set null');
 			$table->text('description')->nullable();
 			$table->timestamps();
 

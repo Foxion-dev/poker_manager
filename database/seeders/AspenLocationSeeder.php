@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Currency;
 use App\Models\Location;
 use App\Models\LocationUser;
 use App\Models\User;
@@ -29,12 +30,22 @@ class AspenLocationSeeder extends Seeder
 				'name' => 'Аспен',
 				'description' => null,
 				'is_public' => true,
-				'password' => Hash::make('poker123'),
+				'password' => 'poker123',
 			]
 		);
 
+		if ($location->wasRecentlyCreated || !$location->checkPassword('poker123')) {
+			$location->password = 'poker123';
+			$location->save();
+		}
+
 		if (!$location->admins()->where('user_id', $owner->id)->exists()) {
 			$location->admins()->attach($owner->id);
+		}
+
+		$gelCurrency = Currency::where('code', 'GEL')->first();
+		if ($gelCurrency && !$location->currencies()->where('currency_id', $gelCurrency->id)->exists()) {
+			$location->currencies()->attach($gelCurrency->id);
 		}
 
 		$participants = [

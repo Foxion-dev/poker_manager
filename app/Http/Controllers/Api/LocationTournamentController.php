@@ -32,16 +32,16 @@ class LocationTournamentController extends Controller
 					$password = $savedPassword->password;
 					if (!$location->checkPassword($password)) {
 						if ($location->user_id !== $user->id && !$location->isAdmin($user)) {
-							return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+							return response()->json(['message' => 'Требуется пароль', 'requires_password' => true], 403);
 						}
 					}
 				} elseif ($location->user_id !== $user->id && !$location->isAdmin($user)) {
-					return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+					return response()->json(['message' => 'Требуется пароль', 'requires_password' => true], 403);
 				}
 			} else {
 				if (!$location->checkPassword($password)) {
 					if ($location->user_id !== $user->id && !$location->isAdmin($user)) {
-						return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+						return response()->json(['message' => 'Требуется пароль', 'requires_password' => true], 403);
 					}
 				} else {
 					\App\Models\LocationUserPassword::updateOrCreate(
@@ -463,10 +463,46 @@ class LocationTournamentController extends Controller
 			return response()->json(['message' => 'Location is not public'], 404);
 		}
 
+		$user = $request->user();
+
 		if ($location->password) {
-			$password = $request->get('password');
-			if (!$password || !$location->checkPassword($password)) {
-				return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+			$isOwnerOrAdmin = $user && ($location->user_id === $user->id || $location->isAdmin($user));
+			
+			if (!$isOwnerOrAdmin) {
+				$password = $request->get('password');
+				
+				if (!$password) {
+					if ($user) {
+						$savedPassword = \App\Models\LocationUserPassword::where('user_id', $user->id)
+							->where('location_id', $location->id)
+							->first();
+						
+						if ($savedPassword) {
+							$password = $savedPassword->password;
+							if (!$location->checkPassword($password)) {
+								return response()->json(['message' => 'Требуется пароль', 'requires_password' => true], 403);
+							}
+						} else {
+							return response()->json(['message' => 'Требуется пароль', 'requires_password' => true], 403);
+						}
+					} else {
+						return response()->json(['message' => 'Требуется пароль', 'requires_password' => true], 403);
+					}
+				} else {
+					if (!$location->checkPassword($password)) {
+						return response()->json(['message' => 'Неверный пароль', 'requires_password' => true], 403);
+					}
+					
+					if ($user) {
+						\App\Models\LocationUserPassword::updateOrCreate(
+							[
+								'user_id' => $user->id,
+								'location_id' => $location->id,
+							],
+							['password' => $password]
+						);
+					}
+				}
 			}
 		}
 

@@ -8,15 +8,17 @@ return new class extends Migration
 {
 	public function up(): void
 	{
-		Schema::table('users', function (Blueprint $table) {
-			$table->timestamp('banned_at')->nullable()->after('balance');
+		Schema::create('rooms', function (Blueprint $table) {
+			$table->id();
+			$table->string('name');
+			$table->string('icon')->nullable();
+			$table->string('image')->nullable();
+			$table->timestamps();
 		});
 	}
 
 	public function down(): void
 	{
-		Schema::table('users', function (Blueprint $table) {
-			$table->dropColumn('banned_at');
-		});
+		Schema::dropIfExists('rooms');
 	}
 };

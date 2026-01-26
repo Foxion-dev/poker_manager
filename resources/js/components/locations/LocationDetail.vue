@@ -101,8 +101,12 @@
 								type="password"
 								required
 								autofocus
-								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								:class="passwordError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500'"
+								class="w-full px-4 py-2 rounded-lg shadow-sm focus:ring-2 dark:bg-gray-700 dark:text-white transition duration-200"
 							/>
+							<div v-if="passwordError" class="mt-2 text-sm text-red-600 dark:text-red-400">
+								{{ passwordError }}
+							</div>
 						</div>
 						<div class="flex justify-end space-x-3 pt-4">
 							<button
@@ -276,42 +280,46 @@
 					</button>
 				</div>
 				<div v-if="tournaments.length > 0" class="space-y-4">
-					<router-link
+					<div
 						v-for="tournament in tournaments"
 						:key="tournament.id"
-						:to="`/locations/${route.params.id}/tournaments/${tournament.id}`"
-						class="block bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+						class="relative bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 					>
-						<div class="flex items-start justify-between">
-							<div class="flex-1">
-								<h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ tournament.name }}</h4>
-								<div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-									<span>📅 {{ formatDate(tournament.date) }}</span>
-									<span>💵 {{ formatBuyin(tournament) }}</span>
-									<span>🎯 {{ tournament.format_label }}</span>
-								</div>
-								<div v-if="tournament.participants && tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени').length > 0" class="mt-3">
-									<p class="text-xs font-medium text-gray-600 dark:text-gray-400">
-										👥 Участников: {{ tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени').length }}
-									</p>
+						<router-link
+							:to="`/locations/${route.params.id}/tournaments/${tournament.id}`"
+							class="block"
+						>
+							<div class="flex items-start justify-between">
+								<div class="flex-1">
+									<h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ tournament.name }}</h4>
+									<div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+										<span>📅 {{ formatDate(tournament.date) }}</span>
+										<span>💵 {{ formatBuyin(tournament) }}</span>
+										<span>🎯 {{ tournament.format_label }}</span>
+									</div>
+									<div v-if="tournament.participants && tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени').length > 0" class="mt-3">
+										<p class="text-xs font-medium text-gray-600 dark:text-gray-400">
+											👥 Участников: {{ tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени').length }}
+										</p>
+									</div>
 								</div>
 							</div>
-							<div v-if="location.is_admin" class="ml-4 flex space-x-2" @click.stop>
-								<button
-									@click.stop="editTournament(tournament)"
-									class="px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-								>
-									Редактировать
-								</button>
-								<button
-									@click.stop="deleteTournament(tournament.id)"
-									class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-								>
-									Удалить
-								</button>
-							</div>
+						</router-link>
+						<div v-if="location.is_admin" class="absolute top-4 right-4 flex space-x-2 z-10" @click.stop>
+							<button
+								@click.stop="editTournament(tournament)"
+								class="px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+							>
+								Редактировать
+							</button>
+							<button
+								@click.stop="deleteTournament(tournament.id)"
+								class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+							>
+								Удалить
+							</button>
 						</div>
-					</router-link>
+					</div>
 				</div>
 				<div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
 					<span class="text-4xl mb-4 block">📭</span>
@@ -889,6 +897,7 @@ const showUsersForm = ref(false);
 const showPasswordForm = ref(false);
 const locationPassword = ref('');
 const checkingPassword = ref(false);
+const passwordError = ref('');
 const editingTournament = ref(null);
 const savingLocation = ref(false);
 const savingTournament = ref(false);
@@ -934,6 +943,7 @@ const fetchLocation = async (password = null) => {
 	} catch (error) {
 		if (error.response?.status === 403 && error.response?.data?.requires_password) {
 			showPasswordForm.value = true;
+			passwordError.value = '';
 			loading.value = false;
 		} else {
 			console.error('Error fetching location:', error);
@@ -947,22 +957,25 @@ const fetchLocation = async (password = null) => {
 
 const submitPassword = async () => {
 	if (!locationPassword.value.trim()) {
-		alert('Введите пароль');
+		passwordError.value = 'Введите пароль';
 		return;
 	}
 	
+	passwordError.value = '';
 	checkingPassword.value = true;
 	try {
 		await fetchLocation(locationPassword.value);
 		showPasswordForm.value = false;
 		locationPassword.value = '';
+		passwordError.value = '';
 	} catch (error) {
 		if (error.response?.status === 403) {
-			alert('Неверный пароль');
+			const errorMessage = error.response?.data?.message || 'Неверный пароль';
+			passwordError.value = errorMessage;
 			locationPassword.value = '';
 		} else {
 			console.error('Error submitting password:', error);
-			alert('Ошибка при проверке пароля');
+			passwordError.value = error.response?.data?.message || 'Ошибка при проверке пароля';
 		}
 	} finally {
 		checkingPassword.value = false;
