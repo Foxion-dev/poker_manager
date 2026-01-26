@@ -1,5 +1,81 @@
 <template>
 	<div>
+		<div v-if="stats" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-100 dark:border-gray-700">
+			<div class="flex flex-col space-y-4">
+				<div class="flex flex-wrap gap-2">
+					<button
+						@click="setPeriod('month')"
+						class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+						:class="selectedPeriod === 'month' 
+							? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+							: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+					>
+						Месяц
+					</button>
+					<button
+						@click="setPeriod('3months')"
+						class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+						:class="selectedPeriod === '3months' 
+							? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+							: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+					>
+						3 месяца
+					</button>
+					<button
+						@click="setPeriod('6months')"
+						class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+						:class="selectedPeriod === '6months' 
+							? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+							: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+					>
+						Полгода
+					</button>
+					<button
+						@click="setPeriod('year')"
+						class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+						:class="selectedPeriod === 'year' 
+							? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+							: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+					>
+						Год
+					</button>
+					<button
+						@click="setPeriod('custom')"
+						class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+						:class="selectedPeriod === 'custom' 
+							? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+							: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+					>
+						Свой диапазон
+					</button>
+				</div>
+				<div v-if="selectedPeriod === 'custom'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">📅</span>
+							Дата начала
+						</label>
+						<input
+							v-model="customDateFrom"
+							type="date"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						/>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">📅</span>
+							Дата окончания
+						</label>
+						<input
+							v-model="customDateTo"
+							type="date"
+							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<div v-if="loading" class="flex items-center justify-center py-20">
 			<div class="text-center">
 				<svg class="animate-spin h-12 w-12 text-indigo-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -182,12 +258,65 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useStatisticsStore } from '../../stores/statistics';
 
 const statisticsStore = useStatisticsStore();
 const { stats, loading } = storeToRefs(statisticsStore);
+
+const selectedPeriod = ref('month');
+const customDateFrom = ref('');
+const customDateTo = ref('');
+
+const getDateRange = (period) => {
+	const today = new Date();
+	const endDate = today.toISOString().split('T')[0];
+	let startDate;
+
+	switch (period) {
+		case 'month':
+			startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+			break;
+		case '3months':
+			startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().split('T')[0];
+			break;
+		case '6months':
+			startDate = new Date(today.getFullYear(), today.getMonth() - 5, 1).toISOString().split('T')[0];
+			break;
+		case 'year':
+			startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+			break;
+		case 'custom':
+			return {
+				start_date: customDateFrom.value || null,
+				end_date: customDateTo.value || null,
+			};
+		default:
+			return {};
+	}
+
+	return {
+		start_date: startDate,
+		end_date: endDate,
+	};
+};
+
+const setPeriod = (period) => {
+	selectedPeriod.value = period;
+	fetchStats();
+};
+
+const fetchStats = () => {
+	const params = getDateRange(selectedPeriod.value);
+	statisticsStore.fetchStats(params);
+};
+
+watch([customDateFrom, customDateTo], () => {
+	if (selectedPeriod.value === 'custom') {
+		fetchStats();
+	}
+});
 
 const formatCurrency = (value) => {
 	return new Intl.NumberFormat('ru-RU', {
@@ -202,6 +331,6 @@ const formatDate = (dateString) => {
 };
 
 onMounted(() => {
-	statisticsStore.fetchStats();
+	fetchStats();
 });
 </script>
