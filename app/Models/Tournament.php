@@ -18,6 +18,7 @@ class Tournament extends Model
 		'place',
 		'cashout',
 		'bounty_count',
+		'players_count',
 	];
 
 	protected function casts(): array
@@ -28,6 +29,7 @@ class Tournament extends Model
 			'cashout' => 'decimal:2',
 			'place' => 'integer',
 			'bounty_count' => 'integer',
+			'players_count' => 'integer',
 		];
 	}
 

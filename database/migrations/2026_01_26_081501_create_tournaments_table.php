@@ -20,6 +20,7 @@ return new class extends Migration
 			$table->integer('place')->nullable();
 			$table->decimal('cashout', 10, 2)->nullable();
 			$table->integer('bounty_count')->default(0);
+			$table->integer('players_count')->nullable();
 			$table->timestamps();
 
 			$table->index('date');

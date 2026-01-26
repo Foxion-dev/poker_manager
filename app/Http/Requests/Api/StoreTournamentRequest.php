@@ -23,6 +23,7 @@ class StoreTournamentRequest extends FormRequest
 			'place' => ['nullable', 'integer', 'min:1'],
 			'cashout' => ['nullable', 'numeric', 'min:0'],
 			'bounty_count' => ['nullable', 'integer', 'min:0'],
+			'players_count' => ['nullable', 'integer', 'min:2'],
 		];
 	}
 }
