@@ -182,7 +182,8 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@echo "✅ Node.js зависимости установлены"
 	@echo ""
 	@echo "🎨 Сборка assets для production..."
-	@./vendor/bin/sail npm run build
+	@echo "⏳ Это может занять несколько минут, пожалуйста подождите..."
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && NODE_ENV=production npm run build 2>&1"
 	@echo "✅ Assets собраны"
 	@echo ""
 	@echo "🔧 Исправление прав доступа после сборки..."

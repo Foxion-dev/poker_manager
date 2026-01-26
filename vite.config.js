@@ -19,6 +19,16 @@ export default defineConfig({
 		}),
 		tailwindcss(),
 	],
+	build: {
+		emptyOutDir: true,
+		manifest: true,
+		outDir: 'public/build',
+		rollupOptions: {
+			output: {
+				manualChunks: undefined,
+			},
+		},
+	},
 	server: {
 		host: '0.0.0.0',
 		port: 5173,
