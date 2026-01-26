@@ -91,8 +91,7 @@
 							<div class="text-right">
 								<div
 									v-if="tournament.cashout"
-									class="text-lg font-bold"
-									:class="getProfit(tournament) >= 0 ? 'text-green-600' : 'text-red-600'"
+									class="text-lg font-bold text-green-600 dark:text-green-400"
 								>
 									{{ formatCashout(tournament) }}
 								</div>
@@ -101,8 +100,7 @@
 								</div>
 								<div
 									v-if="tournament.cashout"
-									class="text-xs mt-1"
-									:class="getProfit(tournament) >= 0 ? 'text-green-600' : 'text-red-600'"
+									class="text-xs mt-1 text-green-600 dark:text-green-400"
 								>
 									{{ getProfit(tournament) >= 0 ? '+' : '' }}{{ formatProfit(tournament) }}
 								</div>
