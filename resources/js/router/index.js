@@ -57,6 +57,11 @@ const routes = [
 				name: 'AdminCurrencies',
 				component: () => import('../components/admin/AdminCurrencies.vue'),
 			},
+			{
+				path: 'users',
+				name: 'AdminUsers',
+				component: () => import('../components/admin/AdminUsers.vue'),
+			},
 		],
 	},
 ];

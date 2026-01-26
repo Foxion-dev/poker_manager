@@ -23,6 +23,7 @@ class User extends Authenticatable
 		'email',
 		'password',
 		'balance',
+		'banned_at',
 	];
 
     /**
@@ -44,9 +45,15 @@ class User extends Authenticatable
 	{
 		return [
 			'email_verified_at' => 'datetime',
+			'banned_at' => 'datetime',
 			'password' => 'hashed',
 			'balance' => 'decimal:2',
 		];
+	}
+
+	public function isBanned(): bool
+	{
+		return $this->banned_at !== null;
 	}
 
 	public function rooms(): BelongsToMany

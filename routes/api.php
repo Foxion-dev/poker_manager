@@ -32,4 +32,12 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::prefix('dashboard')->group(function () {
 		Route::get('/stats', [DashboardController::class, 'stats']);
 	});
+
+	Route::prefix('admin')->group(function () {
+		Route::get('/users', [\App\Http\Controllers\Api\AdminUserController::class, 'index']);
+		Route::get('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'show']);
+		Route::post('/users/{user}/ban', [\App\Http\Controllers\Api\AdminUserController::class, 'ban']);
+		Route::post('/users/{user}/unban', [\App\Http\Controllers\Api\AdminUserController::class, 'unban']);
+		Route::delete('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'destroy']);
+	});
 });

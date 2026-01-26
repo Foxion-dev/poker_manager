@@ -49,6 +49,12 @@ class AuthController extends Controller
 			]);
 		}
 
+		if ($user->isBanned()) {
+			throw ValidationException::withMessages([
+				'email' => ['Your account has been banned.'],
+			]);
+		}
+
 		$token = $user->createToken('auth_token')->plainTextToken;
 
 		return response()->json([
