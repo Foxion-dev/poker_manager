@@ -475,15 +475,31 @@
 								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 									Байин *
 								</label>
-								<input
-									v-model.number="tournamentForm.buyin"
-									type="number"
-									step="0.01"
-									min="0"
-									required
-									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-									placeholder="0.00"
-								/>
+								<div class="flex items-center space-x-2">
+									<input
+										v-model.number="tournamentForm.buyin"
+										type="number"
+										step="0.01"
+										min="0"
+										required
+										class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+										placeholder="0.00"
+									/>
+									<select
+										v-if="availableCurrencies.length > 1"
+										v-model="tournamentForm.currency_id"
+										required
+										class="w-40 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+									>
+										<option value="">Выберите валюту</option>
+										<option v-for="currency in availableCurrencies" :key="currency.id" :value="currency.id">
+											{{ currency.symbol }} {{ currency.code }}
+										</option>
+									</select>
+									<span v-else-if="availableCurrencies.length === 1" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg whitespace-nowrap">
+										{{ availableCurrencies[0].symbol }} {{ availableCurrencies[0].code }}
+									</span>
+								</div>
 							</div>
 							<div>
 								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
