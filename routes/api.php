@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\TournamentController;
@@ -17,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	Route::apiResource('rooms', RoomController::class);
 	Route::apiResource('tournaments', TournamentController::class);
+	Route::get('currencies', [CurrencyController::class, 'index']);
 
 	Route::prefix('user-rooms')->group(function () {
 		Route::get('/', [UserRoomController::class, 'index']);

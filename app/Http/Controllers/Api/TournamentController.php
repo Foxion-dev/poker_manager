@@ -13,7 +13,7 @@ class TournamentController extends Controller
 {
 	public function index(Request $request): JsonResponse
 	{
-		$query = $request->user()->tournaments()->with('room');
+		$query = $request->user()->tournaments()->with(['room', 'currency']);
 
 		if ($request->has('room_id')) {
 			$query->where('room_id', $request->room_id);
@@ -38,7 +38,7 @@ class TournamentController extends Controller
 	{
 		$tournament = $request->user()->tournaments()->create($request->validated());
 
-		return response()->json($tournament->load('room'), 201);
+		return response()->json($tournament->load(['room', 'currency']), 201);
 	}
 
 	public function show(Request $request, Tournament $tournament): JsonResponse
@@ -47,7 +47,7 @@ class TournamentController extends Controller
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
-		return response()->json($tournament->load('room'));
+		return response()->json($tournament->load(['room', 'currency']));
 	}
 
 	public function update(UpdateTournamentRequest $request, Tournament $tournament): JsonResponse
@@ -58,7 +58,7 @@ class TournamentController extends Controller
 
 		$tournament->update($request->validated());
 
-		return response()->json($tournament->load('room'));
+		return response()->json($tournament->load(['room', 'currency']));
 	}
 
 	public function destroy(Request $request, Tournament $tournament): JsonResponse

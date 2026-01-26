@@ -19,6 +19,7 @@ class StoreTournamentRequest extends FormRequest
 		return [
 			'room_id' => ['required', 'exists:rooms,id'],
 			'buyin' => ['required', 'numeric', 'min:0'],
+			'currency_id' => ['nullable', 'exists:currencies,id'],
 			'date' => ['required', 'date'],
 			'place' => ['nullable', 'integer', 'min:1'],
 			'cashout' => ['nullable', 'numeric', 'min:0'],

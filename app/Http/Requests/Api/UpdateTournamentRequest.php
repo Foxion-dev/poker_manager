@@ -19,6 +19,7 @@ class UpdateTournamentRequest extends FormRequest
 		return [
 			'room_id' => ['sometimes', 'required', 'exists:rooms,id'],
 			'buyin' => ['sometimes', 'required', 'numeric', 'min:0'],
+			'currency_id' => ['nullable', 'exists:currencies,id'],
 			'date' => ['sometimes', 'required', 'date'],
 			'place' => ['nullable', 'integer', 'min:1'],
 			'cashout' => ['nullable', 'numeric', 'min:0'],

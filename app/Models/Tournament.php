@@ -14,6 +14,7 @@ class Tournament extends Model
 		'user_id',
 		'room_id',
 		'buyin',
+		'currency_id',
 		'date',
 		'place',
 		'cashout',
@@ -41,6 +42,11 @@ class Tournament extends Model
 	public function room(): BelongsTo
 	{
 		return $this->belongsTo(Room::class);
+	}
+
+	public function currency(): BelongsTo
+	{
+		return $this->belongsTo(Currency::class);
 	}
 
 	public function getProfitAttribute(): float
