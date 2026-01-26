@@ -10,9 +10,12 @@ const api = axios.create({
 
 api.interceptors.request.use(
 	(config) => {
-		const token = localStorage.getItem('auth_token');
-		if (token) {
-			config.headers.Authorization = `Bearer ${token}`;
+		const isPublicRoute = config.url?.includes('/public/');
+		if (!isPublicRoute) {
+			const token = localStorage.getItem('auth_token');
+			if (token) {
+				config.headers.Authorization = `Bearer ${token}`;
+			}
 		}
 		return config;
 	},
@@ -28,8 +31,9 @@ api.interceptors.response.use(
 		
 		if (error.response?.status === 401 && !isPublicRoute) {
 			localStorage.removeItem('auth_token');
-			if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-				window.location.href = '/#/login';
+			const currentPath = window.location.hash || window.location.pathname;
+			if (!currentPath.includes('/login') && !currentPath.includes('/register') && !currentPath.includes('/public/')) {
+				window.location.hash = '/login';
 			}
 		}
 		return Promise.reject(error);

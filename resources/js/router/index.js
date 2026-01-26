@@ -127,13 +127,13 @@ const pageTitles = {
 };
 
 router.beforeEach(async (to, from, next) => {
-	const authStore = useAuthStore();
-	const token = localStorage.getItem('auth_token');
-
 	if (to.meta.public) {
 		next();
 		return;
 	}
+
+	const authStore = useAuthStore();
+	const token = localStorage.getItem('auth_token');
 
 	if (to.meta.requiresAuth && !token) {
 		next({ name: 'Login' });
@@ -145,7 +145,7 @@ router.beforeEach(async (to, from, next) => {
 		return;
 	}
 
-	if (token && !authStore.isAuthenticated && !to.meta.public) {
+	if (token && !authStore.isAuthenticated) {
 		try {
 			await authStore.fetchUser();
 		} catch (error) {
