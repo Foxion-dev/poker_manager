@@ -190,8 +190,10 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
 	@echo ""
 	@echo "🗄️  Запуск миграций..."
-	@./vendor/bin/sail artisan migrate --force || echo "⚠️  Ошибка при миграциях. Продолжаем..."
-	@echo "✅ Миграции выполнены"
+	@echo "⏳ Ожидание готовности базы данных..."
+	@sleep 3
+	@./vendor/bin/sail artisan migrate --force || (echo "⚠️  Ошибка при миграциях. Проверьте логи." && exit 1)
+	@echo "✅ Миграции выполнены успешно"
 	@echo ""
 	@echo "🧹 Очистка кеша..."
 	@./vendor/bin/sail artisan cache:clear || true
