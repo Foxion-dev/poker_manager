@@ -310,8 +310,12 @@ class LocationTournamentController extends Controller
 		$participant->delete();
 
 		$locationTournament->load(['participants.user', 'currency']);
+		$location->load('users');
 
-		return response()->json($locationTournament);
+		return response()->json([
+			'participants' => $locationTournament->participants,
+			'users' => $location->users,
+		]);
 	}
 
 	public function finish(Request $request, Location $location, $locationTournamentId): JsonResponse

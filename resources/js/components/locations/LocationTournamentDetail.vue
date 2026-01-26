@@ -163,20 +163,10 @@
 				</div>
 			</div>
 
-			<div v-if="saving" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 flex flex-col items-center space-y-4">
-					<div class="relative w-16 h-16">
-						<div class="absolute inset-0 border-4 border-indigo-200 dark:border-indigo-800 rounded-full"></div>
-						<div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin"></div>
-					</div>
-					<p class="text-sm font-medium text-gray-700 dark:text-gray-300">Обновление данных...</p>
-				</div>
-			</div>
-
 			<div v-if="tournament.participants && tournament.participants.filter(p => {
 				const name = p.display_name || p.name || p.user?.name || '';
 				return name && name !== 'Без имени' && name !== 'Неизвестный участник';
-			}).length > 0" class="space-y-3" :class="{ 'opacity-50 pointer-events-none': saving }">
+			}).length > 0" class="space-y-3">
 				<div
 					v-for="participant in tournament.participants.filter(p => {
 						const name = p.display_name || p.name || p.user?.name || '';
@@ -622,17 +612,25 @@ const addParticipant = async () => {
 			data.name = newParticipantName.value.trim();
 		}
 
-		await locationService.addTournamentParticipant(route.params.locationId, route.params.id, data);
+		const response = await locationService.addTournamentParticipant(route.params.locationId, route.params.id, data);
+		
+		if (response && response.participants) {
+			tournament.value.participants = response.participants;
+		}
+		
+		if (response && response.users) {
+			location.value.users = response.users;
+			locationUsers.value = response.users;
+		}
 		
 		newParticipantUserId.value = '';
 		newParticipantName.value = '';
-		
-		await fetchTournament();
-		await fetchLocation();
 	} catch (error) {
 		console.error('Error adding participant:', error);
 		const errorMessage = error.response?.data?.message || 'Ошибка при добавлении участника';
 		alert(errorMessage);
+		await fetchTournament();
+		await fetchLocation();
 	} finally {
 		addingParticipant.value = false;
 	}
@@ -658,12 +656,31 @@ const removeParticipant = async (participant) => {
 	saving.value = true;
 	try {
 		await locationService.removeTournamentParticipant(route.params.locationId, route.params.id, participant.id);
-		await fetchTournament();
-		await fetchLocation();
+		
+		if (tournament.value && tournament.value.participants) {
+			const index = tournament.value.participants.findIndex(p => p.id === participant.id);
+			if (index !== -1) {
+				tournament.value.participants.splice(index, 1);
+			}
+		}
+		
+		if (location.value && location.value.users) {
+			const locationUser = locationUsers.value.find(lu => {
+				if (participant.user_id) {
+					return (lu.user_id || lu.id) == participant.user_id;
+				}
+				return lu.name === participant.name;
+			});
+			if (locationUser && !locationUsers.value.includes(locationUser)) {
+				locationUsers.value.push(locationUser);
+			}
+		}
 	} catch (error) {
 		console.error('Error removing participant:', error);
 		const errorMessage = error.response?.data?.message || 'Ошибка при удалении участника';
 		alert(errorMessage);
+		await fetchTournament();
+		await fetchLocation();
 	} finally {
 		saving.value = false;
 	}
@@ -671,8 +688,6 @@ const removeParticipant = async (participant) => {
 
 const updateParticipant = async (participant) => {
 	if (saving.value) return;
-	
-	const scrollPosition = window.scrollY || window.pageYOffset;
 	
 	saving.value = true;
 	try {
@@ -701,16 +716,20 @@ const updateParticipant = async (participant) => {
 			{ participants: participantsData }
 		);
 		
-		await fetchTournament();
-		
-		await new Promise(resolve => setTimeout(resolve, 100));
-		
-		requestAnimationFrame(() => {
-			window.scrollTo(0, scrollPosition);
-		});
+		if (tournament.value) {
+			const updatedParticipant = tournament.value.participants.find(p => p.id === participant.id);
+			if (updatedParticipant) {
+				updatedParticipant.rebuy = participant.rebuy ?? 0;
+				updatedParticipant.addon = participant.addon ?? false;
+				updatedParticipant.is_paid = participant.is_paid ?? false;
+			}
+		}
 	} catch (error) {
 		console.error('Error updating participant:', error);
 		alert('Ошибка при обновлении участника');
+		const errorMessage = error.response?.data?.message || 'Ошибка при обновлении участника';
+		alert(errorMessage);
+		await fetchTournament();
 	} finally {
 		saving.value = false;
 	}
