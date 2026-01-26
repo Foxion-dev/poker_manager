@@ -78,21 +78,25 @@ class LocationController extends Controller
 		$location->load(['user', 'admins', 'users', 'locationUsers']);
 		$location->loadCount('tournaments');
 
-		$allLocationUsers = $location->users->map(function ($user) {
+		$usersFromSystem = $location->users->map(function ($user) {
 			return [
-				'id' => $user->id,
+				'id' => $user->pivot->id ?? $user->id,
 				'name' => $user->pivot->name ?? $user->name,
 				'user_id' => $user->id,
 				'display_name' => $user->pivot->name ?? $user->name,
 			];
-		})->merge($location->locationUsers->whereNull('user_id')->map(function ($locationUser) {
+		});
+
+		$usersByName = $location->locationUsers->whereNull('user_id')->map(function ($locationUser) {
 			return [
 				'id' => $locationUser->id,
 				'name' => $locationUser->name,
 				'user_id' => null,
 				'display_name' => $locationUser->name,
 			];
-		}));
+		});
+
+		$allLocationUsers = $usersFromSystem->concat($usersByName);
 
 		return response()->json([
 			'id' => $location->id,
