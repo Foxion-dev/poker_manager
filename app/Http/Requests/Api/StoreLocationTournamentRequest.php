@@ -22,9 +22,26 @@ class StoreLocationTournamentRequest extends FormRequest
 			'format' => ['required', 'in:classic,classic_bounty,progressive_bounty'],
 			'date' => ['required', 'date'],
 			'participants' => ['required', 'array', 'min:1'],
-			'participants.*.user_id' => ['required', 'exists:users,id'],
+			'participants.*.user_id' => ['required', 'exists:users,id', 'distinct'],
 			'participants.*.place' => ['required', 'integer', 'min:1'],
 			'participants.*.prize' => ['nullable', 'numeric', 'min:0'],
 		];
+	}
+
+	public function withValidator($validator)
+	{
+		$validator->after(function ($validator) {
+			$participants = $this->input('participants', []);
+			$userIds = array_column($participants, 'user_id');
+			$places = array_column($participants, 'place');
+
+			if (count($userIds) !== count(array_unique($userIds))) {
+				$validator->errors()->add('participants', 'Каждый участник может быть добавлен только один раз.');
+			}
+
+			if (count($places) !== count(array_unique($places))) {
+				$validator->errors()->add('participants', 'Места участников должны быть уникальными.');
+			}
+		});
 	}
 }

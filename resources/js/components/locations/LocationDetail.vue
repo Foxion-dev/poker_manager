@@ -477,7 +477,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { locationService } from '../../services/locationService';
 import { useAuthStore } from '../../stores/auth';
@@ -618,19 +618,47 @@ const closeTournamentForm = () => {
 };
 
 const addParticipant = () => {
-	tournamentForm.value.participants.push({ user_id: '', place: tournamentForm.value.participants.length + 1, prize: null });
+	const maxPlace = tournamentForm.value.participants.length > 0
+		? Math.max(...tournamentForm.value.participants.map(p => p.place || 0))
+		: 0;
+	tournamentForm.value.participants.push({ user_id: '', place: maxPlace + 1, prize: null });
 };
 
 const removeParticipant = (index) => {
 	tournamentForm.value.participants.splice(index, 1);
+};
+
+const updatePlaceNumbers = () => {
 	tournamentForm.value.participants.forEach((p, i) => {
-		if (!p.place || p.place < i + 1) {
+		if (!p.place || p.place < 1) {
 			p.place = i + 1;
 		}
 	});
 };
 
+watch(() => tournamentForm.value.participants.length, () => {
+	updatePlaceNumbers();
+});
+
 const saveTournament = async () => {
+	const uniqueUserIds = new Set(tournamentForm.value.participants.map(p => p.user_id));
+	const uniquePlaces = new Set(tournamentForm.value.participants.map(p => p.place));
+
+	if (uniqueUserIds.size !== tournamentForm.value.participants.length) {
+		alert('Каждый участник может быть добавлен только один раз.');
+		return;
+	}
+
+	if (uniquePlaces.size !== tournamentForm.value.participants.length) {
+		alert('Места участников должны быть уникальными.');
+		return;
+	}
+
+	if (tournamentForm.value.participants.some(p => !p.user_id)) {
+		alert('Все участники должны быть выбраны.');
+		return;
+	}
+
 	savingTournament.value = true;
 	try {
 		if (editingTournament.value) {
@@ -642,7 +670,8 @@ const saveTournament = async () => {
 		await fetchLocation();
 	} catch (error) {
 		console.error('Error saving tournament:', error);
-		alert('Ошибка при сохранении турнира');
+		const errorMessage = error.response?.data?.message || error.response?.data?.errors?.participants?.[0] || 'Ошибка при сохранении турнира';
+		alert(errorMessage);
 	} finally {
 		savingTournament.value = false;
 	}
