@@ -219,6 +219,7 @@ class LocationTournamentController extends Controller
 				$participant->update([
 					'rebuy' => $participantData['rebuy'] ?? 0,
 					'addon' => $participantData['addon'] ?? false,
+					'is_paid' => $participantData['is_paid'] ?? false,
 					'prize' => $participantData['prize'] ?? null,
 				]);
 			}
@@ -264,6 +265,7 @@ class LocationTournamentController extends Controller
 			'place' => $newPlace,
 			'rebuy' => 0,
 			'addon' => false,
+			'is_paid' => false,
 		];
 
 		$participant = $locationTournament->participants()->create($participantData);
@@ -321,6 +323,17 @@ class LocationTournamentController extends Controller
 
 		if (!$location->isAdmin($user)) {
 			return response()->json(['message' => 'Only location admins can finish tournaments'], 403);
+		}
+
+		$unpaidParticipants = $locationTournament->participants()
+			->where('is_paid', false)
+			->count();
+
+		if ($unpaidParticipants > 0) {
+			return response()->json([
+				'message' => 'Нельзя завершить турнир: не все участники оплатили вход',
+				'unpaid_count' => $unpaidParticipants,
+			], 422);
 		}
 
 		$locationTournament->update(['is_finished' => true]);

@@ -121,7 +121,9 @@
 					<button
 						v-if="!tournament.is_finished && location?.is_admin"
 						@click="openFinishModal"
-						class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors"
+						:disabled="!canFinishTournament"
+						class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						:title="canFinishTournament ? 'Завершить турнир' : 'Не все участники оплатили вход'"
 					>
 						Завершить турнир
 					</button>
@@ -203,7 +205,7 @@
 									v-model.number="participant.rebuy"
 									type="number"
 									min="0"
-									class="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm font-semibold"
+									class="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-sm font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 									@change="updateParticipant(participant)"
 								/>
 								<button
@@ -229,6 +231,25 @@
 									<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
 									<span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
 										{{ participant.addon ? 'Да' : 'Нет' }}
+									</span>
+								</label>
+							</div>
+						</div>
+						<div>
+							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 text-center">
+								Оплата
+							</label>
+							<div class="flex items-center justify-center">
+								<label class="relative inline-flex items-center cursor-pointer">
+									<input
+										v-model="participant.is_paid"
+										type="checkbox"
+										class="sr-only peer"
+										@change="updateParticipant(participant)"
+									/>
+									<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+									<span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300" :class="participant.is_paid ? 'text-green-600 dark:text-green-400 font-bold' : 'text-red-600 dark:text-red-400'">
+										{{ participant.is_paid ? 'Оплачено' : 'Не оплачено' }}
 									</span>
 								</label>
 							</div>
@@ -556,6 +577,23 @@ const availableLocationUsers = computed(() => {
 	});
 });
 
+const canFinishTournament = computed(() => {
+	if (!tournament.value || !tournament.value.participants || tournament.value.participants.length === 0) {
+		return false;
+	}
+	
+	const validParticipants = tournament.value.participants.filter(p => {
+		const name = p.display_name || p.name || p.user?.name || '';
+		return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+	});
+	
+	if (validParticipants.length === 0) {
+		return false;
+	}
+	
+	return validParticipants.every(p => p.is_paid === true);
+});
+
 const addParticipant = async () => {
 	if (!newParticipantUserId.value && !newParticipantName.value?.trim()) {
 		alert('Необходимо указать либо пользователя, либо имя участника');
@@ -630,6 +668,7 @@ const updateParticipant = async (participant) => {
 					id: p.id,
 					rebuy: p.rebuy ?? 0,
 					addon: p.addon ?? false,
+					is_paid: p.is_paid ?? false,
 					prize: p.prize ?? null,
 				};
 			}
@@ -637,6 +676,7 @@ const updateParticipant = async (participant) => {
 				id: p.id,
 				rebuy: p.rebuy ?? 0,
 				addon: p.addon ?? false,
+				is_paid: p.is_paid ?? false,
 				prize: p.prize ?? null,
 			};
 		});
@@ -807,6 +847,14 @@ const clearPrizeDistribution = async () => {
 };
 
 const openFinishModal = () => {
+	if (!canFinishTournament.value) {
+		const unpaidCount = tournament.value.participants.filter(p => {
+			const name = p.display_name || p.name || p.user?.name || '';
+			return name && name !== 'Без имени' && name !== 'Неизвестный участник' && !p.is_paid;
+		}).length;
+		alert(`Нельзя завершить турнир: ${unpaidCount} участник(ов) еще не оплатили вход`);
+		return;
+	}
 	if (!tournament.value || !tournament.value.prize_distribution) return;
 	selectedWinners.value = [];
 	showFinishModal.value = true;
@@ -845,6 +893,14 @@ const closeFinishModal = () => {
 };
 
 const finishTournament = async () => {
+	if (!canFinishTournament.value) {
+		const unpaidCount = tournament.value.participants.filter(p => {
+			const name = p.display_name || p.name || p.user?.name || '';
+			return name && name !== 'Без имени' && name !== 'Неизвестный участник' && !p.is_paid;
+		}).length;
+		alert(`Нельзя завершить турнир: ${unpaidCount} участник(ов) еще не оплатили вход`);
+		return;
+	}
 	if (selectedWinners.value.length === 0) {
 		alert('Необходимо выбрать хотя бы одного победителя');
 		return;

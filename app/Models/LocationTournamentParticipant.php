@@ -17,6 +17,7 @@ class LocationTournamentParticipant extends Model
 		'place',
 		'rebuy',
 		'addon',
+		'is_paid',
 		'prize',
 	];
 
@@ -26,6 +27,7 @@ class LocationTournamentParticipant extends Model
 			'place' => 'integer',
 			'rebuy' => 'integer',
 			'addon' => 'boolean',
+			'is_paid' => 'boolean',
 			'prize' => 'decimal:2',
 		];
 	}
