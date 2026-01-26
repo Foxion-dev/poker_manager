@@ -15,6 +15,7 @@ class CurrencySeeder extends Seeder
 			['name' => 'Euro', 'code' => 'EUR', 'symbol' => '€', 'rate_to_usd' => 0.9624],
 			['name' => 'Ukrainian Hryvnia', 'code' => 'UAH', 'symbol' => '₴', 'rate_to_usd' => 41.6700],
 			['name' => 'Chinese Yuan', 'code' => 'CNY', 'symbol' => '¥', 'rate_to_usd' => 7.3100],
+			['name' => 'Georgian Lari', 'code' => 'GEL', 'symbol' => '₾', 'rate_to_usd' => 2.7500],
 		];
 
 		foreach ($currencies as $currency) {
