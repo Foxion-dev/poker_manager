@@ -71,6 +71,18 @@ const router = createRouter({
 	routes,
 });
 
+const pageTitles = {
+	Login: 'Вход - Poker Manager',
+	Register: 'Регистрация - Poker Manager',
+	Dashboard: 'Дашборд - Poker Manager',
+	Tournaments: 'Турниры - Poker Manager',
+	TournamentCreate: 'Создать турнир - Poker Manager',
+	TournamentEdit: 'Редактировать турнир - Poker Manager',
+	AdminRooms: 'Управление румами - Админ-панель',
+	AdminCurrencies: 'Управление валютами - Админ-панель',
+	AdminUsers: 'Управление пользователями - Админ-панель',
+};
+
 router.beforeEach((to, from, next) => {
 	const authStore = useAuthStore();
 	const token = localStorage.getItem('auth_token');
@@ -90,6 +102,10 @@ router.beforeEach((to, from, next) => {
 			next();
 		}
 	}
+});
+
+router.afterEach((to) => {
+	document.title = pageTitles[to.name] || 'Poker Manager';
 });
 
 export default router;
