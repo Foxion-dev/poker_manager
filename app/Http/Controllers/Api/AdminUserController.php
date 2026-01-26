@@ -11,7 +11,7 @@ class AdminUserController extends Controller
 {
 	public function index(Request $request): JsonResponse
 	{
-		$query = User::query();
+		$query = User::withCount('tournaments');
 
 		if ($request->has('search')) {
 			$search = $request->get('search');

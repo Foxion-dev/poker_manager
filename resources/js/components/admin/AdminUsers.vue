@@ -63,6 +63,12 @@
 							Админ
 						</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+							Турниров
+						</th>
+						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+							Последний вход
+						</th>
+						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 							Дата регистрации
 						</th>
 						<th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -100,6 +106,12 @@
 							>
 								{{ user.is_admin ? 'Админ' : 'Пользователь' }}
 							</span>
+						</td>
+						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+							{{ user.tournaments_count || 0 }}
+						</td>
+						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+							{{ user.last_login_at ? formatDate(user.last_login_at) : 'Никогда' }}
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 							{{ formatDate(user.created_at) }}
@@ -142,7 +154,7 @@
 						</td>
 					</tr>
 					<tr v-if="users.data.length === 0">
-						<td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+						<td colspan="9" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
 							Нет пользователей
 						</td>
 					</tr>
