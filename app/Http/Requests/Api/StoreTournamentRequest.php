@@ -17,7 +17,6 @@ class StoreTournamentRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			'pack_id' => ['nullable', 'exists:packs,id'],
 			'room_id' => ['required', 'exists:rooms,id'],
 			'buyin' => ['required', 'numeric', 'min:0'],
 			'currency_id' => ['nullable', 'exists:currencies,id'],

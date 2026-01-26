@@ -13,7 +13,6 @@ class Tournament extends Model
 
 	protected $fillable = [
 		'user_id',
-		'pack_id',
 		'room_id',
 		'buyin',
 		'currency_id',
@@ -49,11 +48,6 @@ class Tournament extends Model
 	public function currency(): BelongsTo
 	{
 		return $this->belongsTo(Currency::class);
-	}
-
-	public function pack(): BelongsTo
-	{
-		return $this->belongsTo(Pack::class);
 	}
 
 	public function getProfitAttribute(): float
