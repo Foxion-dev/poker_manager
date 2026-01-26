@@ -90,18 +90,16 @@ class LocationTournament extends Model
 
 	public function getPrizeDistributionAttribute(): array
 	{
-		if ($this->attributes['prize_distribution'] ?? null) {
-			$customDistribution = json_decode($this->attributes['prize_distribution'], true);
-			if (is_array($customDistribution) && count($customDistribution) > 0) {
-				$prizePool = $this->prize_pool;
-				return array_map(function($prize) use ($prizePool) {
-					return [
-						'place' => $prize['place'],
-						'percentage' => $prize['percentage'],
-						'prize' => round($prizePool * ($prize['percentage'] / 100), 2),
-					];
-				}, $customDistribution);
-			}
+		$customDistribution = $this->prize_distribution;
+		if (is_array($customDistribution) && count($customDistribution) > 0) {
+			$prizePool = $this->prize_pool;
+			return array_map(function($prize) use ($prizePool) {
+				return [
+					'place' => $prize['place'],
+					'percentage' => $prize['percentage'],
+					'prize' => round($prizePool * ($prize['percentage'] / 100), 2),
+				];
+			}, $customDistribution);
 		}
 
 		$prizePool = $this->prize_pool;
@@ -116,7 +114,13 @@ class LocationTournament extends Model
 		}
 
 		$itmPercentage = (float) ($this->itm_percentage ?? 15);
-		$itmPlaces = max(1, (int) ceil($participantsCount * ($itmPercentage / 100)));
+		$itmPlacesFloat = $participantsCount * ($itmPercentage / 100);
+		
+		if ($itmPlacesFloat < 1) {
+			return [];
+		}
+		
+		$itmPlaces = max(1, min((int) round($itmPlacesFloat), $participantsCount));
 		
 		if ($itmPlaces === 0) {
 			return [];

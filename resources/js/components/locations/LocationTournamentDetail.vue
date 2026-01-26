@@ -491,15 +491,23 @@ const prizeDistributionForm = ref([]);
 const openPrizeDistributionModal = () => {
 	if (!tournament.value) return;
 	
-	if (tournament.value.prize_distribution && tournament.value.prize_distribution.length > 0) {
-		prizeDistributionForm.value = tournament.value.prize_distribution.map(p => ({
+	const customDistribution = tournament.value.prize_distribution;
+	if (customDistribution && Array.isArray(customDistribution) && customDistribution.length > 0 && customDistribution[0].hasOwnProperty('percentage')) {
+		prizeDistributionForm.value = customDistribution.map(p => ({
 			place: p.place,
 			percentage: p.percentage,
 		}));
 	} else {
 		const participantsCount = tournament.value.participants?.length || 0;
 		const itmPercentage = tournament.value.itm_percentage || 15;
-		const itmPlaces = Math.max(1, Math.ceil(participantsCount * (itmPercentage / 100)));
+		const itmPlacesFloat = participantsCount * (itmPercentage / 100);
+		
+		if (itmPlacesFloat < 1) {
+			alert('Недостаточно участников для расчета призовых мест');
+			return;
+		}
+		
+		const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
 		
 		prizeDistributionForm.value = [];
 		for (let place = 1; place <= itmPlaces; place++) {
