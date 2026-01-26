@@ -310,11 +310,30 @@ class LocationTournamentController extends Controller
 		$participant->delete();
 
 		$locationTournament->load(['participants.user', 'currency']);
-		$location->load('users');
+		
+		$usersFromSystem = $location->users()->get()->map(function($user) {
+			return [
+				'id' => $user->pivot->id,
+				'user_id' => $user->id,
+				'name' => null,
+				'display_name' => $user->name,
+			];
+		});
+		
+		$usersByName = $location->locationUsers()->whereNull('user_id')->get()->map(function($locationUser) {
+			return [
+				'id' => $locationUser->id,
+				'user_id' => null,
+				'name' => $locationUser->name,
+				'display_name' => $locationUser->name,
+			];
+		});
+		
+		$allLocationUsers = $usersFromSystem->concat($usersByName);
 
 		return response()->json([
 			'participants' => $locationTournament->participants,
-			'users' => $location->users,
+			'users' => $allLocationUsers->values(),
 		]);
 	}
 
