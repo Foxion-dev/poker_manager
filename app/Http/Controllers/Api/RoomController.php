@@ -19,9 +19,12 @@ class RoomController extends Controller
 			'coinpoker' => 4,
 		];
 
-		$rooms = Room::all()->sortBy(function ($room) use ($priorityOrder) {
-			return $priorityOrder[$room->name] ?? 999;
-		})->values();
+		$rooms = Room::all()
+			->unique('name')
+			->sortBy(function ($room) use ($priorityOrder) {
+				return $priorityOrder[$room->name] ?? 999;
+			})
+			->values();
 
 		return response()->json($rooms);
 	}
