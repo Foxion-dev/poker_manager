@@ -6,8 +6,8 @@ export const locationService = {
 		return response.data;
 	},
 
-	async getById(id) {
-		const response = await api.get(`/locations/${id}`);
+	async getById(id, params = {}) {
+		const response = await api.get(`/locations/${id}`, { params });
 		return response.data;
 	},
 
@@ -48,6 +48,16 @@ export const locationService = {
 
 	async deleteTournament(locationId, tournamentId) {
 		const response = await api.delete(`/locations/${locationId}/tournaments/${tournamentId}`);
+		return response.data;
+	},
+
+	async addAdmin(locationId, data) {
+		const response = await api.post(`/locations/${locationId}/admins`, data);
+		return response.data;
+	},
+
+	async removeAdmin(locationId, adminId) {
+		const response = await api.delete(`/locations/${locationId}/admins/${adminId}`);
 		return response.data;
 	},
 };

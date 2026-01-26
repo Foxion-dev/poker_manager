@@ -20,6 +20,7 @@ class UpdateLocationRequest extends FormRequest
 			'name' => ['sometimes', 'required', 'string', 'max:255'],
 			'description' => ['nullable', 'string'],
 			'is_public' => ['sometimes', 'boolean'],
+			'password' => ['nullable', 'string', 'min:4'],
 		];
 	}
 }

@@ -29,26 +29,77 @@
 							</span>
 						</div>
 					</div>
-					<div class="ml-6" v-if="location?.user_id === currentUser?.id">
+					<div class="ml-6" v-if="location?.can_manage_admins || location?.is_admin">
 						<button
+							v-if="location?.can_manage_admins"
 							@click="editLocation"
 							class="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors mr-2"
 						>
 							Редактировать
 						</button>
 						<button
+							v-if="location?.can_manage_admins"
+							@click="showAdminForm = true"
+							class="px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors mr-2"
+						>
+							Управление админами
+						</button>
+						<button
+							v-if="location?.is_admin"
 							@click="openTournamentForm"
 							class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors mr-2"
 						>
 							Создать турнир
 						</button>
 						<button
+							v-if="location?.user_id === currentUser?.id"
 							@click="deleteLocation"
 							class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
 						>
 							Удалить
 						</button>
 					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="showPasswordForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
+				<div class="p-6">
+					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Введите пароль</h3>
+					<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+						Эта локация защищена паролем. Введите пароль для доступа.
+					</p>
+					<form @submit.prevent="submitPassword" class="space-y-4">
+						<div>
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								Пароль *
+							</label>
+							<input
+								v-model="locationPassword"
+								type="password"
+								required
+								autofocus
+								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							/>
+						</div>
+						<div class="flex justify-end space-x-3 pt-4">
+							<button
+								type="button"
+								@click="$router.push('/locations')"
+								class="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+							>
+								Отмена
+							</button>
+							<button
+								type="submit"
+								:disabled="checkingPassword"
+								class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
+							>
+								{{ checkingPassword ? 'Проверка...' : 'Войти' }}
+							</button>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>
@@ -185,7 +236,7 @@
 			</div>
 
 			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
-				<div class="flex items-center justify-between mb-6">
+					<div class="flex items-center justify-between mb-6">
 					<div class="flex items-center">
 						<div class="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3">
 							<span class="text-xl">🎮</span>
@@ -195,7 +246,7 @@
 						</h3>
 					</div>
 					<button
-						v-if="location.user_id === currentUser?.id"
+						v-if="location.is_admin"
 						@click="openTournamentForm"
 						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors"
 					>
@@ -240,7 +291,7 @@
 									</div>
 								</div>
 							</div>
-							<div v-if="location.user_id === currentUser?.id" class="ml-4 flex space-x-2">
+							<div v-if="location.is_admin" class="ml-4 flex space-x-2">
 								<button
 									@click="editTournament(tournament)"
 									class="px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
@@ -298,7 +349,7 @@
 						</div>
 
 						<div>
-							<label class="flex items-center space-x-2">
+							<label class="flex items-center space-x-2 mb-4">
 								<input
 									v-model="locationForm.is_public"
 									type="checkbox"
@@ -308,6 +359,22 @@
 									Публичная локация
 								</span>
 							</label>
+						</div>
+
+						<div v-if="locationForm.is_public">
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								Пароль (обязательно для публичных локаций)
+							</label>
+							<input
+								v-model="locationForm.password"
+								type="password"
+								:required="locationForm.is_public"
+								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								placeholder="Введите пароль"
+							/>
+							<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+								Оставьте пустым, чтобы не менять пароль при редактировании
+							</p>
 						</div>
 
 						<div class="flex justify-end space-x-3 pt-4">
@@ -473,11 +540,82 @@
 				</div>
 			</div>
 		</div>
+
+		<div
+			v-if="showAdminForm"
+			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+			@click.self="showAdminForm = false"
+		>
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+				<div class="p-6">
+					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Управление админами</h3>
+
+					<div v-if="location?.admins && location.admins.length > 0" class="mb-6">
+						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Текущие админы:</h4>
+						<div class="space-y-2">
+							<div
+								v-for="admin in location.admins"
+								:key="admin.id"
+								class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+							>
+								<div class="flex items-center">
+									<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
+										{{ admin.name?.charAt(0).toUpperCase() }}
+									</div>
+									<span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.name }}</span>
+									<span v-if="admin.id === location.user_id" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+										Создатель
+									</span>
+								</div>
+								<button
+									v-if="admin.id !== location.user_id"
+									@click="removeAdmin(admin.id)"
+									class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+								>
+									Удалить
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<div>
+						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Добавить админа:</h4>
+						<div class="flex items-center space-x-2">
+							<select
+								v-model="newAdminUserId"
+								class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							>
+								<option value="">Выберите пользователя</option>
+								<option v-for="user in availableUsers" :key="user.id" :value="user.id">
+									{{ user.name }}
+								</option>
+							</select>
+							<button
+								@click="addAdmin"
+								:disabled="!newAdminUserId || addingAdmin"
+								class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
+							>
+								{{ addingAdmin ? 'Добавление...' : 'Добавить' }}
+							</button>
+						</div>
+					</div>
+
+					<div class="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+						<button
+							@click="showAdminForm = false"
+							class="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+						>
+							Закрыть
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { locationService } from '../../services/locationService';
 import { useAuthStore } from '../../stores/auth';
@@ -495,14 +633,21 @@ const allUsers = ref([]);
 const loading = ref(false);
 const showLocationForm = ref(false);
 const showTournamentForm = ref(false);
+const showAdminForm = ref(false);
+const showPasswordForm = ref(false);
+const locationPassword = ref('');
+const checkingPassword = ref(false);
 const editingTournament = ref(null);
 const savingLocation = ref(false);
 const savingTournament = ref(false);
+const addingAdmin = ref(false);
+const newAdminUserId = ref('');
 
 const locationForm = ref({
 	name: '',
 	description: '',
 	is_public: false,
+	password: '',
 });
 
 const tournamentForm = ref({
@@ -513,21 +658,46 @@ const tournamentForm = ref({
 	participants: [{ user_id: '', place: 1, prize: null }],
 });
 
-const fetchLocation = async () => {
+const fetchLocation = async (password = null) => {
 	loading.value = true;
 	try {
-		location.value = await locationService.getById(route.params.id);
+		const params = password ? { password } : {};
+		location.value = await locationService.getById(route.params.id, params);
 		locationForm.value = {
 			name: location.value.name,
 			description: location.value.description || '',
 			is_public: location.value.is_public,
+			password: '',
 		};
 		await fetchTournaments();
 		await fetchUsers();
 	} catch (error) {
-		console.error('Error fetching location:', error);
+		if (error.response?.status === 403 && error.response?.data?.requires_password) {
+			showPasswordForm.value = true;
+		} else {
+			console.error('Error fetching location:', error);
+			alert('Ошибка при загрузке локации');
+		}
 	} finally {
 		loading.value = false;
+	}
+};
+
+const submitPassword = async () => {
+	checkingPassword.value = true;
+	try {
+		await fetchLocation(locationPassword.value);
+		showPasswordForm.value = false;
+		locationPassword.value = '';
+	} catch (error) {
+		if (error.response?.status === 403) {
+			alert('Неверный пароль');
+		} else {
+			console.error('Error submitting password:', error);
+			alert('Ошибка при проверке пароля');
+		}
+	} finally {
+		checkingPassword.value = false;
 	}
 };
 
@@ -559,7 +729,11 @@ const closeLocationForm = () => {
 const saveLocation = async () => {
 	savingLocation.value = true;
 	try {
-		await locationService.update(route.params.id, locationForm.value);
+		const data = { ...locationForm.value };
+		if (!data.password) {
+			delete data.password;
+		}
+		await locationService.update(route.params.id, data);
 		closeLocationForm();
 		await fetchLocation();
 	} catch (error) {
@@ -701,6 +875,42 @@ const formatCurrency = (value) => {
 const formatDate = (dateString) => {
 	const date = new Date(dateString);
 	return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const availableUsers = computed(() => {
+	if (!location.value || !allUsers.value.length) return [];
+	const adminIds = [location.value.user_id, ...(location.value.admins?.map(a => a.id) || [])];
+	return allUsers.value.filter(user => !adminIds.includes(user.id));
+});
+
+const addAdmin = async () => {
+	if (!newAdminUserId.value) return;
+
+	addingAdmin.value = true;
+	try {
+		await locationService.addAdmin(route.params.id, { user_id: newAdminUserId.value });
+		newAdminUserId.value = '';
+		await fetchLocation();
+	} catch (error) {
+		console.error('Error adding admin:', error);
+		alert(error.response?.data?.message || 'Ошибка при добавлении админа');
+	} finally {
+		addingAdmin.value = false;
+	}
+};
+
+const removeAdmin = async (adminId) => {
+	if (!confirm('Вы уверены, что хотите удалить этого админа?')) {
+		return;
+	}
+
+	try {
+		await locationService.removeAdmin(route.params.id, adminId);
+		await fetchLocation();
+	} catch (error) {
+		console.error('Error removing admin:', error);
+		alert(error.response?.data?.message || 'Ошибка при удалении админа');
+	}
 };
 
 onMounted(() => {

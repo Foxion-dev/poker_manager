@@ -5,8 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class Location extends Model
 {
@@ -17,6 +19,11 @@ class Location extends Model
 		'name',
 		'description',
 		'is_public',
+		'password',
+	];
+
+	protected $hidden = [
+		'password',
 	];
 
 	protected function casts(): array
@@ -34,6 +41,37 @@ class Location extends Model
 	public function tournaments(): HasMany
 	{
 		return $this->hasMany(LocationTournament::class);
+	}
+
+	public function admins(): BelongsToMany
+	{
+		return $this->belongsToMany(User::class, 'location_admins')
+			->withTimestamps();
+	}
+
+	public function isAdmin(User $user): bool
+	{
+		return $this->user_id === $user->id || $this->admins()->where('user_id', $user->id)->exists();
+	}
+
+	public function canManageAdmins(User $user): bool
+	{
+		return $this->user_id === $user->id || $this->admins()->where('user_id', $user->id)->exists();
+	}
+
+	public function setPasswordAttribute($value)
+	{
+		if ($value) {
+			$this->attributes['password'] = Hash::make($value);
+		}
+	}
+
+	public function checkPassword($password): bool
+	{
+		if (!$this->password) {
+			return true;
+		}
+		return Hash::check($password, $this->password);
 	}
 
 	public function getTournamentsCountAttribute(): int

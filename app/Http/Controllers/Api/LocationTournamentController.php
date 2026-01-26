@@ -50,8 +50,8 @@ class LocationTournamentController extends Controller
 	{
 		$user = $request->user();
 
-		if ($location->user_id !== $user->id) {
-			return response()->json(['message' => 'Unauthorized'], 403);
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can create tournaments'], 403);
 		}
 
 		$data = $request->validated();
@@ -102,8 +102,8 @@ class LocationTournamentController extends Controller
 		$user = $request->user();
 		$location = $locationTournament->location;
 
-		if ($location->user_id !== $user->id) {
-			return response()->json(['message' => 'Unauthorized'], 403);
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can update tournaments'], 403);
 		}
 
 		$data = $request->validated();
@@ -130,8 +130,8 @@ class LocationTournamentController extends Controller
 		$user = $request->user();
 		$location = $locationTournament->location;
 
-		if ($location->user_id !== $user->id) {
-			return response()->json(['message' => 'Unauthorized'], 403);
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can delete tournaments'], 403);
 		}
 
 		$locationTournament->delete();

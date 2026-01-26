@@ -21,7 +21,10 @@ class LocationController extends Controller
 		} else {
 			$query->where(function ($q) use ($user) {
 				$q->where('is_public', true)
-					->orWhere('user_id', $user->id);
+					->orWhere('user_id', $user->id)
+					->orWhereHas('admins', function ($adminQuery) use ($user) {
+						$adminQuery->where('user_id', $user->id);
+					});
 			});
 		}
 
@@ -29,13 +32,15 @@ class LocationController extends Controller
 			->withCount('tournaments')
 			->orderBy('created_at', 'desc')
 			->get()
-			->map(function ($location) {
+			->map(function ($location) use ($user) {
 				return [
 					'id' => $location->id,
 					'name' => $location->name,
 					'description' => $location->description,
 					'is_public' => $location->is_public,
+					'has_password' => !empty($location->password),
 					'user' => $location->user,
+					'is_admin' => $location->isAdmin($user),
 					'tournaments_count' => $location->tournaments_count,
 					'average_buyin' => $location->average_buyin,
 				];
@@ -56,11 +61,20 @@ class LocationController extends Controller
 	{
 		$user = $request->user();
 
-		if (!$location->is_public && $location->user_id !== $user->id) {
+		if (!$location->is_public && $location->user_id !== $user->id && !$location->isAdmin($user)) {
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
-		$location->load('user');
+		if ($location->is_public && $location->password) {
+			$password = $request->get('password');
+			if (!$password || !$location->checkPassword($password)) {
+				if ($location->user_id !== $user->id && !$location->isAdmin($user)) {
+					return response()->json(['message' => 'Password required', 'requires_password' => true], 403);
+				}
+			}
+		}
+
+		$location->load(['user', 'admins']);
 		$location->loadCount('tournaments');
 
 		return response()->json([
@@ -68,7 +82,11 @@ class LocationController extends Controller
 			'name' => $location->name,
 			'description' => $location->description,
 			'is_public' => $location->is_public,
+			'has_password' => !empty($location->password),
 			'user' => $location->user,
+			'is_admin' => $location->isAdmin($user),
+			'can_manage_admins' => $location->canManageAdmins($user),
+			'admins' => $location->admins,
 			'tournaments_count' => $location->tournaments_count,
 			'average_buyin' => $location->average_buyin,
 			'top_players_by_wins' => $location->top_players_by_wins,
@@ -80,12 +98,17 @@ class LocationController extends Controller
 	{
 		$user = $request->user();
 
-		if ($location->user_id !== $user->id) {
+		if ($location->user_id !== $user->id && !$location->canManageAdmins($user)) {
 			return response()->json(['message' => 'Unauthorized'], 403);
 		}
 
-		$location->update($request->validated());
-		$location->load('user');
+		$data = $request->validated();
+		if (isset($data['password']) && empty($data['password'])) {
+			unset($data['password']);
+		}
+
+		$location->update($data);
+		$location->load(['user', 'admins']);
 
 		return response()->json($location);
 	}
@@ -102,4 +125,42 @@ class LocationController extends Controller
 
 		return response()->json(['message' => 'Location deleted successfully']);
 	}
-}
+
+	public function addAdmin(Location $location, Request $request): JsonResponse
+	{
+		$user = $request->user();
+
+		if (!$location->canManageAdmins($user)) {
+			return response()->json(['message' => 'Unauthorized'], 403);
+		}
+
+		$adminUserId = $request->input('user_id');
+		if (!$adminUserId || $adminUserId == $location->user_id) {
+			return response()->json(['message' => 'Invalid user'], 422);
+		}
+
+		if ($location->admins()->where('user_id', $adminUserId)->exists()) {
+			return response()->json(['message' => 'User is already an admin'], 422);
+		}
+
+		$location->admins()->attach($adminUserId);
+
+		return response()->json(['message' => 'Admin added successfully']);
+	}
+
+	public function removeAdmin(Location $location, Request $request, int $adminId): JsonResponse
+	{
+		$user = $request->user();
+
+		if (!$location->canManageAdmins($user)) {
+			return response()->json(['message' => 'Unauthorized'], 403);
+		}
+
+		if ($adminId == $location->user_id) {
+			return response()->json(['message' => 'Cannot remove location creator'], 422);
+		}
+
+		$location->admins()->detach($adminId);
+
+		return response()->json(['message' => 'Admin removed successfully']);
+	}

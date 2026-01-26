@@ -20,6 +20,7 @@ class StoreLocationRequest extends FormRequest
 			'name' => ['required', 'string', 'max:255'],
 			'description' => ['nullable', 'string'],
 			'is_public' => ['sometimes', 'boolean'],
+			'password' => ['nullable', 'string', 'min:4', 'required_if:is_public,true'],
 		];
 	}
 }

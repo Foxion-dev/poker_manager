@@ -167,7 +167,7 @@
 						</div>
 
 						<div>
-							<label class="flex items-center space-x-2">
+							<label class="flex items-center space-x-2 mb-4">
 								<input
 									v-model="form.is_public"
 									type="checkbox"
@@ -177,6 +177,19 @@
 									Публичная локация
 								</span>
 							</label>
+						</div>
+
+						<div v-if="form.is_public">
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								Пароль (обязательно для публичных локаций) *
+							</label>
+							<input
+								v-model="form.password"
+								type="password"
+								:required="form.is_public"
+								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								placeholder="Введите пароль"
+							/>
 						</div>
 
 						<div class="flex justify-end space-x-3 pt-4">
@@ -224,6 +237,7 @@ const form = ref({
 	name: '',
 	description: '',
 	is_public: false,
+	password: '',
 });
 
 const filteredLocations = computed(() => {
@@ -250,6 +264,7 @@ const openCreateForm = () => {
 		name: '',
 		description: '',
 		is_public: false,
+		password: '',
 	};
 	showForm.value = true;
 };
@@ -260,6 +275,7 @@ const editLocation = (location) => {
 		name: location.name,
 		description: location.description || '',
 		is_public: location.is_public,
+		password: '',
 	};
 	showForm.value = true;
 };
@@ -272,10 +288,14 @@ const closeForm = () => {
 const saveLocation = async () => {
 	saving.value = true;
 	try {
+		const data = { ...form.value };
+		if (editingLocation.value && !data.password) {
+			delete data.password;
+		}
 		if (editingLocation.value) {
-			await locationService.update(editingLocation.value.id, form.value);
+			await locationService.update(editingLocation.value.id, data);
 		} else {
-			await locationService.create(form.value);
+			await locationService.create(data);
 		}
 		closeForm();
 		await fetchLocations();
