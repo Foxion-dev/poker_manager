@@ -38,7 +38,7 @@
 							<router-link
 								to="/admin/rooms"
 								class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-								:class="$route.name === 'AdminRooms' || $route.name === 'AdminCurrencies'
+								:class="$route.name === 'AdminRooms' || $route.name === 'AdminCurrencies' || $route.name === 'AdminUsers'
 									? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
 									: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
 							>

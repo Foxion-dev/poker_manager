@@ -50,11 +50,26 @@
 					<div class="flex items-center space-x-4">
 						<router-link
 							to="/"
+							class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700"
+						>
+							<span class="mr-2">🃏</span>
+							В систему
+						</router-link>
+						<div class="hidden sm:flex items-center space-x-3 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+							<div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+								{{ user?.name?.charAt(0).toUpperCase() }}
+							</div>
+							<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+								{{ user?.name }}
+							</span>
+						</div>
+						<button
+							@click="handleLogout"
 							class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200"
 						>
-							<span class="mr-2">←</span>
-							На главную
-						</router-link>
+							<span class="mr-2">🚪</span>
+							Выход
+						</button>
 					</div>
 				</div>
 			</div>
@@ -67,4 +82,16 @@
 </template>
 
 <script setup>
+import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
+
+const router = useRouter();
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
+
+const handleLogout = async () => {
+	await authStore.logout();
+	router.push({ name: 'Login' });
+};
 </script>
