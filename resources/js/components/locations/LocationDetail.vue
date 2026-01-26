@@ -291,26 +291,9 @@
 									<span>🎯 {{ tournament.format_label }}</span>
 								</div>
 								<div v-if="tournament.participants && tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени').length > 0" class="mt-3">
-									<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Участники:</p>
-									<div class="flex flex-wrap gap-2">
-										<div
-											v-for="participant in tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени')"
-											:key="participant.id"
-											class="px-3 py-1 text-xs rounded-full"
-											:class="participant.place === 1 
-												? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
-												: participant.place === 2 
-												? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' 
-												: participant.place === 3 
-												? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' 
-												: 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400'"
-										>
-											{{ participant.place }}. {{ participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник' }}
-											<span v-if="participant.prize" class="ml-1 font-semibold text-green-600">
-												({{ formatCurrency(participant.prize) }})
-											</span>
-										</div>
-									</div>
+									<p class="text-xs font-medium text-gray-600 dark:text-gray-400">
+										👥 Участников: {{ tournament.participants.filter(p => p.name && p.name !== 'Без имени' && p.display_name && p.display_name !== 'Без имени').length }}
+									</p>
 								</div>
 							</div>
 							<div v-if="location.is_admin" class="ml-4 flex space-x-2" @click.stop>

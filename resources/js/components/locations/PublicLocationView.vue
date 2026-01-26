@@ -232,25 +232,12 @@
 										const name = p.display_name || p.name || p.user?.name || '';
 										return name && name !== 'Без имени' && name !== 'Неизвестный участник';
 									}).length > 0" class="mt-3">
-										<p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Участники:</p>
-										<div class="flex flex-wrap gap-2">
-											<div
-												v-for="participant in tournament.participants.filter(p => {
-													const name = p.display_name || p.name || p.user?.name || '';
-													return name && name !== 'Без имени' && name !== 'Неизвестный участник';
-												})"
-												:key="participant.id"
-												class="px-3 py-1 text-xs rounded-full"
-												:class="participant.place === 1 
-													? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
-													: participant.prize > 0 
-														? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-														: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'"
-											>
-												{{ participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник' }} - {{ participant.place }} место
-												<span v-if="participant.prize > 0"> ({{ formatCurrency(participant.prize) }})</span>
-											</div>
-										</div>
+										<p class="text-xs font-medium text-gray-600 dark:text-gray-400">
+											👥 Участников: {{ tournament.participants.filter(p => {
+												const name = p.display_name || p.name || p.user?.name || '';
+												return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+											}).length }}
+										</p>
 									</div>
 								</div>
 							</div>
