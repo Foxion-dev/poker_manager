@@ -60,6 +60,9 @@
 							Статус
 						</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+							Админ
+						</th>
+						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 							Дата регистрации
 						</th>
 						<th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -88,6 +91,16 @@
 								{{ user.banned_at ? 'Забанен' : 'Активен' }}
 							</span>
 						</td>
+						<td class="px-6 py-4 whitespace-nowrap">
+							<span
+								class="px-2 py-1 text-xs font-semibold rounded-full"
+								:class="user.is_admin 
+									? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
+									: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'"
+							>
+								{{ user.is_admin ? 'Админ' : 'Пользователь' }}
+							</span>
+						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 							{{ formatDate(user.created_at) }}
 						</td>
@@ -107,6 +120,20 @@
 								Разбанить
 							</button>
 							<button
+								v-if="!user.is_admin"
+								@click="makeAdmin(user)"
+								class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-4"
+							>
+								Сделать админом
+							</button>
+							<button
+								v-else
+								@click="removeAdmin(user)"
+								class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 mr-4"
+							>
+								Убрать админа
+							</button>
+							<button
 								@click="deleteUser(user)"
 								class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
 							>
@@ -115,7 +142,7 @@
 						</td>
 					</tr>
 					<tr v-if="users.data.length === 0">
-						<td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+						<td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
 							Нет пользователей
 						</td>
 					</tr>
@@ -287,6 +314,36 @@ const unbanUser = async (user) => {
 	} catch (error) {
 		console.error('Error unbanning user:', error);
 		const message = error.response?.data?.message || 'Ошибка при разбане пользователя';
+		alert(message);
+	}
+};
+
+const makeAdmin = async (user) => {
+	if (!confirm(`Вы уверены, что хотите сделать пользователя "${user.name}" администратором?`)) {
+		return;
+	}
+
+	try {
+		await api.post(`/admin/users/${user.id}/make-admin`);
+		await fetchUsers(users.value.current_page);
+	} catch (error) {
+		console.error('Error making admin:', error);
+		const message = error.response?.data?.message || 'Ошибка при назначении администратора';
+		alert(message);
+	}
+};
+
+const removeAdmin = async (user) => {
+	if (!confirm(`Вы уверены, что хотите убрать права администратора у пользователя "${user.name}"?`)) {
+		return;
+	}
+
+	try {
+		await api.post(`/admin/users/${user.id}/remove-admin`);
+		await fetchUsers(users.value.current_page);
+	} catch (error) {
+		console.error('Error removing admin:', error);
+		const message = error.response?.data?.message || 'Ошибка при снятии прав администратора';
 		alert(message);
 	}
 };

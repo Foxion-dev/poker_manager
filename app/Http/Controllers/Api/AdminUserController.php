@@ -59,6 +59,28 @@ class AdminUserController extends Controller
 		return response()->json(['message' => 'User unbanned successfully', 'user' => $user]);
 	}
 
+	public function makeAdmin(User $user): JsonResponse
+	{
+		if ($user->id === auth()->id()) {
+			return response()->json(['message' => 'Cannot change your own admin status'], 422);
+		}
+
+		$user->update(['is_admin' => true]);
+
+		return response()->json(['message' => 'User promoted to admin successfully', 'user' => $user]);
+	}
+
+	public function removeAdmin(User $user): JsonResponse
+	{
+		if ($user->id === auth()->id()) {
+			return response()->json(['message' => 'Cannot change your own admin status'], 422);
+		}
+
+		$user->update(['is_admin' => false]);
+
+		return response()->json(['message' => 'Admin rights removed successfully', 'user' => $user]);
+	}
+
 	public function destroy(User $user): JsonResponse
 	{
 		if ($user->id === auth()->id()) {

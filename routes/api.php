@@ -38,6 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::get('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'show']);
 		Route::post('/users/{user}/ban', [\App\Http\Controllers\Api\AdminUserController::class, 'ban']);
 		Route::post('/users/{user}/unban', [\App\Http\Controllers\Api\AdminUserController::class, 'unban']);
+		Route::post('/users/{user}/make-admin', [\App\Http\Controllers\Api\AdminUserController::class, 'makeAdmin']);
+		Route::post('/users/{user}/remove-admin', [\App\Http\Controllers\Api\AdminUserController::class, 'removeAdmin']);
 		Route::delete('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'destroy']);
 
 		Route::post('rooms', [RoomController::class, 'store']);
