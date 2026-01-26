@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::prefix('admin')->middleware('admin')->group(function () {
 		Route::get('/users', [\App\Http\Controllers\Api\AdminUserController::class, 'index']);
 		Route::get('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'show']);
+		Route::get('/users/{user}/statistics', [\App\Http\Controllers\Api\AdminUserController::class, 'statistics']);
 		Route::post('/users/{user}/ban', [\App\Http\Controllers\Api\AdminUserController::class, 'ban']);
 		Route::post('/users/{user}/unban', [\App\Http\Controllers\Api\AdminUserController::class, 'unban']);
 		Route::post('/users/{user}/make-admin', [\App\Http\Controllers\Api\AdminUserController::class, 'makeAdmin']);

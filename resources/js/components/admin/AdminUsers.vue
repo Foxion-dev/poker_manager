@@ -64,12 +64,6 @@
 							Админ
 						</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-							Турниров
-						</th>
-						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-							Последний вход
-						</th>
-						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
 							Дата регистрации
 						</th>
 						<th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -80,7 +74,12 @@
 				<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
 					<tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
 						<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-							{{ user.name }}
+							<router-link
+								:to="`/admin/users/${user.id}`"
+								class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
+							>
+								{{ user.name }}
+							</router-link>
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 							{{ user.email }}
@@ -107,12 +106,6 @@
 							>
 								{{ user.is_admin ? 'Админ' : 'Пользователь' }}
 							</span>
-						</td>
-						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-							{{ user.tournaments_count || 0 }}
-						</td>
-						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-							{{ user.last_login_at ? formatDate(user.last_login_at) : 'Никогда' }}
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 							{{ formatDate(user.created_at) }}
@@ -157,7 +150,7 @@
 						</td>
 					</tr>
 					<tr v-if="users.data.length === 0">
-						<td colspan="9" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+						<td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
 							Нет пользователей
 						</td>
 					</tr>

@@ -62,6 +62,11 @@ const routes = [
 				name: 'AdminUsers',
 				component: () => import('../components/admin/AdminUsers.vue'),
 			},
+			{
+				path: 'users/:id',
+				name: 'AdminUserDetail',
+				component: () => import('../components/admin/UserDetail.vue'),
+			},
 		],
 	},
 ];
@@ -81,6 +86,7 @@ const pageTitles = {
 	AdminRooms: 'Управление румами - Админ-панель',
 	AdminCurrencies: 'Управление валютами - Админ-панель',
 	AdminUsers: 'Управление пользователями - Админ-панель',
+	AdminUserDetail: 'Детали пользователя - Админ-панель',
 };
 
 router.beforeEach(async (to, from, next) => {
