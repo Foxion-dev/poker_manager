@@ -1,121 +1,210 @@
 <template>
-	<div class="px-4 py-6 sm:px-0">
-		<div v-if="loading" class="text-center py-12">
-			<div class="text-gray-500">Загрузка статистики...</div>
+	<div>
+		<div v-if="loading" class="flex items-center justify-center py-20">
+			<div class="text-center">
+				<svg class="animate-spin h-12 w-12 text-indigo-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				<div class="text-gray-600 dark:text-gray-400">Загрузка статистики...</div>
+			</div>
 		</div>
 
 		<div v-else-if="stats" class="space-y-6">
-			<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-				<div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-					<div class="p-5">
-						<div class="flex items-center">
-							<div class="flex-shrink-0">
-								<span class="text-2xl">🎯</span>
+			<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+					<div class="p-6">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+									Всего турниров
+								</p>
+								<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+									{{ stats.total_tournaments }}
+								</p>
 							</div>
-							<div class="ml-5 w-0 flex-1">
-								<dl>
-									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-										Всего турниров
-									</dt>
-									<dd class="text-lg font-medium text-gray-900 dark:text-white">
-										{{ stats.total_tournaments }}
-									</dd>
-								</dl>
+							<div class="h-16 w-16 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
+								<span class="text-3xl">🎯</span>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-					<div class="p-5">
-						<div class="flex items-center">
-							<div class="flex-shrink-0">
-								<span class="text-2xl">💰</span>
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+					<div class="p-6">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+									Общий профит
+								</p>
+								<p
+									class="mt-2 text-3xl font-bold"
+									:class="stats.total_profit >= 0 ? 'text-green-600' : 'text-red-600'"
+								>
+									{{ formatCurrency(stats.total_profit) }}
+								</p>
 							</div>
-							<div class="ml-5 w-0 flex-1">
-								<dl>
-									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-										Общий профит
-									</dt>
-									<dd
-										class="text-lg font-medium"
-										:class="stats.total_profit >= 0 ? 'text-green-600' : 'text-red-600'"
-									>
-										{{ formatCurrency(stats.total_profit) }}
-									</dd>
-								</dl>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-					<div class="p-5">
-						<div class="flex items-center">
-							<div class="flex-shrink-0">
-								<span class="text-2xl">📊</span>
-							</div>
-							<div class="ml-5 w-0 flex-1">
-								<dl>
-									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-										ITM %
-									</dt>
-									<dd class="text-lg font-medium text-gray-900 dark:text-white">
-										{{ stats.itm_percentage }}%
-									</dd>
-								</dl>
+							<div
+								class="h-16 w-16 rounded-xl flex items-center justify-center shadow-lg"
+								:class="stats.total_profit >= 0 
+									? 'bg-gradient-to-br from-green-400 to-green-600' 
+									: 'bg-gradient-to-br from-red-400 to-red-600'"
+							>
+								<span class="text-3xl">💰</span>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-					<div class="p-5">
-						<div class="flex items-center">
-							<div class="flex-shrink-0">
-								<span class="text-2xl">📈</span>
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+					<div class="p-6">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+									ITM %
+								</p>
+								<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+									{{ stats.itm_percentage }}%
+								</p>
 							</div>
-							<div class="ml-5 w-0 flex-1">
-								<dl>
-									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-										Средний байин
-									</dt>
-									<dd class="text-lg font-medium text-gray-900 dark:text-white">
-										{{ formatCurrency(stats.average_buyin) }}
-									</dd>
-								</dl>
+							<div class="h-16 w-16 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-lg">
+								<span class="text-3xl">📊</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+					<div class="p-6">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+									Средний байин
+								</p>
+								<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+									{{ formatCurrency(stats.average_buyin) }}
+								</p>
+							</div>
+							<div class="h-16 w-16 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center shadow-lg">
+								<span class="text-3xl">📈</span>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-				<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-					Динамика банкролла
-				</h3>
-				<div v-if="stats.bankroll_history && stats.bankroll_history.length > 0" class="space-y-2">
+			<div v-if="stats.roi" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+					<div class="flex items-center">
+						<div class="h-12 w-12 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mr-4">
+							<span class="text-2xl">📉</span>
+						</div>
+						<div>
+							<p class="text-sm font-medium text-gray-600 dark:text-gray-400">ROI</p>
+							<p
+								class="text-2xl font-bold"
+								:class="stats.roi >= 0 ? 'text-green-600' : 'text-red-600'"
+							>
+								{{ stats.roi }}%
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+					<div class="flex items-center">
+						<div class="h-12 w-12 rounded-lg bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center mr-4">
+							<span class="text-2xl">💵</span>
+						</div>
+						<div>
+							<p class="text-sm font-medium text-gray-600 dark:text-gray-400">Средний кэшаут</p>
+							<p class="text-2xl font-bold text-gray-900 dark:text-white">
+								{{ formatCurrency(stats.average_cashout) }}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+					<div class="flex items-center">
+						<div class="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-4">
+							<span class="text-2xl">🏆</span>
+						</div>
+						<div>
+							<p class="text-sm font-medium text-gray-600 dark:text-gray-400">ITM турниров</p>
+							<p class="text-2xl font-bold text-gray-900 dark:text-white">
+								{{ stats.itm_count }}
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+				<div class="flex items-center mb-6">
+					<div class="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3">
+						<span class="text-xl">📊</span>
+					</div>
+					<h3 class="text-xl font-bold text-gray-900 dark:text-white">
+						Динамика банкролла
+					</h3>
+				</div>
+				<div v-if="stats.bankroll_history && stats.bankroll_history.length > 0" class="space-y-3">
 					<div
 						v-for="(item, index) in stats.bankroll_history.slice(-10)"
 						:key="index"
-						class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700"
+						class="flex justify-between items-center py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 					>
-						<span class="text-sm text-gray-600 dark:text-gray-400">{{ item.date }}</span>
+						<div class="flex items-center space-x-3">
+							<div
+								class="h-2 w-2 rounded-full"
+								:class="item.balance >= 0 ? 'bg-green-500' : 'bg-red-500'"
+							></div>
+							<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+								{{ formatDate(item.date) }}
+							</span>
+						</div>
 						<span
-							class="text-sm font-medium"
+							class="text-sm font-bold"
 							:class="item.balance >= 0 ? 'text-green-600' : 'text-red-600'"
 						>
 							{{ formatCurrency(item.balance) }}
 						</span>
 					</div>
 				</div>
-				<div v-else class="text-gray-500 text-center py-4">
-					Нет данных
+				<div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
+					<span class="text-4xl mb-4 block">📭</span>
+					<p>Нет данных для отображения</p>
 				</div>
 			</div>
 		</div>
 	</div>
 </template>
+
+<script setup>
+import { computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useStatisticsStore } from '../../stores/statistics';
+
+const statisticsStore = useStatisticsStore();
+const { stats, loading } = storeToRefs(statisticsStore);
+
+const formatCurrency = (value) => {
+	return new Intl.NumberFormat('ru-RU', {
+		style: 'currency',
+		currency: 'USD',
+	}).format(value);
+};
+
+const formatDate = (dateString) => {
+	const date = new Date(dateString);
+	return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+onMounted(() => {
+	statisticsStore.fetchStats();
+});
+</script>
 
 <script setup>
 import { computed, onMounted } from 'vue';
