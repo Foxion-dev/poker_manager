@@ -174,9 +174,11 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@echo "✅ PHP зависимости установлены"
 	@echo ""
 	@echo "🔧 Исправление прав доступа перед установкой npm..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && rm -f /var/www/html/package-lock.json && ls -la /var/www/html/package.json" || true
+	@sleep 1
+	@echo "✅ Права доступа исправлены"
 	@echo "📦 Установка Node.js зависимостей..."
-	@./vendor/bin/sail npm install
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && whoami && npm install"
 	@echo "✅ Node.js зависимости установлены"
 	@echo ""
 	@echo "🎨 Сборка assets для production..."
