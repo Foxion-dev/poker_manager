@@ -193,7 +193,7 @@
 				<div class="p-6">
 					<h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Завершение турнира</h3>
 					<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-						Выберите участников в порядке призовых мест (первый выбранный - 3 место, последний - 1 место)
+						Выберите участников в порядке призовых мест (первый выбранный - последнее призовое место, последний - 1 место)
 					</p>
 
 					<div v-if="tournament && tournament.prize_distribution" class="mb-6">
@@ -268,7 +268,9 @@
 											? 'text-yellow-600 dark:text-yellow-400'
 											: getWinnerPlace(participant.id) === 2
 											? 'text-gray-600 dark:text-gray-400'
-											: 'text-orange-600 dark:text-orange-400'"
+											: getWinnerPlace(participant.id) === 3
+											? 'text-orange-600 dark:text-orange-400'
+											: 'text-blue-600 dark:text-blue-400'"
 									>
 										{{ getWinnerPlace(participant.id) }}
 									</span>
