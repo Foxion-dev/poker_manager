@@ -996,6 +996,7 @@ const openTournamentForm = () => {
 		buyin: 0,
 		currency_id: availableCurrencies.value.length === 1 ? availableCurrencies.value[0].id : null,
 		format: 'classic',
+		itm_percentage: 100,
 		participants: [{ user_id: '', name: '', place: 1, prize: null }],
 	};
 	showTournamentForm.value = true;

@@ -61,7 +61,8 @@ class LocationTournament extends Model
 	{
 		$buyin = (float) $this->buyin;
 		$totalRebuys = $this->participants->sum('rebuy');
-		return $buyin + ($totalRebuys * $buyin);
+		$totalAddons = $this->participants->where('addon', true)->count();
+		return ($buyin * $this->participants->count()) + ($totalRebuys * $buyin) + ($totalAddons * $buyin);
 	}
 
 	public function getPrizePoolAttribute(): float
