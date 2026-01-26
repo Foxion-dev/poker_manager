@@ -44,7 +44,7 @@ const routes = [
 	{
 		path: '/admin',
 		component: () => import('../components/admin/AdminLayout.vue'),
-		meta: { requiresAuth: true },
+		meta: { requiresAuth: true, requiresAdmin: true },
 		redirect: '/admin/rooms',
 		children: [
 			{
@@ -83,25 +83,35 @@ const pageTitles = {
 	AdminUsers: 'Управление пользователями - Админ-панель',
 };
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
 	const authStore = useAuthStore();
 	const token = localStorage.getItem('auth_token');
 
 	if (to.meta.requiresAuth && !token) {
 		next({ name: 'Login' });
-	} else if (to.meta.guest && token) {
+		return;
+	}
+
+	if (to.meta.guest && token) {
 		next({ name: 'Dashboard' });
-	} else {
-		if (token && !authStore.isAuthenticated) {
-			authStore.fetchUser().then(() => {
-				next();
-			}).catch(() => {
-				next({ name: 'Login' });
-			});
-		} else {
-			next();
+		return;
+	}
+
+	if (token && !authStore.isAuthenticated) {
+		try {
+			await authStore.fetchUser();
+		} catch (error) {
+			next({ name: 'Login' });
+			return;
 		}
 	}
+
+	if (to.meta.requiresAdmin && (!authStore.user || !authStore.user.is_admin)) {
+		next({ name: 'Dashboard' });
+		return;
+	}
+
+	next();
 });
 
 router.afterEach((to) => {

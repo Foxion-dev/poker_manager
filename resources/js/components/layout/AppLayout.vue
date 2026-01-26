@@ -39,6 +39,7 @@
 					</div>
 					<div class="flex items-center space-x-4">
 						<router-link
+							v-if="user?.is_admin"
 							to="/admin/rooms"
 							class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700"
 							:class="$route.name === 'AdminRooms' || $route.name === 'AdminCurrencies' || $route.name === 'AdminUsers'

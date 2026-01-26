@@ -16,9 +16,9 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::get('/user', [AuthController::class, 'user']);
 	Route::post('/logout', [AuthController::class, 'logout']);
 
-	Route::apiResource('rooms', RoomController::class);
+	Route::get('rooms', [RoomController::class, 'index']);
+	Route::get('rooms/{room}', [RoomController::class, 'show']);
 	Route::apiResource('tournaments', TournamentController::class);
-	Route::apiResource('currencies', CurrencyController::class)->except(['index']);
 	Route::get('currencies', [CurrencyController::class, 'index']);
 
 	Route::prefix('user-rooms')->group(function () {
@@ -33,11 +33,20 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/stats', [DashboardController::class, 'stats']);
 	});
 
-	Route::prefix('admin')->group(function () {
+	Route::prefix('admin')->middleware('admin')->group(function () {
 		Route::get('/users', [\App\Http\Controllers\Api\AdminUserController::class, 'index']);
-		Route::get('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'show']);
+			Route::get('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'show']);
 		Route::post('/users/{user}/ban', [\App\Http\Controllers\Api\AdminUserController::class, 'ban']);
 		Route::post('/users/{user}/unban', [\App\Http\Controllers\Api\AdminUserController::class, 'unban']);
 		Route::delete('/users/{user}', [\App\Http\Controllers\Api\AdminUserController::class, 'destroy']);
+
+		Route::post('rooms', [RoomController::class, 'store']);
+		Route::put('rooms/{room}', [RoomController::class, 'update']);
+		Route::delete('rooms/{room}', [RoomController::class, 'destroy']);
+
+		Route::post('currencies', [CurrencyController::class, 'store']);
+		Route::get('currencies/{currency}', [CurrencyController::class, 'show']);
+		Route::put('currencies/{currency}', [CurrencyController::class, 'update']);
+		Route::delete('currencies/{currency}', [CurrencyController::class, 'destroy']);
 	});
 });

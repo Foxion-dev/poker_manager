@@ -24,6 +24,7 @@ class User extends Authenticatable
 		'password',
 		'balance',
 		'banned_at',
+		'is_admin',
 	];
 
     /**
@@ -48,12 +49,18 @@ class User extends Authenticatable
 			'banned_at' => 'datetime',
 			'password' => 'hashed',
 			'balance' => 'decimal:2',
+			'is_admin' => 'boolean',
 		];
 	}
 
 	public function isBanned(): bool
 	{
 		return $this->banned_at !== null;
+	}
+
+	public function isAdmin(): bool
+	{
+		return $this->is_admin === true;
 	}
 
 	public function rooms(): BelongsToMany
