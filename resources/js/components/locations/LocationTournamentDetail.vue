@@ -624,9 +624,8 @@ const totalEntriesCount = computed(() => {
 	
 	const participantsCount = validParticipants.length;
 	const totalRebuys = validParticipants.reduce((sum, p) => sum + (p.rebuy || 0), 0);
-	const totalAddons = validParticipants.filter(p => p.addon === true).length;
 	
-	return participantsCount + totalRebuys + totalAddons;
+	return participantsCount + totalRebuys;
 });
 
 const addParticipant = async () => {
@@ -794,16 +793,23 @@ const openPrizeDistributionModal = () => {
 			percentage: p.percentage,
 		}));
 	} else {
-		const participantsCount = tournament.value.participants?.length || 0;
+		const validParticipants = tournament.value.participants?.filter(p => {
+			const name = p.display_name || p.name || p.user?.name || '';
+			return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+		}) || [];
+		
+		const participantsCount = validParticipants.length;
+		const totalRebuys = validParticipants.reduce((sum, p) => sum + (p.rebuy || 0), 0);
+		const totalEntries = participantsCount + totalRebuys;
 		const itmPercentage = tournament.value.itm_percentage || 15;
-		const itmPlacesFloat = participantsCount * (itmPercentage / 100);
+		const itmPlacesFloat = totalEntries * (itmPercentage / 100);
 		
 		if (itmPlacesFloat < 0.5) {
 			alert('Недостаточно участников для расчета призовых мест');
 			return;
 		}
 		
-		const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
+		const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), totalEntries));
 		
 		prizeDistributionForm.value = [];
 		for (let place = 1; place <= itmPlaces; place++) {
@@ -851,16 +857,23 @@ const removePrizePlace = (index) => {
 const resetPrizeDistribution = () => {
 	if (!tournament.value) return;
 	
-	const participantsCount = tournament.value.participants?.length || 0;
+	const validParticipants = tournament.value.participants?.filter(p => {
+		const name = p.display_name || p.name || p.user?.name || '';
+		return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+	}) || [];
+	
+	const participantsCount = validParticipants.length;
+	const totalRebuys = validParticipants.reduce((sum, p) => sum + (p.rebuy || 0), 0);
+	const totalEntries = participantsCount + totalRebuys;
 	const itmPercentage = tournament.value.itm_percentage || 15;
-	const itmPlacesFloat = participantsCount * (itmPercentage / 100);
+	const itmPlacesFloat = totalEntries * (itmPercentage / 100);
 	
 	if (itmPlacesFloat < 0.5) {
 		alert('Недостаточно участников для расчета призовых мест');
 		return;
 	}
 	
-	const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), participantsCount));
+	const itmPlaces = Math.max(1, Math.min(Math.round(itmPlacesFloat), totalEntries));
 	
 	prizeDistributionForm.value = [];
 	for (let place = 1; place <= itmPlaces; place++) {

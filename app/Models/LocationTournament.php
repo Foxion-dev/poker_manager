@@ -116,8 +116,7 @@ class LocationTournament extends Model
 		}
 
 		$totalRebuys = $this->participants->sum('rebuy');
-		$totalAddons = $this->participants->where('addon', true)->count();
-		$totalEntries = $participantsCount + $totalRebuys + $totalAddons;
+		$totalEntries = $participantsCount + $totalRebuys;
 		
 		if ($totalEntries === 0) {
 			return [];
