@@ -35,6 +35,7 @@ class LocationTournamentController extends Controller
 					'format_label' => $tournament->format_label,
 					'itm_percentage' => $tournament->itm_percentage ?? 15,
 					'rake' => $tournament->rake ?? 30,
+					'rake_type' => $tournament->rake_type ?? 'fixed',
 					'date' => $tournament->date->format('Y-m-d'),
 					'is_finished' => $tournament->is_finished ?? false,
 					'total_buyin' => $tournament->total_buyin,

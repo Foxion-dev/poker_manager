@@ -540,19 +540,36 @@
 							</div>
 							<div>
 								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-									Рейк (%)
+									Тип рейка
+								</label>
+								<select
+									v-model="tournamentForm.rake_type"
+									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 mb-2"
+								>
+									<option value="fixed">Фиксированный</option>
+									<option value="percentage">Процент</option>
+								</select>
+							</div>
+							<div>
+								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+									Рейк {{ tournamentForm.rake_type === 'percentage' ? '(%)' : '(фиксированная сумма)' }}
 								</label>
 								<input
 									v-model.number="tournamentForm.rake"
 									type="number"
 									step="0.01"
 									min="0"
-									max="100"
+									:max="tournamentForm.rake_type === 'percentage' ? 100 : null"
 									placeholder="30"
 									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 								/>
 								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-									Процент рейка от призового фонда (отнимается пропорционально)
+									<span v-if="tournamentForm.rake_type === 'percentage'">
+										Процент рейка от призового фонда (отнимается пропорционально)
+									</span>
+									<span v-else>
+										Фиксированная сумма рейка (отнимается от призового фонда)
+									</span>
 								</p>
 							</div>
 						</div>
@@ -1024,6 +1041,7 @@ const openTournamentForm = () => {
 		format: 'classic',
 		itm_percentage: 15,
 		rake: 30,
+		rake_type: 'fixed',
 		participants: [{ user_id: '', name: '', place: 1, prize: null }],
 	};
 	showTournamentForm.value = true;
@@ -1039,6 +1057,7 @@ const editTournament = (tournament) => {
 		format: tournament.format,
 		itm_percentage: tournament.itm_percentage ?? 15,
 		rake: tournament.rake ?? 30,
+		rake_type: tournament.rake_type ?? 'fixed',
 		participants: tournament.participants.map(p => ({
 			user_id: p.user_id ? String(p.user_id) : '',
 			name: p.name || '',

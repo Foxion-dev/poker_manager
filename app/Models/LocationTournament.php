@@ -19,6 +19,7 @@ class LocationTournament extends Model
 		'format',
 		'itm_percentage',
 		'rake',
+		'rake_type',
 		'date',
 		'is_finished',
 	];
@@ -71,9 +72,17 @@ class LocationTournament extends Model
 	{
 		$totalBuyin = $this->total_buyin;
 		$itmPercentage = (float) ($this->itm_percentage ?? 15);
-		$rakePercentage = (float) ($this->rake ?? 30);
+		$rakeType = $this->rake_type ?? 'fixed';
+		$rake = (float) ($this->rake ?? 30);
+		
 		$prizePoolBeforeRake = $totalBuyin * ($itmPercentage / 100);
-		$rakeAmount = $prizePoolBeforeRake * ($rakePercentage / 100);
+		
+		if ($rakeType === 'percentage') {
+			$rakeAmount = $prizePoolBeforeRake * ($rake / 100);
+		} else {
+			$rakeAmount = $rake;
+		}
+		
 		return round($prizePoolBeforeRake - $rakeAmount, 2);
 	}
 
