@@ -94,12 +94,24 @@ class LocationTournament extends Model
 			return [];
 		}
 
-		$distribution = [60, 30, 10];
-		$prizes = [];
+		$participantsCount = $this->participants->count();
+		if ($participantsCount === 0) {
+			return [];
+		}
+
+		$itmPercentage = (float) ($this->itm_percentage ?? 15);
+		$itmPlaces = max(1, (int) round($participantsCount * ($itmPercentage / 100)));
 		
-		for ($place = 1; $place <= 3; $place++) {
-			$index = $place - 1;
-			$percentage = $distribution[$index] ?? 0;
+		if ($itmPlaces === 0) {
+			return [];
+		}
+
+		$prizes = [];
+		$totalPercentage = 0;
+		
+		for ($place = 1; $place <= $itmPlaces; $place++) {
+			$percentage = $this->calculatePrizePercentage($place, $itmPlaces);
+			$totalPercentage += $percentage;
 			$prize = round($prizePool * ($percentage / 100), 2);
 			$prize = round($prize / 5) * 5;
 			
@@ -110,6 +122,49 @@ class LocationTournament extends Model
 			];
 		}
 
+		if ($totalPercentage < 100 && count($prizes) > 0) {
+			$diff = 100 - $totalPercentage;
+			$prizes[0]['percentage'] += $diff;
+			$prizes[0]['prize'] = round($prizePool * ($prizes[0]['percentage'] / 100), 2);
+			$prizes[0]['prize'] = round($prizes[0]['prize'] / 5) * 5;
+		}
+
 		return $prizes;
+	}
+
+	private function calculatePrizePercentage(int $place, int $totalPlaces): float
+	{
+		if ($totalPlaces === 1) {
+			return 100.0;
+		}
+
+		if ($totalPlaces === 2) {
+			return $place === 1 ? 60.0 : 40.0;
+		}
+
+		if ($totalPlaces === 3) {
+			return match($place) {
+				1 => 60.0,
+				2 => 30.0,
+				3 => 10.0,
+				default => 0.0,
+			};
+		}
+
+		$basePercentages = [
+			1 => 50.0,
+			2 => 25.0,
+			3 => 12.5,
+		];
+
+		if ($place <= 3) {
+			$percentage = $basePercentages[$place] ?? 0;
+		} else {
+			$remainingPlaces = $totalPlaces - 3;
+			$remainingPercentage = 12.5;
+			$percentage = $remainingPercentage / $remainingPlaces;
+		}
+
+		return round($percentage, 2);
 	}
 }

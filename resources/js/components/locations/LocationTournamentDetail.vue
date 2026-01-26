@@ -197,28 +197,35 @@
 					</p>
 
 					<div v-if="tournament && tournament.prize_distribution" class="mb-6">
-						<div class="grid grid-cols-3 gap-4 mb-6">
+						<div class="grid gap-4 mb-6" :class="`grid-cols-${Math.min(tournament.prize_distribution.length, 5)}`">
 							<div
 								v-for="(prize, index) in tournament.prize_distribution"
 								:key="prize.place"
 								class="p-4 rounded-lg text-center"
-								:class="index === 2 
+								:class="index === tournament.prize_distribution.length - 1
 									? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700' 
-									: index === 1 
+									: index === tournament.prize_distribution.length - 2
 									? 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-300 dark:border-gray-600' 
-									: 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700'"
+									: index === tournament.prize_distribution.length - 3
+									? 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700'
+									: 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700'"
 							>
-								<div class="text-2xl font-bold mb-2"
-									:class="index === 2 
+								<div class="text-xl font-bold mb-2"
+									:class="index === tournament.prize_distribution.length - 1
 										? 'text-yellow-600 dark:text-yellow-400' 
-										: index === 1 
+										: index === tournament.prize_distribution.length - 2
 										? 'text-gray-600 dark:text-gray-400' 
-										: 'text-orange-600 dark:text-orange-400'"
+										: index === tournament.prize_distribution.length - 3
+										? 'text-orange-600 dark:text-orange-400'
+										: 'text-blue-600 dark:text-blue-400'"
 								>
 									{{ prize.place }} место
 								</div>
 								<div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
 									{{ formatCurrency(prize.prize, tournament.currency) }}
+								</div>
+								<div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									{{ prize.percentage }}%
 								</div>
 								<div v-if="selectedWinners.length > 0 && getWinnerPlace(selectedWinners[selectedWinners.length - index - 1]) === prize.place" class="mt-2 text-xs text-green-600 dark:text-green-400">
 									✓ Выбран
@@ -228,7 +235,7 @@
 
 						<div class="space-y-2">
 							<p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-								Участники ({{ selectedWinners.length }}/3 выбрано):
+								Участники ({{ selectedWinners.length }}/{{ maxPrizePlaces }} выбрано):
 							</p>
 							<div
 								v-for="participant in tournament.participants.filter(p => {
@@ -379,10 +386,15 @@ const openFinishModal = () => {
 	showFinishModal.value = true;
 };
 
+const maxPrizePlaces = computed(() => {
+	if (!tournament.value || !tournament.value.prize_distribution) return 0;
+	return tournament.value.prize_distribution.length;
+});
+
 const toggleWinner = (participantId) => {
 	const index = selectedWinners.value.indexOf(participantId);
 	if (index === -1) {
-		if (selectedWinners.value.length < 3) {
+		if (selectedWinners.value.length < maxPrizePlaces.value) {
 			selectedWinners.value.push(participantId);
 		}
 	} else {
@@ -393,7 +405,7 @@ const toggleWinner = (participantId) => {
 const getWinnerPlace = (participantId) => {
 	const index = selectedWinners.value.indexOf(participantId);
 	if (index === -1) return null;
-	return 3 - index;
+	return maxPrizePlaces.value - index;
 };
 
 const getWinnerPrize = (place) => {
@@ -421,7 +433,7 @@ const finishTournament = async () => {
 		}));
 
 		selectedWinners.value.forEach((participantId, index) => {
-			const place = 3 - index;
+			const place = maxPrizePlaces.value - index;
 			const prize = getWinnerPrize(place);
 			const participant = participantsData.find(p => p.id === participantId);
 			if (participant) {
