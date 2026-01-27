@@ -170,7 +170,7 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 		echo "⚠️  Контейнеры не запущены. Запускаем..."; \
 		./vendor/bin/sail up -d; \
 		echo "⏳ Ожидание запуска сервисов..."; \
-		sleep 5; \
+		sleep 30; \
 	fi
 	@echo "✅ Контейнеры запущены"
 	@echo ""
@@ -206,11 +206,11 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && NODE_ENV=production npm run build 2>&1" || (echo "❌ Ошибка при сборке assets!" && exit 1)
 	@echo "✅ Assets собраны"
 	@echo ""
-	@echo "🔍 Проверка наличия манифеста Vite..."
-	@./vendor/bin/sail exec laravel.test sh -c "if [ -f /var/www/html/public/build/manifest.json ]; then echo '✅ Манифест найден'; ls -lh /var/www/html/public/build/manifest.json; else echo '❌ Манифест не найден!'; echo 'Содержимое директории build:'; ls -la /var/www/html/public/build/ 2>&1 || echo 'Директория build не существует'; exit 1; fi" || (echo "⚠️  Проблема с проверкой манифеста" && exit 1)
+	@echo "🔍 Проверка и копирование манифеста Vite..."
+	@./vendor/bin/sail exec laravel.test sh -c "if [ -f /var/www/html/public/build/.vite/manifest.json ]; then echo '✅ Манифест найден в .vite/, копируем в корень build/'; cp /var/www/html/public/build/.vite/manifest.json /var/www/html/public/build/manifest.json && echo '✅ Манифест скопирован'; ls -lh /var/www/html/public/build/manifest.json; elif [ -f /var/www/html/public/build/manifest.json ]; then echo '✅ Манифест найден в корне build/'; ls -lh /var/www/html/public/build/manifest.json; else echo '❌ Манифест не найден!'; echo 'Содержимое директории build:'; ls -la /var/www/html/public/build/ 2>&1 || echo 'Директория build не существует'; echo 'Содержимое директории .vite:'; ls -la /var/www/html/public/build/.vite/ 2>&1 || echo 'Директория .vite не существует'; exit 1; fi" || (echo "⚠️  Проблема с проверкой манифеста" && exit 1)
 	@echo ""
 	@echo "🔧 Исправление прав доступа после сборки..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 755 /var/www/html/public/build" || true
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 755 /var/www/html/public/build && chown -R sail:sail /var/www/html/public/build/.vite 2>/dev/null || true && chmod -R 755 /var/www/html/public/build/.vite 2>/dev/null || true" || true
 	@echo ""
 	@echo "🗄️  Запуск миграций..."
 	@echo "⏳ Ожидание готовности базы данных..."
