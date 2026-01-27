@@ -169,29 +169,29 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@if ! ./vendor/bin/sail ps | grep -q "laravel.test"; then \
 		echo "⚠️  Контейнеры не запущены. Запускаем..."; \
 		./vendor/bin/sail up -d; \
-		echo "⏳ Ожидание запуска сервисов..."; \
-		sleep 30; \
+		echo "⏳ Ожидание готовности сервисов (проверка healthcheck)..."; \
+		for i in 1 2 3 4 5 6; do \
+			if ./vendor/bin/sail ps | grep -q "laravel.test.*healthy"; then \
+				echo "✅ Контейнеры готовы (попытка $$i)"; \
+				break; \
+			fi; \
+			echo "⏳ Попытка $$i/6..."; \
+			sleep 5; \
+		done; \
 	fi
 	@echo "✅ Контейнеры запущены"
 	@echo ""
-	@echo "📦 Проверка PHP зависимостей..."
-	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && composer validate --no-check-publish --no-check-lock --quiet 2>/dev/null || echo 'composer.json valid'" || true
 	@echo "📦 Установка PHP зависимостей..."
-	@echo "⏳ Это может занять несколько минут..."
-	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && timeout 600 composer install --no-interaction --prefer-dist --no-scripts 2>&1" || (echo "⚠️  Composer install завершился с ошибкой или таймаутом" && exit 1)
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && composer install --no-interaction --prefer-dist --no-scripts --quiet 2>&1" || (echo "⚠️  Composer install завершился с ошибкой" && exit 1)
 	@echo "✅ PHP зависимости установлены"
 	@echo ""
-	@echo "🔧 Оптимизация autoload..."
+	@echo "🔧 Оптимизация autoload и обнаружение пакетов..."
 	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && composer dump-autoload --optimize --no-interaction --quiet 2>&1" || true
-	@echo "✅ Autoload оптимизирован"
-	@echo ""
-	@echo "🔧 Обнаружение пакетов..."
 	@./vendor/bin/sail artisan package:discover --ansi --quiet || true
-	@echo "✅ Пакеты обнаружены"
+	@echo "✅ Autoload оптимизирован, пакеты обнаружены"
 	@echo ""
 	@echo "🔧 Исправление прав доступа перед установкой npm..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && rm -f /var/www/html/package-lock.json && ls -la /var/www/html/package.json" || true
-	@sleep 1
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && rm -f /var/www/html/package-lock.json" || true
 	@echo "✅ Права доступа исправлены"
 	@echo "📦 Установка Node.js зависимостей..."
 	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && whoami && npm install"
@@ -206,33 +206,49 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && NODE_ENV=production npm run build 2>&1" || (echo "❌ Ошибка при сборке assets!" && exit 1)
 	@echo "✅ Assets собраны"
 	@echo ""
-	@echo "🔧 Исправление прав доступа для директории build..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html/public/build && chmod -R 755 /var/www/html/public/build" || true
+	@echo "🔧 Исправление прав доступа и проверка манифеста..."
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html/public/build && chmod -R 755 /var/www/html/public/build && if [ -f /var/www/html/public/build/.vite/manifest.json ] && [ ! -f /var/www/html/public/build/manifest.json ]; then cp /var/www/html/public/build/.vite/manifest.json /var/www/html/public/build/manifest.json && chown sail:sail /var/www/html/public/build/manifest.json; fi" || true
+	@./vendor/bin/sail exec laravel.test sh -c "if [ -f /var/www/html/public/build/manifest.json ]; then echo '✅ Манифест найден'; else echo '❌ Манифест не найден!'; ls -la /var/www/html/public/build/ 2>&1; exit 1; fi" || (echo "⚠️  Проблема с проверкой манифеста" && exit 1)
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
 	@echo "✅ Права доступа исправлены"
 	@echo ""
-	@echo "🔍 Проверка и копирование манифеста Vite..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "if [ -f /var/www/html/public/build/.vite/manifest.json ]; then echo '✅ Манифест найден в .vite/, копируем в корень build/'; cp /var/www/html/public/build/.vite/manifest.json /var/www/html/public/build/manifest.json && chown sail:sail /var/www/html/public/build/manifest.json && echo '✅ Манифест скопирован'; ls -lh /var/www/html/public/build/manifest.json; elif [ -f /var/www/html/public/build/manifest.json ]; then echo '✅ Манифест найден в корне build/'; ls -lh /var/www/html/public/build/manifest.json; else echo '❌ Манифест не найден!'; echo 'Содержимое директории build:'; ls -la /var/www/html/public/build/ 2>&1 || echo 'Директория build не существует'; echo 'Содержимое директории .vite:'; ls -la /var/www/html/public/build/.vite/ 2>&1 || echo 'Директория .vite не существует'; if [ -d /var/www/html/public/build/.vite ]; then echo 'Файлы в .vite:'; ls -la /var/www/html/public/build/.vite/ 2>&1; fi; exit 1; fi" || (echo "⚠️  Проблема с проверкой манифеста" && exit 1)
-	@echo ""
-	@echo "🔧 Исправление прав доступа после сборки..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 755 /var/www/html/public/build && chown -R sail:sail /var/www/html/public/build/.vite 2>/dev/null || true && chmod -R 755 /var/www/html/public/build/.vite 2>/dev/null || true" || true
-	@echo ""
-	@echo "🗄️  Проверка готовности MySQL..."
-	@echo "⏳ Ожидание запуска MySQL..."
+	@echo "🗄️  Проверка и запуск MySQL..."
+	@if ! ./vendor/bin/sail ps --format json 2>/dev/null | grep -q "mysql" && ! ./vendor/bin/sail ps 2>/dev/null | grep -q "mysql"; then \
+		echo "⚠️  MySQL контейнер не запущен. Запускаем..."; \
+		./vendor/bin/sail up -d mysql 2>&1 || echo "⚠️  Ошибка при запуске MySQL"; \
+		echo "⏳ Ожидание запуска MySQL (5 секунд)..."; \
+		sleep 5; \
+	fi
+	@echo "⏳ Проверка готовности MySQL..."
 	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
 		if ./vendor/bin/sail exec mysql mysqladmin ping -h localhost --silent 2>/dev/null || ./vendor/bin/sail exec mysql mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
 			echo "✅ MySQL готов (попытка $$i)"; \
-			sleep 2; \
 			break; \
 		fi; \
-		echo "⏳ Попытка $$i/15..."; \
+		if [ $$i -le 5 ] || [ $$(( $$i % 3 )) -eq 0 ]; then \
+			echo "⏳ Попытка $$i/15..."; \
+		fi; \
 		sleep 2; \
 		if [ $$i -eq 15 ]; then \
 			echo "❌ MySQL не запустился за 30 секунд"; \
-			echo "Проверка статуса контейнеров:"; \
-			./vendor/bin/sail ps; \
-			echo "Последние логи MySQL:"; \
-			./vendor/bin/sail logs mysql --tail=10; \
-			exit 1; \
+			echo "Проверка статуса всех контейнеров:"; \
+			./vendor/bin/sail ps -a 2>&1 || true; \
+			echo ""; \
+			echo "Попытка перезапуска MySQL..."; \
+			./vendor/bin/sail restart mysql 2>&1 || ./vendor/bin/sail up -d mysql 2>&1 || true; \
+			sleep 3; \
+			echo "Повторная проверка готовности MySQL (еще 10 секунд)..."; \
+			for j in 1 2 3 4 5; do \
+				if ./vendor/bin/sail exec mysql mysqladmin ping -h localhost --silent 2>/dev/null || ./vendor/bin/sail exec mysql mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
+					echo "✅ MySQL готов после перезапуска"; \
+					break; \
+				fi; \
+				sleep 2; \
+			done; \
+			if ! ./vendor/bin/sail exec mysql mysqladmin ping -h localhost --silent 2>/dev/null && ! ./vendor/bin/sail exec mysql mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
+				echo "❌ MySQL все еще не готов. Проверьте логи: ./vendor/bin/sail logs mysql"; \
+				exit 1; \
+			fi; \
 		fi; \
 	done
 	@echo ""
