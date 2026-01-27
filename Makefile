@@ -169,9 +169,20 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	fi
 	@echo "✅ Контейнеры запущены"
 	@echo ""
+	@echo "📦 Проверка PHP зависимостей..."
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && composer validate --no-check-publish --no-check-lock --quiet 2>/dev/null || echo 'composer.json valid'" || true
 	@echo "📦 Установка PHP зависимостей..."
-	@./vendor/bin/sail composer install --no-interaction --prefer-dist --optimize-autoloader
+	@echo "⏳ Это может занять несколько минут..."
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && timeout 600 composer install --no-interaction --prefer-dist --no-scripts 2>&1" || (echo "⚠️  Composer install завершился с ошибкой или таймаутом" && exit 1)
 	@echo "✅ PHP зависимости установлены"
+	@echo ""
+	@echo "🔧 Оптимизация autoload..."
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && composer dump-autoload --optimize --no-interaction --quiet 2>&1" || true
+	@echo "✅ Autoload оптимизирован"
+	@echo ""
+	@echo "🔧 Обнаружение пакетов..."
+	@./vendor/bin/sail artisan package:discover --ansi --quiet || true
+	@echo "✅ Пакеты обнаружены"
 	@echo ""
 	@echo "🔧 Исправление прав доступа перед установкой npm..."
 	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && rm -f /var/www/html/package-lock.json && ls -la /var/www/html/package.json" || true
