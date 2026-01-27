@@ -218,23 +218,26 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@echo ""
 	@echo "🗄️  Проверка готовности MySQL..."
 	@echo "⏳ Ожидание запуска MySQL..."
-	@for i in 1 2 3 4 5 6 7 8 9 10; do \
-		if ./vendor/bin/sail exec mysql mysqladmin ping -h mysql --silent 2>/dev/null; then \
-			echo "✅ MySQL готов"; \
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
+		if ./vendor/bin/sail exec mysql mysqladmin ping -h localhost --silent 2>/dev/null || ./vendor/bin/sail exec mysql mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
+			echo "✅ MySQL готов (попытка $$i)"; \
+			sleep 2; \
 			break; \
 		fi; \
-		echo "⏳ Попытка $$i/10..."; \
-		sleep 3; \
-		if [ $$i -eq 10 ]; then \
+		echo "⏳ Попытка $$i/15..."; \
+		sleep 2; \
+		if [ $$i -eq 15 ]; then \
 			echo "❌ MySQL не запустился за 30 секунд"; \
 			echo "Проверка статуса контейнеров:"; \
 			./vendor/bin/sail ps; \
+			echo "Последние логи MySQL:"; \
+			./vendor/bin/sail logs mysql --tail=10; \
 			exit 1; \
 		fi; \
 	done
 	@echo ""
 	@echo "🗄️  Запуск миграций..."
-	@./vendor/bin/sail artisan migrate --force || (echo "⚠️  Ошибка при миграциях. Проверьте логи." && ./vendor/bin/sail logs mysql --tail=20 && exit 1)
+	@./vendor/bin/sail artisan migrate --force || (echo "⚠️  Ошибка при миграциях. Проверьте логи." && echo "Статус контейнеров:" && ./vendor/bin/sail ps && echo "Логи MySQL:" && ./vendor/bin/sail logs mysql --tail=20 && exit 1)
 	@echo "✅ Миграции выполнены успешно"
 	@echo ""
 	@echo "🧹 Очистка кеша..."
