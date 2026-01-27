@@ -20,6 +20,8 @@ class Tournament extends Model
 		'place',
 		'cashout',
 		'bounty_count',
+		'rebuy_count',
+		'double_rebuy',
 		'players_count',
 	];
 
@@ -31,6 +33,8 @@ class Tournament extends Model
 			'cashout' => 'decimal:2',
 			'place' => 'integer',
 			'bounty_count' => 'integer',
+			'rebuy_count' => 'integer',
+			'double_rebuy' => 'boolean',
 			'players_count' => 'integer',
 		];
 	}
@@ -53,6 +57,11 @@ class Tournament extends Model
 	public function getProfitAttribute(): float
 	{
 		$totalBuyin = $this->buyin + ($this->bounty_count * $this->buyin);
+		$rebuyAmount = ($this->rebuy_count ?? 0) * $this->buyin;
+		if ($this->double_rebuy ?? false) {
+			$rebuyAmount += 2 * $this->buyin;
+		}
+		$totalBuyin += $rebuyAmount;
 		return ($this->cashout ?? 0) - $totalBuyin;
 	}
 
@@ -78,8 +87,8 @@ class Tournament extends Model
 			->selectRaw('
 				CASE 
 					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-					ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+					THEN tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)
+					ELSE (tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)) / currencies.rate_to_usd
 				END as total_buyin_usd
 			')
 			->selectRaw('
@@ -92,8 +101,8 @@ class Tournament extends Model
 				-
 				CASE 
 					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-					ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+					THEN tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)
+					ELSE (tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)) / currencies.rate_to_usd
 				END as profit_usd
 			');
 	}
@@ -103,8 +112,8 @@ class Tournament extends Model
 		return "
 			CASE 
 				WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-				THEN tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)
-				ELSE (tournaments.buyin + (tournaments.bounty_count * tournaments.buyin)) / currencies.rate_to_usd
+				THEN tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)
+				ELSE (tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)) / currencies.rate_to_usd
 			END
 		";
 	}

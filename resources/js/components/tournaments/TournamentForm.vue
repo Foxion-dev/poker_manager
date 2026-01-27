@@ -41,7 +41,6 @@
 					<input
 						v-model="form.date"
 						type="date"
-						required
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 					/>
 				</div>
@@ -90,6 +89,34 @@
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 						placeholder="0"
 					/>
+				</div>
+
+				<div>
+					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+						<span class="mr-2">🔄</span>
+						Количество ребаев
+					</label>
+					<input
+						v-model.number="form.rebuy_count"
+						type="number"
+						min="0"
+						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						placeholder="0"
+					/>
+				</div>
+
+				<div class="flex items-center">
+					<label class="flex items-center cursor-pointer">
+						<input
+							v-model="form.double_rebuy"
+							type="checkbox"
+							class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+						/>
+						<span class="ml-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+							<span class="mr-2">🔄</span>
+							Двойной ребай
+						</span>
+					</label>
 				</div>
 
 				<div>
@@ -170,10 +197,12 @@ const error = ref('');
 
 const form = ref({
 	room_id: '',
-	date: '',
+	date: new Date().toISOString().split('T')[0],
 	buyin: 0,
 	currency_id: null,
 	bounty_count: 0,
+	rebuy_count: 0,
+	double_rebuy: false,
 	place: null,
 	cashout: null,
 });
@@ -188,22 +217,24 @@ onMounted(async () => {
 		error.value = 'Ошибка загрузки данных';
 	}
 
-	if (isEdit.value) {
-		try {
-			const tournament = await tournamentStore.fetchTournament(route.params.id);
-			form.value = {
-				room_id: tournament.room_id,
-				date: tournament.date,
-				buyin: tournament.buyin,
-				currency_id: tournament.currency_id,
-				bounty_count: tournament.bounty_count,
-				place: tournament.place,
-				cashout: tournament.cashout,
-			};
-		} catch (err) {
-			error.value = 'Ошибка загрузки турнира';
+		if (isEdit.value) {
+			try {
+				const tournament = await tournamentStore.fetchTournament(route.params.id);
+				form.value = {
+					room_id: tournament.room_id,
+					date: tournament.date,
+					buyin: tournament.buyin,
+					currency_id: tournament.currency_id,
+					bounty_count: tournament.bounty_count ?? 0,
+					rebuy_count: tournament.rebuy_count ?? 0,
+					double_rebuy: tournament.double_rebuy ?? false,
+					place: tournament.place,
+					cashout: tournament.cashout,
+				};
+			} catch (err) {
+				error.value = 'Ошибка загрузки турнира';
+			}
 		}
-	}
 });
 
 const handleSubmit = async () => {

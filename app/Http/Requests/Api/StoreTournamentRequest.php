@@ -20,10 +20,12 @@ class StoreTournamentRequest extends FormRequest
 			'room_id' => ['required', 'exists:rooms,id'],
 			'buyin' => ['required', 'numeric', 'min:0'],
 			'currency_id' => ['nullable', 'exists:currencies,id'],
-			'date' => ['required', 'date'],
+			'date' => ['nullable', 'date'],
 			'place' => ['nullable', 'integer', 'min:1'],
 			'cashout' => ['nullable', 'numeric', 'min:0'],
 			'bounty_count' => ['nullable', 'integer', 'min:0'],
+			'rebuy_count' => ['nullable', 'integer', 'min:0'],
+			'double_rebuy' => ['nullable', 'boolean'],
 			'players_count' => ['nullable', 'integer', 'min:2'],
 		];
 	}

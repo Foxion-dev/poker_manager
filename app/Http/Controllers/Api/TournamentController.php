@@ -75,7 +75,11 @@ class TournamentController extends Controller
 	public function store(StoreTournamentRequest $request): JsonResponse
 	{
 		$user = $request->user();
-		$tournament = $user->tournaments()->create($request->validated());
+		$data = $request->validated();
+		if (!isset($data['date'])) {
+			$data['date'] = now()->toDateString();
+		}
+		$tournament = $user->tournaments()->create($data);
 
 		return response()->json($tournament->load(['room', 'currency']), 201);
 	}
