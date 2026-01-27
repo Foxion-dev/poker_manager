@@ -216,10 +216,25 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@echo "🔧 Исправление прав доступа после сборки..."
 	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 755 /var/www/html/public/build && chown -R sail:sail /var/www/html/public/build/.vite 2>/dev/null || true && chmod -R 755 /var/www/html/public/build/.vite 2>/dev/null || true" || true
 	@echo ""
+	@echo "🗄️  Проверка готовности MySQL..."
+	@echo "⏳ Ожидание запуска MySQL..."
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		if ./vendor/bin/sail exec mysql mysqladmin ping -h mysql --silent 2>/dev/null; then \
+			echo "✅ MySQL готов"; \
+			break; \
+		fi; \
+		echo "⏳ Попытка $$i/10..."; \
+		sleep 3; \
+		if [ $$i -eq 10 ]; then \
+			echo "❌ MySQL не запустился за 30 секунд"; \
+			echo "Проверка статуса контейнеров:"; \
+			./vendor/bin/sail ps; \
+			exit 1; \
+		fi; \
+	done
+	@echo ""
 	@echo "🗄️  Запуск миграций..."
-	@echo "⏳ Ожидание готовности базы данных..."
-	@sleep 3
-	@./vendor/bin/sail artisan migrate --force || (echo "⚠️  Ошибка при миграциях. Проверьте логи." && exit 1)
+	@./vendor/bin/sail artisan migrate --force || (echo "⚠️  Ошибка при миграциях. Проверьте логи." && ./vendor/bin/sail logs mysql --tail=20 && exit 1)
 	@echo "✅ Миграции выполнены успешно"
 	@echo ""
 	@echo "🧹 Очистка кеша..."
