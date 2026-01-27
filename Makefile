@@ -213,17 +213,21 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@echo "✅ Права доступа исправлены"
 	@echo ""
 	@echo "🗄️  Проверка и запуск MySQL..."
-	@if ! ./vendor/bin/sail ps --format json 2>/dev/null | grep -q "mysql" && ! ./vendor/bin/sail ps 2>/dev/null | grep -q "mysql"; then \
+	@MYSQL_CONTAINER=$$(docker ps -q -f name=mysql 2>/dev/null || echo ""); \
+	if [ -z "$$MYSQL_CONTAINER" ]; then \
 		echo "⚠️  MySQL контейнер не запущен. Запускаем..."; \
 		./vendor/bin/sail up -d mysql 2>&1 || echo "⚠️  Ошибка при запуске MySQL"; \
-		echo "⏳ Ожидание запуска MySQL (5 секунд)..."; \
-		sleep 5; \
+		echo "⏳ Ожидание запуска MySQL (10 секунд)..."; \
+		sleep 10; \
 	fi
 	@echo "⏳ Проверка готовности MySQL..."
 	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
-		if ./vendor/bin/sail exec mysql mysqladmin ping -h localhost --silent 2>/dev/null || ./vendor/bin/sail exec mysql mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
-			echo "✅ MySQL готов (попытка $$i)"; \
-			break; \
+		MYSQL_CONTAINER=$$(docker ps -q -f name=mysql 2>/dev/null || echo ""); \
+		if [ -n "$$MYSQL_CONTAINER" ]; then \
+			if docker exec $$MYSQL_CONTAINER mysqladmin ping -h localhost --silent 2>/dev/null || docker exec $$MYSQL_CONTAINER mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
+				echo "✅ MySQL готов (попытка $$i)"; \
+				break; \
+			fi; \
 		fi; \
 		if [ $$i -le 5 ] || [ $$(( $$i % 3 )) -eq 0 ]; then \
 			echo "⏳ Попытка $$i/15..."; \
@@ -232,20 +236,24 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 		if [ $$i -eq 15 ]; then \
 			echo "❌ MySQL не запустился за 30 секунд"; \
 			echo "Проверка статуса всех контейнеров:"; \
-			./vendor/bin/sail ps -a 2>&1 || true; \
+			./vendor/bin/sail ps -a 2>&1 || docker ps -a 2>&1 || true; \
 			echo ""; \
 			echo "Попытка перезапуска MySQL..."; \
 			./vendor/bin/sail restart mysql 2>&1 || ./vendor/bin/sail up -d mysql 2>&1 || true; \
-			sleep 3; \
+			sleep 5; \
 			echo "Повторная проверка готовности MySQL (еще 10 секунд)..."; \
 			for j in 1 2 3 4 5; do \
-				if ./vendor/bin/sail exec mysql mysqladmin ping -h localhost --silent 2>/dev/null || ./vendor/bin/sail exec mysql mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
-					echo "✅ MySQL готов после перезапуска"; \
-					break; \
+				MYSQL_CONTAINER=$$(docker ps -q -f name=mysql 2>/dev/null || echo ""); \
+				if [ -n "$$MYSQL_CONTAINER" ]; then \
+					if docker exec $$MYSQL_CONTAINER mysqladmin ping -h localhost --silent 2>/dev/null || docker exec $$MYSQL_CONTAINER mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
+						echo "✅ MySQL готов после перезапуска"; \
+						break; \
+					fi; \
 				fi; \
 				sleep 2; \
 			done; \
-			if ! ./vendor/bin/sail exec mysql mysqladmin ping -h localhost --silent 2>/dev/null && ! ./vendor/bin/sail exec mysql mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then \
+			MYSQL_CONTAINER=$$(docker ps -q -f name=mysql 2>/dev/null || echo ""); \
+			if [ -z "$$MYSQL_CONTAINER" ] || (! docker exec $$MYSQL_CONTAINER mysqladmin ping -h localhost --silent 2>/dev/null && ! docker exec $$MYSQL_CONTAINER mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null); then \
 				echo "❌ MySQL все еще не готов. Проверьте логи: ./vendor/bin/sail logs mysql"; \
 				exit 1; \
 			fi; \
