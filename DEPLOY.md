@@ -2,7 +2,7 @@
 
 ## Автодеплой через GitHub Actions
 
-При пуше в ветку `main` запускается workflow `.github/workflows/deploy.yml`: по SSH подключается к серверу и выполняет `git pull` и `make deploy` в `/home/poker_manager`.
+При пуше в ветку `main` запускается workflow `.github/workflows/deploy.yml`: по SSH подключается к серверу и выполняет `make deploy-lite` в `/home/poker_manager`.
 
 **Секреты в репозитории (Settings → Secrets and variables → Actions):**
 
@@ -23,6 +23,13 @@
 ```bash
 cd /home/poker_manager
 make deploy
+```
+
+Для легкого деплоя (без миграций и установки PHP-зависимостей) можно использовать:
+
+```bash
+cd /home/poker_manager
+make deploy-lite
 ```
 
 ## Пошаговый процесс деплоя

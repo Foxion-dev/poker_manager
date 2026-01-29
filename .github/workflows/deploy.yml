@@ -20,5 +20,4 @@ jobs:
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           script: |
             cd /home/poker_manager
-            git pull origin main
-            make deploy
+            make deploy-lite

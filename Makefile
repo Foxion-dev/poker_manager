@@ -1,4 +1,4 @@
-.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php deploy
+.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php deploy deploy-lite
 
 help: ## Показать справку по командам
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -278,3 +278,32 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@echo "✅ Приложение оптимизировано"
 	@echo ""
 	@echo "🎉 Деплой завершен успешно!"
+
+deploy-lite: ## Обновить код и фронтенд без полного деплоя
+	@echo "🚀 Начало легкого деплоя..."
+	@echo "📥 Подтягивание изменений из git..."
+	@git pull || echo "⚠️  Ошибка при git pull. Продолжаем деплой..."
+	@echo "✅ Код обновлен"
+	@echo ""
+	@echo "📦 Проверка контейнеров..."
+	@if ! ./vendor/bin/sail ps | grep -q "laravel.test"; then \
+		echo "⚠️  Контейнеры не запущены. Запускаем..."; \
+		./vendor/bin/sail up -d; \
+		echo "⏳ Ожидание готовности сервисов (несколько секунд)..."; \
+		sleep 10; \
+	fi
+	@echo "✅ Контейнеры запущены"
+	@echo ""
+	@echo "📦 Установка Node.js зависимостей..."
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && npm install"
+	@echo "✅ Node.js зависимости установлены"
+	@echo ""
+	@echo "📁 Создание директории для сборки..."
+	@./vendor/bin/sail exec -u root laravel.test sh -c "mkdir -p /var/www/html/public/build && chown -R sail:sail /var/www/html/public/build && chmod -R 755 /var/www/html/public/build" || true
+	@echo "✅ Директория создана"
+	@echo ""
+	@echo "🎨 Сборка assets для production..."
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && NODE_ENV=production npm run build 2>&1" || (echo "❌ Ошибка при сборке assets!" && exit 1)
+	@echo "✅ Assets собраны"
+	@echo ""
+	@echo "🎉 Легкий деплой завершен успешно!"
