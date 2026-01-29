@@ -24,6 +24,7 @@ services:
             - '.:/var/www/html'
         networks:
             - sail
+        restart: unless-stopped
         depends_on:
             mysql:
                 condition: service_healthy
@@ -44,6 +45,7 @@ services:
             - './docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf'
         networks:
             - sail
+        restart: unless-stopped
         depends_on:
             laravel.test:
                 condition: service_healthy
@@ -64,6 +66,7 @@ services:
             - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
             - sail
+        restart: unless-stopped
         healthcheck:
             test:
                 - CMD
@@ -80,6 +83,7 @@ services:
             - 'sail-redis:/data'
         networks:
             - sail
+        restart: unless-stopped
         healthcheck:
             test:
                 - CMD
