@@ -54,6 +54,7 @@ class DashboardController extends Controller
 			'average_buyin' => $this->statisticsService->getAverageBuyin($user, $startDate, $endDate),
 			'roi' => $this->statisticsService->getROI($user, $startDate, $endDate),
 			'average_cashout' => $this->statisticsService->getAverageCashout($user, $startDate, $endDate),
+			'bounty_profit' => $this->statisticsService->getTotalBountyProfit($user, $startDate, $endDate),
 			'tournaments_by_month' => $this->statisticsService->getTournamentsByPeriod($user, 'month'),
 			'bankroll_history' => $this->statisticsService->getBankrollHistory($user, $startDate, $endDate),
 			'statistics_by_room' => $this->statisticsService->getStatisticsByRoom($user),

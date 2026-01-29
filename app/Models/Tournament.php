@@ -12,17 +12,18 @@ class Tournament extends Model
 	use HasFactory;
 
 	protected $fillable = [
-		'user_id',
-		'room_id',
-		'buyin',
-		'currency_id',
-		'date',
-		'place',
-		'cashout',
-		'bounty_count',
-		'rebuy_count',
-		'double_rebuy',
-		'players_count',
+			'user_id',
+			'room_id',
+			'buyin',
+			'currency_id',
+			'date',
+			'place',
+			'cashout',
+			'cashout_bounty',
+			'bounty_count',
+			'rebuy_count',
+			'double_rebuy',
+			'players_count',
 	];
 
 	protected function casts(): array
@@ -31,6 +32,7 @@ class Tournament extends Model
 			'date' => 'date',
 			'buyin' => 'decimal:2',
 			'cashout' => 'decimal:2',
+			'cashout_bounty' => 'decimal:2',
 			'place' => 'integer',
 			'bounty_count' => 'integer',
 			'rebuy_count' => 'integer',
@@ -62,7 +64,8 @@ class Tournament extends Model
 			$rebuyAmount += 2 * $this->buyin;
 		}
 		$totalBuyin += $rebuyAmount;
-		return ($this->cashout ?? 0) - $totalBuyin;
+			$totalCashout = ($this->cashout ?? 0) + ($this->cashout_bounty ?? 0);
+			return $totalCashout - $totalBuyin;
 	}
 
 	public function scopeWithUsd(Builder $query): Builder
@@ -78,10 +81,10 @@ class Tournament extends Model
 			')
 			->selectRaw('
 				CASE 
-					WHEN tournaments.cashout IS NULL THEN 0
+					WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0
 					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN tournaments.cashout
-					ELSE tournaments.cashout / currencies.rate_to_usd
+					THEN COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)
+					ELSE (COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)) / currencies.rate_to_usd
 				END as cashout_usd
 			')
 			->selectRaw('
@@ -93,10 +96,10 @@ class Tournament extends Model
 			')
 			->selectRaw('
 				CASE 
-					WHEN tournaments.cashout IS NULL THEN 0
+					WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0
 					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN tournaments.cashout
-					ELSE tournaments.cashout / currencies.rate_to_usd
+					THEN COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)
+					ELSE (COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)) / currencies.rate_to_usd
 				END
 				-
 				CASE 
@@ -122,10 +125,10 @@ class Tournament extends Model
 	{
 		return "
 			CASE 
-				WHEN tournaments.cashout IS NULL THEN 0
+				WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0
 				WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-				THEN tournaments.cashout
-				ELSE tournaments.cashout / currencies.rate_to_usd
+				THEN COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)
+				ELSE (COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)) / currencies.rate_to_usd
 			END
 		";
 	}

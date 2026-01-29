@@ -226,16 +226,21 @@
 						<div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 sm:gap-6 sm:ml-4 w-full sm:w-auto">
 							<div class="text-left sm:text-right w-full sm:w-auto">
 								<div
-									v-if="tournament.cashout"
-									class="text-base sm:text-lg font-bold text-green-600 dark:text-green-400"
+									v-if="hasAnyCashout(tournament)"
+									class="text-sm sm:text-base font-semibold text-green-600 dark:text-green-400 space-y-1"
 								>
-									{{ formatCashout(tournament) }}
+									<div v-if="tournament.cashout">
+										Приз: {{ formatCashout(tournament, tournament.cashout) }}
+									</div>
+									<div v-if="tournament.cashout_bounty">
+										Баунти: {{ formatCashout(tournament, tournament.cashout_bounty) }}
+									</div>
 								</div>
 								<div v-else class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
 									Не в деньгах
 								</div>
 								<div
-									v-if="tournament.cashout"
+									v-if="hasAnyCashout(tournament)"
 									class="text-xs mt-1 text-green-600 dark:text-green-400"
 								>
 									{{ getProfit(tournament) >= 0 ? '+' : '' }}{{ formatProfit(tournament) }}
@@ -355,16 +360,20 @@ const formatBuyin = (tournament) => {
 	return `${formatCurrency(buyinInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(buyinInUSD)})`;
 };
 
-const formatCashout = (tournament) => {
-	if (!tournament.cashout) {
+const formatCashout = (tournament, amount) => {
+	const value = typeof amount === 'number' || amount !== undefined
+		? (typeof amount === 'number' ? amount : parseFloat(amount) || 0)
+		: (parseFloat(tournament.cashout) || 0);
+
+	if (!value) {
 		return '';
 	}
 	
 	if (!tournament.currency || tournament.currency.code === 'USD') {
-		return formatCurrency(tournament.cashout);
+		return formatCurrency(value);
 	}
 
-	const cashoutInCurrency = parseFloat(tournament.cashout) || 0;
+	const cashoutInCurrency = value;
 	const cashoutInUSD = cashoutInCurrency / parseFloat(tournament.currency.rate_to_usd);
 
 	return `${formatCurrency(cashoutInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(cashoutInUSD)})`;
@@ -408,7 +417,9 @@ const formatProfit = (tournament) => {
 	const bountyCount = parseInt(tournament.bounty_count) || 0;
 	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
 	const doubleRebuy = tournament.double_rebuy || false;
-	const cashout = parseFloat(tournament.cashout) || 0;
+	const cashoutPrize = parseFloat(tournament.cashout) || 0;
+	const cashoutBounty = parseFloat(tournament.cashout_bounty) || 0;
+	const cashout = cashoutPrize + cashoutBounty;
 	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
 	const totalBuyin = buyin + (bountyCount * buyin) + rebuyAmount;
 	const profit = cashout - totalBuyin;
@@ -438,9 +449,16 @@ const getProfit = (tournament) => {
 	const bountyCount = parseInt(tournament.bounty_count) || 0;
 	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
 	const doubleRebuy = tournament.double_rebuy || false;
+	const cashoutPrize = parseFloat(tournament.cashout) || 0;
+	const cashoutBounty = parseFloat(tournament.cashout_bounty) || 0;
 	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
 	const totalBuyin = buyin + (bountyCount * buyin) + rebuyAmount;
-	return (tournament.cashout || 0) - totalBuyin;
+	const totalCashout = cashoutPrize + cashoutBounty;
+	return totalCashout - totalBuyin;
+};
+
+const hasAnyCashout = (tournament) => {
+	return !!(tournament.cashout || tournament.cashout_bounty);
 };
 
 onMounted(() => {

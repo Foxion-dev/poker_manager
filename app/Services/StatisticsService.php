@@ -296,7 +296,10 @@ class StatisticsService
 	{
 		$tournamentsQuery = $user->tournaments()
 			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
-			->whereNotNull('tournaments.cashout');
+			->where(function ($query) {
+				$query->whereNotNull('tournaments.cashout')
+					->orWhereNotNull('tournaments.cashout_bounty');
+			});
 
 		if ($startDate) {
 			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
@@ -338,6 +341,44 @@ class StatisticsService
 		}
 
 		return round($totalCashout / $totalCount, 2);
+	}
+
+	public function getTotalBountyProfit(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+	{
+		$tournamentsQuery = $user->tournaments()
+			->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id');
+
+		if ($startDate) {
+			$tournamentsQuery->where('tournaments.date', '>=', $startDate);
+		}
+
+		if ($endDate) {
+			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
+		}
+
+		$stats = $tournamentsQuery->selectRaw('
+				SUM(
+					CASE
+						WHEN tournaments.cashout_bounty IS NULL THEN 0
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1
+						THEN tournaments.cashout_bounty
+						ELSE tournaments.cashout_bounty / currencies.rate_to_usd
+					END
+				) as total_bounty_cashout,
+				SUM(
+					CASE
+						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1
+						THEN COALESCE(tournaments.bounty_count, 0) * tournaments.buyin
+						ELSE COALESCE(tournaments.bounty_count, 0) * tournaments.buyin / currencies.rate_to_usd
+					END
+				) as total_bounty_buyin
+			')
+			->first();
+
+		$totalBountyCashout = $stats->total_bounty_cashout ?? 0;
+		$totalBountyBuyin = $stats->total_bounty_buyin ?? 0;
+
+		return round($totalBountyCashout - $totalBountyBuyin, 2);
 	}
 
 	public function getStatisticsByRoom(User $user): Collection

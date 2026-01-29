@@ -23,6 +23,7 @@ class UpdateTournamentRequest extends FormRequest
 			'date' => ['sometimes', 'required', 'date'],
 			'place' => ['nullable', 'integer', 'min:1'],
 			'cashout' => ['nullable', 'numeric', 'min:0'],
+				'cashout_bounty' => ['nullable', 'numeric', 'min:0'],
 			'bounty_count' => ['nullable', 'integer', 'min:0'],
 			'rebuy_count' => ['nullable', 'integer', 'min:0'],
 			'double_rebuy' => ['nullable', 'boolean'],

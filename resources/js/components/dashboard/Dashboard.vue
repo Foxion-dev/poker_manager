@@ -223,6 +223,23 @@
 						</div>
 					</div>
 				</div>
+
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+					<div class="flex items-center">
+						<div class="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-400 to-lime-500 flex items-center justify-center mr-4">
+							<span class="text-2xl">🎯</span>
+						</div>
+						<div>
+							<p class="text-sm font-medium text-gray-600 dark:text-gray-400">Профит по баунти</p>
+							<p
+								class="text-2xl font-bold"
+								:class="stats.bounty_profit >= 0 ? 'text-green-600' : 'text-red-600'"
+							>
+								{{ formatCurrency(stats.bounty_profit || 0) }}
+							</p>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">

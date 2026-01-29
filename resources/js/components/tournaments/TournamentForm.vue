@@ -136,7 +136,7 @@
 				<div>
 					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 						<span class="mr-2">💰</span>
-						Кэшаут ($)
+						Кэшаут
 					</label>
 					<input
 						v-model.number="form.cashout"
@@ -145,6 +145,21 @@
 						min="0"
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 						placeholder="0.00 (оставьте пустым, если не в деньгах)"
+					/>
+				</div>
+
+				<div>
+					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+						<span class="mr-2">🎯</span>
+						Кэшаут баунти
+					</label>
+					<input
+						v-model.number="form.cashout_bounty"
+						type="number"
+						step="0.01"
+						min="0"
+						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						placeholder="0.00"
 					/>
 				</div>
 			</div>
@@ -200,6 +215,7 @@ const form = ref({
 	date: new Date().toISOString().split('T')[0],
 	buyin: 0,
 	currency_id: null,
+	cashout_bounty: null,
 	bounty_count: 0,
 	rebuy_count: 0,
 	double_rebuy: false,
@@ -256,6 +272,7 @@ onMounted(async () => {
 					date: tournament.date,
 					buyin: tournament.buyin,
 					currency_id: tournament.currency_id,
+					cashout_bounty: tournament.cashout_bounty,
 					bounty_count: tournament.bounty_count ?? 0,
 					rebuy_count: tournament.rebuy_count ?? 0,
 					double_rebuy: tournament.double_rebuy ?? false,
