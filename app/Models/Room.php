@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -15,6 +16,7 @@ class Room extends Model
 		'name',
 		'icon',
 		'image',
+		'currency_id',
 	];
 
 	public function users(): BelongsToMany
@@ -32,5 +34,15 @@ class Room extends Model
 	public function userRooms(): HasMany
 	{
 		return $this->hasMany(UserRoom::class);
+	}
+
+	public function currency(): BelongsTo
+	{
+		return $this->belongsTo(Currency::class);
+	}
+
+	public function currencies(): BelongsToMany
+	{
+		return $this->belongsToMany(Currency::class, 'room_currencies');
 	}
 }

@@ -71,7 +71,7 @@
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 					>
 						<option :value="null">USD (Доллар США)</option>
-						<option v-for="currency in currencyStore.currencies" :key="currency.id" :value="currency.id">
+						<option v-for="currency in availableCurrencies" :key="currency.id" :value="currency.id">
 							{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
 						</option>
 					</select>
@@ -179,7 +179,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useTournamentStore } from '../../stores/tournaments';
 import { useRoomStore } from '../../stores/rooms';
@@ -205,6 +205,37 @@ const form = ref({
 	double_rebuy: false,
 	place: null,
 	cashout: null,
+});
+
+const availableCurrencies = computed(() => {
+	if (!form.value.room_id) {
+		return currencyStore.currencies;
+	}
+	const selectedRoom = roomStore.rooms.find(room => room.id === parseInt(form.value.room_id));
+	if (selectedRoom && selectedRoom.currencies && selectedRoom.currencies.length > 0) {
+		return selectedRoom.currencies;
+	}
+	return currencyStore.currencies;
+});
+
+watch(() => form.value.room_id, (newRoomId) => {
+	if (newRoomId && !isEdit.value) {
+		const selectedRoom = roomStore.rooms.find(room => room.id === parseInt(newRoomId));
+		if (selectedRoom && selectedRoom.currency_id) {
+			form.value.currency_id = selectedRoom.currency_id;
+		} else {
+			form.value.currency_id = null;
+		}
+	}
+	if (newRoomId && form.value.currency_id) {
+		const selectedRoom = roomStore.rooms.find(room => room.id === parseInt(newRoomId));
+		if (selectedRoom && selectedRoom.currencies) {
+			const currencyExists = selectedRoom.currencies.some(c => c.id === form.value.currency_id);
+			if (!currencyExists) {
+				form.value.currency_id = selectedRoom.currency_id || null;
+			}
+		}
+	}
 });
 
 onMounted(async () => {

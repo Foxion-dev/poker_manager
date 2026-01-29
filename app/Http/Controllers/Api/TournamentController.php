@@ -13,7 +13,7 @@ class TournamentController extends Controller
 {
 	public function index(Request $request): JsonResponse
 	{
-		$query = $request->user()->tournaments()->with(['room', 'currency']);
+		$query = $request->user()->tournaments()->with(['room.currency', 'currency']);
 
 		if ($request->has('room_id')) {
 			$query->where('room_id', $request->room_id);

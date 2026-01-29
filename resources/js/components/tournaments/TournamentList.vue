@@ -216,6 +216,10 @@
 										<span class="mr-1">🎁</span>
 										{{ tournament.bounty_count }} баунти
 									</span>
+									<span v-if="tournament.rebuy_count > 0 || tournament.double_rebuy" class="flex items-center">
+										<span class="mr-1">🔄</span>
+										{{ formatRebuys(tournament) }}
+									</span>
 								</div>
 							</div>
 						</div>
@@ -366,11 +370,47 @@ const formatCashout = (tournament) => {
 	return `${formatCurrency(cashoutInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(cashoutInUSD)})`;
 };
 
+const formatRebuys = (tournament) => {
+	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
+	const doubleRebuy = tournament.double_rebuy || false;
+	const buyin = parseFloat(tournament.buyin) || 0;
+	
+	if (rebuyCount === 0 && !doubleRebuy) {
+		return '';
+	}
+
+	let rebuyText = '';
+	if (rebuyCount > 0) {
+		rebuyText = `${rebuyCount} ребаев`;
+	}
+	if (doubleRebuy) {
+		if (rebuyText) {
+			rebuyText += ' + двойной ребай';
+		} else {
+			rebuyText = 'двойной ребай';
+		}
+	}
+
+	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
+	
+	if (!tournament.currency || tournament.currency.code === 'USD') {
+		return `${rebuyText} (${formatCurrency(rebuyAmount)})`;
+	}
+
+	const rebuyInCurrency = rebuyAmount;
+	const rebuyInUSD = rebuyInCurrency / parseFloat(tournament.currency.rate_to_usd);
+
+	return `${rebuyText} (${formatCurrency(rebuyInCurrency, tournament.currency.code, tournament.currency.symbol)} / ${formatCurrency(rebuyInUSD)})`;
+};
+
 const formatProfit = (tournament) => {
 	const buyin = parseFloat(tournament.buyin) || 0;
 	const bountyCount = parseInt(tournament.bounty_count) || 0;
+	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
+	const doubleRebuy = tournament.double_rebuy || false;
 	const cashout = parseFloat(tournament.cashout) || 0;
-	const totalBuyin = buyin + (bountyCount * buyin);
+	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
+	const totalBuyin = buyin + (bountyCount * buyin) + rebuyAmount;
 	const profit = cashout - totalBuyin;
 
 	if (!tournament.currency || tournament.currency.code === 'USD') {
@@ -394,7 +434,12 @@ const getRoomImageUrl = (imagePath) => {
 };
 
 const getProfit = (tournament) => {
-	const totalBuyin = tournament.buyin + (tournament.bounty_count * tournament.buyin);
+	const buyin = parseFloat(tournament.buyin) || 0;
+	const bountyCount = parseInt(tournament.bounty_count) || 0;
+	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
+	const doubleRebuy = tournament.double_rebuy || false;
+	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
+	const totalBuyin = buyin + (bountyCount * buyin) + rebuyAmount;
 	return (tournament.cashout || 0) - totalBuyin;
 };
 

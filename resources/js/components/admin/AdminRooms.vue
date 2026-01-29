@@ -55,6 +55,50 @@
 						<img :src="getImageUrl(editingRoom.image)" alt="Current" class="h-20 w-20 object-cover rounded-lg" />
 					</div>
 				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						Доступные валюты
+					</label>
+					<div class="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+						<label
+							v-for="currency in currencies"
+							:key="currency.id"
+							class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded"
+						>
+							<input
+								type="checkbox"
+								:value="currency.id"
+								v-model="form.currency_ids"
+								@change="updateDefaultCurrency"
+								class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+							/>
+							<span class="text-sm text-gray-700 dark:text-gray-300">
+								{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+							</span>
+						</label>
+						<div v-if="currencies.length === 0" class="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+							Нет доступных валют
+						</div>
+					</div>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						Валюта по умолчанию
+					</label>
+					<select
+						v-model="form.currency_id"
+						class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+					>
+						<option :value="null">Не выбрана</option>
+						<option
+							v-for="currency in availableCurrenciesForDefault"
+							:key="currency.id"
+							:value="currency.id"
+						>
+							{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+						</option>
+					</select>
+				</div>
 				<div class="flex space-x-3">
 					<button
 						type="submit"
@@ -139,20 +183,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import api from '../../services/api';
+import { useCurrencyStore } from '../../stores/currencies';
 
+const currencyStore = useCurrencyStore();
 const rooms = ref([]);
 const loading = ref(false);
 const showForm = ref(false);
 const editingRoom = ref(null);
 const imageInput = ref(null);
+const currencies = ref([]);
 const form = ref({
 	name: '',
 	icon: '',
 	image: null,
 	imagePreview: null,
+	currency_id: null,
+	currency_ids: [],
 });
+
+const availableCurrenciesForDefault = computed(() => {
+	return currencies.value.filter(currency => form.value.currency_ids.includes(currency.id));
+});
+
+const updateDefaultCurrency = () => {
+	if (form.value.currency_id && !form.value.currency_ids.includes(form.value.currency_id)) {
+		form.value.currency_id = null;
+	}
+};
 
 const fetchRooms = async () => {
 	loading.value = true;
@@ -163,6 +222,15 @@ const fetchRooms = async () => {
 		console.error('Error fetching rooms:', error);
 	} finally {
 		loading.value = false;
+	}
+};
+
+const fetchCurrencies = async () => {
+	try {
+		await currencyStore.fetchCurrencies();
+		currencies.value = currencyStore.currencies;
+	} catch (error) {
+		console.error('Error fetching currencies:', error);
 	}
 };
 
@@ -195,6 +263,14 @@ const saveRoom = async () => {
 		if (form.value.image) {
 			formData.append('image', form.value.image);
 		}
+		if (form.value.currency_id) {
+			formData.append('currency_id', form.value.currency_id);
+		}
+		if (form.value.currency_ids && form.value.currency_ids.length > 0) {
+			form.value.currency_ids.forEach((id, index) => {
+				formData.append(`currency_ids[${index}]`, id);
+			});
+		}
 
 		if (editingRoom.value) {
 			await api.put(`/rooms/${editingRoom.value.id}`, formData, {
@@ -213,7 +289,8 @@ const saveRoom = async () => {
 		cancelForm();
 	} catch (error) {
 		console.error('Error saving room:', error);
-		alert('Ошибка при сохранении рума');
+		const errorMessage = error.response?.data?.message || error.response?.data?.errors?.currency_id?.[0] || 'Ошибка при сохранении рума';
+		alert(errorMessage);
 	} finally {
 		loading.value = false;
 	}
@@ -226,6 +303,8 @@ const editRoom = (room) => {
 		icon: room.icon || '',
 		image: null,
 		imagePreview: null,
+		currency_id: room.currency_id || null,
+		currency_ids: room.currencies ? room.currencies.map(c => c.id) : [],
 	};
 	if (imageInput.value) {
 		imageInput.value.value = '';
@@ -255,13 +334,18 @@ const cancelForm = () => {
 		icon: '',
 		image: null,
 		imagePreview: null,
+		currency_id: null,
+		currency_ids: [],
 	};
 	if (imageInput.value) {
 		imageInput.value.value = '';
 	}
 };
 
-onMounted(() => {
-	fetchRooms();
+onMounted(async () => {
+	await Promise.all([
+		fetchRooms(),
+		fetchCurrencies(),
+	]);
 });
 </script>

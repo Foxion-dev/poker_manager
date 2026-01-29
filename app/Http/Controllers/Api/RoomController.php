@@ -20,7 +20,8 @@ class RoomController extends Controller
 			'coinpoker' => 4,
 		];
 
-		$rooms = Room::all()
+		$rooms = Room::with(['currency', 'currencies'])
+			->get()
 			->unique('name')
 			->sortBy(function ($room) use ($priorityOrder) {
 				return $priorityOrder[$room->name] ?? 999;
@@ -33,6 +34,8 @@ class RoomController extends Controller
 	public function store(StoreRoomRequest $request): JsonResponse
 	{
 		$data = $request->validated();
+		$currencyIds = $data['currency_ids'] ?? [];
+		unset($data['currency_ids']);
 
 		if ($request->hasFile('image')) {
 			$data['image'] = $request->file('image')->store('rooms', 'public');
@@ -40,17 +43,23 @@ class RoomController extends Controller
 
 		$room = Room::create($data);
 
-		return response()->json($room, 201);
+		if (!empty($currencyIds)) {
+			$room->currencies()->sync($currencyIds);
+		}
+
+		return response()->json($room->load(['currency', 'currencies']), 201);
 	}
 
 	public function show(Room $room): JsonResponse
 	{
-		return response()->json($room);
+		return response()->json($room->load(['currency', 'currencies']));
 	}
 
 	public function update(UpdateRoomRequest $request, Room $room): JsonResponse
 	{
 		$data = $request->validated();
+		$currencyIds = $data['currency_ids'] ?? null;
+		unset($data['currency_ids']);
 
 		if ($request->hasFile('image')) {
 			if ($room->image) {
@@ -61,7 +70,11 @@ class RoomController extends Controller
 
 		$room->update($data);
 
-		return response()->json($room);
+		if ($currencyIds !== null) {
+			$room->currencies()->sync($currencyIds);
+		}
+
+		return response()->json($room->load(['currency', 'currencies']));
 	}
 
 	public function destroy(Room $room): JsonResponse
