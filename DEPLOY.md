@@ -1,5 +1,20 @@
 # Инструкция по деплою на сервере
 
+## Автодеплой через GitHub Actions
+
+При пуше в ветку `main` запускается workflow `.github/workflows/deploy.yml`: по SSH подключается к серверу и выполняет `git pull` и `make deploy` в `/home/poker_manager`.
+
+**Секреты в репозитории (Settings → Secrets and variables → Actions):**
+
+| Секрет | Описание |
+|--------|----------|
+| `DEPLOY_HOST` | IP или hostname сервера |
+| `DEPLOY_USER` | SSH-пользователь на сервере |
+| `DEPLOY_SSH_KEY` | Приватный SSH-ключ для доступа к серверу |
+| `DEPLOY_PORT` | (опционально) Порт SSH, по умолчанию 22 |
+
+На сервере в `~/.ssh/authorized_keys` должен быть добавлен соответствующий публичный ключ.
+
 ## Быстрый деплой
 
 На сервере выполните команду:
