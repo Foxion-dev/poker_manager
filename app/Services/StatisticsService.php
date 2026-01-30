@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Services\MoneyService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -356,29 +357,13 @@ class StatisticsService
 			$tournamentsQuery->where('tournaments.date', '<=', $endDate);
 		}
 
-		$stats = $tournamentsQuery->selectRaw('
-				SUM(
-					CASE
-						WHEN tournaments.cashout_bounty IS NULL THEN 0
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1
-						THEN tournaments.cashout_bounty
-						ELSE tournaments.cashout_bounty / currencies.rate_to_usd
-					END
-				) as total_bounty_cashout,
-				SUM(
-					CASE
-						WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1
-						THEN COALESCE(tournaments.bounty_count, 0) * tournaments.buyin
-						ELSE COALESCE(tournaments.bounty_count, 0) * tournaments.buyin / currencies.rate_to_usd
-					END
-				) as total_bounty_buyin
-			')
+		$bountyCashoutUsd = MoneyService::toUsdSqlExpression('COALESCE(tournaments.cashout_bounty, 0)', 'currencies.rate_to_usd');
+		$stats = $tournamentsQuery->selectRaw("SUM({$bountyCashoutUsd}) as total_bounty_cashout")
 			->first();
 
 		$totalBountyCashout = $stats->total_bounty_cashout ?? 0;
-		$totalBountyBuyin = $stats->total_bounty_buyin ?? 0;
 
-		return round($totalBountyCashout - $totalBountyBuyin, 2);
+		return round($totalBountyCashout, 2);
 	}
 
 	public function getStatisticsByRoom(User $user): Collection

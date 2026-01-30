@@ -12,17 +12,17 @@ export const roomService = {
 	},
 
 	async create(data) {
-		const response = await api.post('/rooms', data);
+		const response = await api.post('/admin/rooms', data);
 		return response.data;
 	},
 
 	async update(id, data) {
-		const response = await api.put(`/rooms/${id}`, data);
+		const response = await api.put(`/admin/rooms/${id}`, data);
 		return response.data;
 	},
 
 	async delete(id) {
-		const response = await api.delete(`/rooms/${id}`);
+		const response = await api.delete(`/admin/rooms/${id}`);
 		return response.data;
 	},
 };

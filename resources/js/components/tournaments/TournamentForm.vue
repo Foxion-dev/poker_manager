@@ -21,16 +21,36 @@
 						<span class="mr-2">🎰</span>
 						Рум
 					</label>
-					<select
+					<AppSelect
 						v-model="form.room_id"
-						required
-						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						:options="roomStore.rooms"
+						option-value="id"
+						option-label="name"
+						placeholder="Выберите рум"
+						class="mt-1"
 					>
-						<option value="">Выберите рум</option>
-						<option v-for="room in roomStore.rooms" :key="room.id" :value="room.id">
-							{{ room.name }}
-						</option>
-					</select>
+						<template #selected="{ option, placeholder }">
+							<template v-if="option">
+								<div v-if="option.image" class="h-8 w-8 rounded-lg overflow-hidden flex-shrink-0">
+									<img :src="getRoomImageUrl(option.image)" :alt="option.name" class="h-full w-full object-cover" />
+								</div>
+								<div v-else class="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0 text-base">
+									{{ option.icon || '🎰' }}
+								</div>
+								<span class="truncate font-medium">{{ option.name }}</span>
+							</template>
+							<span v-else class="text-gray-500 dark:text-gray-400">{{ placeholder }}</span>
+						</template>
+						<template #default="{ option }">
+							<div v-if="option.image" class="h-9 w-9 rounded-lg overflow-hidden flex-shrink-0">
+								<img :src="getRoomImageUrl(option.image)" :alt="option.name" class="h-full w-full object-cover" />
+							</div>
+							<div v-else class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0 text-lg">
+								{{ option.icon || '🎰' }}
+							</div>
+							<span class="truncate font-medium">{{ option.name }}</span>
+						</template>
+					</AppSelect>
 				</div>
 
 				<div>
@@ -70,7 +90,6 @@
 						v-model="form.currency_id"
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 					>
-						<option :value="null">USD (Доллар США)</option>
 						<option v-for="currency in availableCurrencies" :key="currency.id" :value="currency.id">
 							{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
 						</option>
@@ -103,10 +122,7 @@
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 						placeholder="0"
 					/>
-				</div>
-
-				<div class="flex items-center">
-					<label class="flex items-center cursor-pointer">
+					<label class="mt-3 flex items-center cursor-pointer">
 						<input
 							v-model="form.double_rebuy"
 							type="checkbox"
@@ -133,34 +149,35 @@
 					/>
 				</div>
 
-				<div>
-					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-						<span class="mr-2">💰</span>
-						Кэшаут
-					</label>
-					<input
-						v-model.number="form.cashout"
-						type="number"
-						step="0.01"
-						min="0"
-						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-						placeholder="0.00 (оставьте пустым, если не в деньгах)"
-					/>
-				</div>
-
-				<div>
-					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-						<span class="mr-2">🎯</span>
-						Кэшаут баунти
-					</label>
-					<input
-						v-model.number="form.cashout_bounty"
-						type="number"
-						step="0.01"
-						min="0"
-						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-						placeholder="0.00"
-					/>
+				<div class="flex flex-col gap-4 sm:flex-row sm:gap-3">
+					<div class="sm:flex-1 sm:min-w-0">
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">💰</span>
+							Кэшаут
+						</label>
+						<input
+							v-model.number="form.cashout"
+							type="number"
+							step="0.01"
+							min="0"
+							class="mt-1 block w-full px-4 py-3 sm:px-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							placeholder="0.00 (оставьте пустым, если не в деньгах)"
+						/>
+					</div>
+					<div class="sm:flex-1 sm:min-w-0">
+						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+							<span class="mr-2">🎯</span>
+							Кэшаут баунти
+						</label>
+						<input
+							v-model.number="form.cashout_bounty"
+							type="number"
+							step="0.01"
+							min="0"
+							class="mt-1 block w-full px-4 py-3 sm:px-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							placeholder="0.00"
+						/>
+					</div>
 				</div>
 			</div>
 
@@ -199,6 +216,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useTournamentStore } from '../../stores/tournaments';
 import { useRoomStore } from '../../stores/rooms';
 import { useCurrencyStore } from '../../stores/currencies';
+import AppSelect from '../AppSelect.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -224,31 +242,42 @@ const form = ref({
 });
 
 const availableCurrencies = computed(() => {
+	const all = currencyStore.currencies;
 	if (!form.value.room_id) {
-		return currencyStore.currencies;
+		return all;
 	}
 	const selectedRoom = roomStore.rooms.find(room => room.id === parseInt(form.value.room_id));
 	if (selectedRoom && selectedRoom.currencies && selectedRoom.currencies.length > 0) {
+		if (isEdit.value && form.value.currency_id != null) {
+			const currentInList = selectedRoom.currencies.some(c => c.id === form.value.currency_id);
+			if (!currentInList) {
+				const currentCurrency = all.find(c => c.id === form.value.currency_id);
+				return currentCurrency ? [currentCurrency, ...selectedRoom.currencies] : selectedRoom.currencies;
+			}
+		}
 		return selectedRoom.currencies;
 	}
-	return currencyStore.currencies;
+	return all;
 });
 
 watch(() => form.value.room_id, (newRoomId) => {
 	if (newRoomId && !isEdit.value) {
 		const selectedRoom = roomStore.rooms.find(room => room.id === parseInt(newRoomId));
-		if (selectedRoom && selectedRoom.currency_id) {
-			form.value.currency_id = selectedRoom.currency_id;
+		if (selectedRoom && selectedRoom.currencies && selectedRoom.currencies.length > 0) {
+			form.value.currency_id = selectedRoom.currency_id && selectedRoom.currencies.some(c => c.id === selectedRoom.currency_id)
+				? selectedRoom.currency_id
+				: selectedRoom.currencies[0].id;
 		} else {
-			form.value.currency_id = null;
+			const usdId = currencyStore.currencies.find(c => c.code?.toUpperCase() === 'USD')?.id ?? null;
+			form.value.currency_id = selectedRoom?.currency_id ?? usdId;
 		}
 	}
-	if (newRoomId && form.value.currency_id) {
+	if (newRoomId && form.value.currency_id && !isEdit.value) {
 		const selectedRoom = roomStore.rooms.find(room => room.id === parseInt(newRoomId));
-		if (selectedRoom && selectedRoom.currencies) {
+		if (selectedRoom && selectedRoom.currencies && selectedRoom.currencies.length > 0) {
 			const currencyExists = selectedRoom.currencies.some(c => c.id === form.value.currency_id);
 			if (!currencyExists) {
-				form.value.currency_id = selectedRoom.currency_id || null;
+				form.value.currency_id = selectedRoom.currency_id || (currencyStore.currencies.find(c => c.code?.toUpperCase() === 'USD')?.id ?? null);
 			}
 		}
 	}
@@ -267,11 +296,22 @@ onMounted(async () => {
 		if (isEdit.value) {
 			try {
 				const tournament = await tournamentStore.fetchTournament(route.params.id);
+				const dateStr = tournament.date
+					? (typeof tournament.date === 'string' ? tournament.date.slice(0, 10) : tournament.date)
+					: new Date().toISOString().split('T')[0];
+				let currencyId = tournament.currency_id ?? tournament.currency?.id ?? null;
+				if (currencyId != null && typeof currencyId !== 'number') {
+					currencyId = parseInt(currencyId, 10);
+					if (Number.isNaN(currencyId)) currencyId = null;
+				}
+				const roomId = tournament.room_id != null
+					? (typeof tournament.room_id === 'number' ? tournament.room_id : parseInt(tournament.room_id, 10))
+					: '';
 				form.value = {
-					room_id: tournament.room_id,
-					date: tournament.date,
+					room_id: Number.isNaN(roomId) ? '' : roomId,
+					date: dateStr,
 					buyin: tournament.buyin,
-					currency_id: tournament.currency_id,
+					currency_id: currencyId,
 					cashout_bounty: tournament.cashout_bounty,
 					bounty_count: tournament.bounty_count ?? 0,
 					rebuy_count: tournament.rebuy_count ?? 0,
@@ -284,6 +324,12 @@ onMounted(async () => {
 			}
 		}
 });
+
+const getRoomImageUrl = (imagePath) => {
+	if (!imagePath) return null;
+	if (imagePath.startsWith('http')) return imagePath;
+	return `/storage/${imagePath}`;
+};
 
 const handleSubmit = async () => {
 	loading.value = true;

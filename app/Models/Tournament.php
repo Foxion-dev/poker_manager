@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\MoneyService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -58,79 +59,43 @@ class Tournament extends Model
 
 	public function getProfitAttribute(): float
 	{
-		$totalBuyin = $this->buyin + ($this->bounty_count * $this->buyin);
 		$rebuyAmount = ($this->rebuy_count ?? 0) * $this->buyin;
 		if ($this->double_rebuy ?? false) {
 			$rebuyAmount += 2 * $this->buyin;
 		}
-		$totalBuyin += $rebuyAmount;
-			$totalCashout = ($this->cashout ?? 0) + ($this->cashout_bounty ?? 0);
-			return $totalCashout - $totalBuyin;
+		$totalBuyin = $this->buyin + $rebuyAmount;
+		$totalCashout = ($this->cashout ?? 0) + ($this->cashout_bounty ?? 0);
+		return $totalCashout - $totalBuyin;
 	}
 
 	public function scopeWithUsd(Builder $query): Builder
 	{
+		$buyinUsd = MoneyService::toUsdSqlExpression('tournaments.buyin', 'currencies.rate_to_usd');
+		$totalBuyinExpr = 'tournaments.buyin + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)';
+		$totalBuyinUsd = MoneyService::toUsdSqlExpression($totalBuyinExpr, 'currencies.rate_to_usd');
+		$totalCashoutExpr = 'COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)';
+		$totalCashoutUsd = MoneyService::toUsdSqlExpression($totalCashoutExpr, 'currencies.rate_to_usd');
+		$cashoutUsd = "CASE WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0 ELSE {$totalCashoutUsd} END";
+
 		return $query->leftJoin('currencies', 'tournaments.currency_id', '=', 'currencies.id')
 			->select('tournaments.*')
-			->selectRaw('
-				CASE 
-					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN tournaments.buyin
-					ELSE tournaments.buyin / currencies.rate_to_usd
-				END as buyin_usd
-			')
-			->selectRaw('
-				CASE 
-					WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0
-					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)
-					ELSE (COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)) / currencies.rate_to_usd
-				END as cashout_usd
-			')
-			->selectRaw('
-				CASE 
-					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)
-					ELSE (tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)) / currencies.rate_to_usd
-				END as total_buyin_usd
-			')
-			->selectRaw('
-				CASE 
-					WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0
-					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)
-					ELSE (COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)) / currencies.rate_to_usd
-				END
-				-
-				CASE 
-					WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-					THEN tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)
-					ELSE (tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)) / currencies.rate_to_usd
-				END as profit_usd
-			');
+			->selectRaw("{$buyinUsd} as buyin_usd")
+			->selectRaw("{$cashoutUsd} as cashout_usd")
+			->selectRaw("{$totalBuyinUsd} as total_buyin_usd")
+			->selectRaw("{$cashoutUsd} - {$totalBuyinUsd} as profit_usd");
 	}
 
 	public static function getBuyinUsdExpression(): string
 	{
-		return "
-			CASE 
-				WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-				THEN tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)
-				ELSE (tournaments.buyin + (COALESCE(tournaments.bounty_count, 0) * tournaments.buyin) + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)) / currencies.rate_to_usd
-			END
-		";
+		$expr = 'tournaments.buyin + (COALESCE(tournaments.rebuy_count, 0) * tournaments.buyin) + (CASE WHEN tournaments.double_rebuy = 1 THEN 2 * tournaments.buyin ELSE 0 END)';
+		return MoneyService::toUsdSqlExpression($expr, 'currencies.rate_to_usd');
 	}
 
 	public static function getCashoutUsdExpression(): string
 	{
-		return "
-			CASE 
-				WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0
-				WHEN currencies.rate_to_usd IS NULL OR currencies.rate_to_usd = 0 OR currencies.rate_to_usd = 1 
-				THEN COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)
-				ELSE (COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)) / currencies.rate_to_usd
-			END
-		";
+		$totalCashoutExpr = 'COALESCE(tournaments.cashout, 0) + COALESCE(tournaments.cashout_bounty, 0)';
+		$totalCashoutUsd = MoneyService::toUsdSqlExpression($totalCashoutExpr, 'currencies.rate_to_usd');
+		return "CASE WHEN tournaments.cashout IS NULL AND tournaments.cashout_bounty IS NULL THEN 0 ELSE {$totalCashoutUsd} END";
 	}
 
 	public static function getProfitUsdExpression(): string

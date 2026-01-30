@@ -210,11 +210,7 @@
 									</span>
 									<span class="flex items-center">
 										<span class="mr-1">💵</span>
-										Байин: {{ formatBuyin(tournament) }}
-									</span>
-									<span v-if="tournament.bounty_count > 0" class="flex items-center">
-										<span class="mr-1">🎁</span>
-										{{ tournament.bounty_count }} баунти
+										Байин: {{ formatBuyin(tournament) }}{{ tournament.cashout_bounty && tournament.bounty_count ? ' (' + tournament.bounty_count + ' баунти)' : '' }}
 									</span>
 									<span v-if="tournament.rebuy_count > 0 || tournament.double_rebuy" class="flex items-center">
 										<span class="mr-1">🔄</span>
@@ -263,9 +259,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTournamentStore } from '../../stores/tournaments';
+import { formatAmount, formatCurrency, toUsd } from '../../services/moneyService';
 
 const tournamentStore = useTournamentStore();
 const { tournaments, loading } = storeToRefs(tournamentStore);
@@ -337,101 +334,30 @@ watch([dateFrom, dateTo, buyinMin, buyinMax, cashoutMin, cashoutMax, sortBy, sor
 	fetchTournaments();
 });
 
-const formatCurrency = (value, currencyCode = 'USD', symbol = '$') => {
-	const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
-	
-	if (currencyCode === 'USD') {
-		return new Intl.NumberFormat('ru-RU', {
-			style: 'currency',
-			currency: 'USD',
-		}).format(numValue);
-	}
-	return `${symbol}${numValue.toFixed(2)}`;
-};
-
-const formatBuyin = (tournament) => {
-	if (!tournament.currency || tournament.currency.code === 'USD') {
-		return formatCurrency(tournament.buyin);
-	}
-
-	const buyinInCurrency = parseFloat(tournament.buyin) || 0;
-	const buyinInUSD = buyinInCurrency / parseFloat(tournament.currency.rate_to_usd);
-
-	return `${formatCurrency(buyinInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(buyinInUSD)})`;
-};
+const formatBuyin = (tournament) => formatAmount(tournament.buyin, tournament.currency);
 
 const formatCashout = (tournament, amount) => {
 	const value = typeof amount === 'number' || amount !== undefined
 		? (typeof amount === 'number' ? amount : parseFloat(amount) || 0)
 		: (parseFloat(tournament.cashout) || 0);
-
-	if (!value) {
-		return '';
-	}
-	
-	if (!tournament.currency || tournament.currency.code === 'USD') {
-		return formatCurrency(value);
-	}
-
-	const cashoutInCurrency = value;
-	const cashoutInUSD = cashoutInCurrency / parseFloat(tournament.currency.rate_to_usd);
-
-	return `${formatCurrency(cashoutInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(cashoutInUSD)})`;
+	if (!value) return '';
+	return formatAmount(value, tournament.currency);
 };
 
 const formatRebuys = (tournament) => {
 	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
 	const doubleRebuy = tournament.double_rebuy || false;
 	const buyin = parseFloat(tournament.buyin) || 0;
-	
-	if (rebuyCount === 0 && !doubleRebuy) {
-		return '';
-	}
-
-	let rebuyText = '';
-	if (rebuyCount > 0) {
-		rebuyText = `${rebuyCount} ребаев`;
-	}
-	if (doubleRebuy) {
-		if (rebuyText) {
-			rebuyText += ' + двойной ребай';
-		} else {
-			rebuyText = 'двойной ребай';
-		}
-	}
-
+	if (rebuyCount === 0 && !doubleRebuy) return '';
+	let rebuyText = rebuyCount > 0 ? `${rebuyCount} ребаев` : '';
+	if (doubleRebuy) rebuyText = rebuyText ? `${rebuyText} + двойной ребай` : 'двойной ребай';
 	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
-	
-	if (!tournament.currency || tournament.currency.code === 'USD') {
-		return `${rebuyText} (${formatCurrency(rebuyAmount)})`;
-	}
-
-	const rebuyInCurrency = rebuyAmount;
-	const rebuyInUSD = rebuyInCurrency / parseFloat(tournament.currency.rate_to_usd);
-
-	return `${rebuyText} (${formatCurrency(rebuyInCurrency, tournament.currency.code, tournament.currency.symbol)} / ${formatCurrency(rebuyInUSD)})`;
+	return `${rebuyText} (${formatAmount(rebuyAmount, tournament.currency)})`;
 };
 
 const formatProfit = (tournament) => {
-	const buyin = parseFloat(tournament.buyin) || 0;
-	const bountyCount = parseInt(tournament.bounty_count) || 0;
-	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
-	const doubleRebuy = tournament.double_rebuy || false;
-	const cashoutPrize = parseFloat(tournament.cashout) || 0;
-	const cashoutBounty = parseFloat(tournament.cashout_bounty) || 0;
-	const cashout = cashoutPrize + cashoutBounty;
-	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
-	const totalBuyin = buyin + (bountyCount * buyin) + rebuyAmount;
-	const profit = cashout - totalBuyin;
-
-	if (!tournament.currency || tournament.currency.code === 'USD') {
-		return formatCurrency(profit);
-	}
-
-	const profitInCurrency = profit;
-	const profitInUSD = profitInCurrency / parseFloat(tournament.currency.rate_to_usd);
-
-	return `${formatCurrency(profitInCurrency, tournament.currency.code, tournament.currency.symbol)} (${formatCurrency(profitInUSD)})`;
+	const profit = getProfit(tournament);
+	return formatAmount(profit, tournament.currency);
 };
 
 const formatDate = (date) => {
@@ -446,13 +372,12 @@ const getRoomImageUrl = (imagePath) => {
 
 const getProfit = (tournament) => {
 	const buyin = parseFloat(tournament.buyin) || 0;
-	const bountyCount = parseInt(tournament.bounty_count) || 0;
 	const rebuyCount = parseInt(tournament.rebuy_count) || 0;
 	const doubleRebuy = tournament.double_rebuy || false;
 	const cashoutPrize = parseFloat(tournament.cashout) || 0;
 	const cashoutBounty = parseFloat(tournament.cashout_bounty) || 0;
 	const rebuyAmount = (rebuyCount * buyin) + (doubleRebuy ? 2 * buyin : 0);
-	const totalBuyin = buyin + (bountyCount * buyin) + rebuyAmount;
+	const totalBuyin = buyin + rebuyAmount;
 	const totalCashout = cashoutPrize + cashoutBounty;
 	return totalCashout - totalBuyin;
 };

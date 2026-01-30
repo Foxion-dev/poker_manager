@@ -273,13 +273,13 @@ const saveRoom = async () => {
 		}
 
 		if (editingRoom.value) {
-			await api.put(`/rooms/${editingRoom.value.id}`, formData, {
+			await api.put(`/admin/rooms/${editingRoom.value.id}`, formData, {
 				headers: {
 					'Content-Type': 'multipart/form-data',
 				},
 			});
 		} else {
-			await api.post('/rooms', formData, {
+			await api.post('/admin/rooms', formData, {
 				headers: {
 					'Content-Type': 'multipart/form-data',
 				},
@@ -318,7 +318,7 @@ const deleteRoom = async (room) => {
 	}
 
 	try {
-		await api.delete(`/rooms/${room.id}`);
+		await api.delete(`/admin/rooms/${room.id}`);
 		await fetchRooms();
 	} catch (error) {
 		console.error('Error deleting room:', error);
