@@ -579,10 +579,29 @@
 								Участники *
 							</label>
 							<div class="mb-4">
+								<div class="relative mb-2">
+									<input
+										v-model="participantSearchQuery"
+										type="text"
+										placeholder="Поиск участников..."
+										class="w-full pl-4 pr-10 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+									/>
+									<button
+										v-show="participantSearchQuery"
+										type="button"
+										@click="participantSearchQuery = ''"
+										class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+										aria-label="Сбросить поиск"
+									>
+										<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+											<path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+										</svg>
+									</button>
+								</div>
 								<div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 max-h-64 overflow-y-auto">
 									<div class="space-y-2">
 										<label
-											v-for="locationUser in locationUsers"
+											v-for="locationUser in filteredLocationUsers"
 											:key="locationUser.id || locationUser.user_id"
 											class="flex items-center space-x-2 sm:space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg cursor-pointer transition-colors"
 										>
@@ -889,6 +908,7 @@ const tournaments = ref([]);
 const allUsers = ref([]);
 const allCurrencies = ref([]);
 const selectedLocationUsers = ref([]);
+const participantSearchQuery = ref('');
 const newParticipantName = ref('');
 const addingNewUser = ref(false);
 const loading = ref(false);
@@ -1125,6 +1145,7 @@ const editTournament = (tournament) => {
 const closeTournamentForm = () => {
 	showTournamentForm.value = false;
 	editingTournament.value = null;
+	participantSearchQuery.value = '';
 };
 
 
@@ -1249,6 +1270,15 @@ const availableUsersForLocation = computed(() => {
 const locationUsers = computed(() => {
 	if (!location.value) return [];
 	return location.value.users || [];
+});
+
+const filteredLocationUsers = computed(() => {
+	const query = (participantSearchQuery.value || '').trim().toLowerCase();
+	if (!query) return locationUsers.value;
+	return locationUsers.value.filter(u => {
+		const name = (u.display_name || u.name || '').toLowerCase();
+		return name.includes(query);
+	});
 });
 
 const selectAllLocationUsers = () => {
