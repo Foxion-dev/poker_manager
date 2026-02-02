@@ -278,7 +278,10 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 		fi; \
 	done
 	@echo ""
+	@echo "🔧 Проверка .env для Docker (DB_HOST=mysql)..."
+	@if [ -f .env ]; then if grep -q '^DB_HOST=' .env; then sed -i.bak 's/^DB_HOST=.*/DB_HOST=mysql/' .env; else echo 'DB_HOST=mysql' >> .env; fi; fi
 	@echo "🗄️  Запуск миграций..."
+	@./vendor/bin/sail artisan config:clear
 	@./vendor/bin/sail artisan migrate --force || (echo "⚠️  Ошибка при миграциях. Проверьте логи." && echo "Статус контейнеров:" && ./vendor/bin/sail ps && echo "Логи MySQL:" && ./vendor/bin/sail logs mysql --tail=20 && exit 1)
 	@echo "✅ Миграции выполнены успешно"
 	@echo ""
