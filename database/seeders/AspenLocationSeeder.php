@@ -7,21 +7,12 @@ use App\Models\Location;
 use App\Models\LocationUser;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class AspenLocationSeeder extends Seeder
 {
 	public function run(): void
 	{
-		$owner = User::firstOrCreate(
-			['email' => 'mamama141996@gmail.com'],
-			[
-				'name' => 'mamama141996',
-				'password' => Hash::make('password'),
-				'balance' => 0,
-				'is_admin' => true,
-			]
-		);
+		$owner = User::where('email', 'admin@poker-manager.com')->firstOrFail();
 
 		$location = Location::firstOrCreate(
 			['name' => 'Аспен'],
