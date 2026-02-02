@@ -61,7 +61,6 @@ class DatabaseSeeder extends Seeder
 		foreach ($rooms as $room) {
 			UserRoom::firstOrCreate(
 				['user_id' => $admin->id, 'room_id' => $room->id],
-				['balance' => fake()->randomFloat(2, 0, 500)]
 			);
 			UserRoom::firstOrCreate(
 				['user_id' => $testUser->id, 'room_id' => $room->id],
