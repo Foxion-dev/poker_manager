@@ -136,7 +136,14 @@ setup: ## Первоначальная настройка проекта
 	@echo "Настройка проекта..."
 	@if [ ! -f ./vendor/bin/sail ]; then \
 		echo "Установка зависимостей Composer..."; \
-		composer install --no-interaction --prefer-dist --optimize-autoloader; \
+		if command -v composer >/dev/null 2>&1; then \
+			composer install --no-interaction --prefer-dist --optimize-autoloader; \
+		else \
+			php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"; \
+			php composer-setup.php --quiet; \
+			php composer.phar install --no-interaction --prefer-dist --optimize-autoloader; \
+			rm -f composer-setup.php composer.phar; \
+		fi; \
 	fi
 	@if [ ! -f ./vendor/bin/sail ]; then \
 		echo "Ошибка: vendor/bin/sail не найден. Убедитесь, что зависимости установлены."; \

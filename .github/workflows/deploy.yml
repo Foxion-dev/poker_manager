@@ -21,4 +21,4 @@ jobs:
           script: |
             cd /home/poker_manager
             git pull origin main
-            make deploy-lite
+            make deploy
