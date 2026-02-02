@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
 				$roomData
 			));
 		}
-//
+
 		$admin = User::firstOrCreate(
 			['email' => 'admin@poker-manager.com'],
 			[
