@@ -18,6 +18,7 @@ class UpdateUserRoomBalanceRequest extends FormRequest
 	{
 		return [
 			'balance' => ['required', 'numeric', 'min:0'],
+			'currency_id' => ['nullable', 'integer', 'exists:currencies,id'],
 		];
 	}
 }

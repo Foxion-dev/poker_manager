@@ -2,27 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class UserRoom extends Model
+class UserRoomSetting extends Model
 {
-	use HasFactory;
+	protected $table = 'user_room_settings';
 
 	protected $fillable = [
 		'user_id',
 		'room_id',
-		'balance',
-		'currency_id',
 	];
-
-	protected function casts(): array
-	{
-		return [
-			'balance' => 'decimal:2',
-		];
-	}
 
 	public function user(): BelongsTo
 	{
@@ -32,10 +22,5 @@ class UserRoom extends Model
 	public function room(): BelongsTo
 	{
 		return $this->belongsTo(Room::class);
-	}
-
-	public function currency(): BelongsTo
-	{
-		return $this->belongsTo(Currency::class);
 	}
 }

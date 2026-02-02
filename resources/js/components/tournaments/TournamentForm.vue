@@ -23,7 +23,7 @@
 					</label>
 					<AppSelect
 						v-model="form.room_id"
-						:options="roomStore.rooms"
+						:options="roomOptions"
 						option-value="id"
 						option-label="name"
 						placeholder="Выберите рум"
@@ -241,6 +241,18 @@ const form = ref({
 	cashout: null,
 });
 
+const roomOptions = computed(() => {
+	const list = roomStore.roomsForSelection;
+	if (isEdit.value && form.value.room_id) {
+		const id = parseInt(form.value.room_id);
+		const currentRoom = roomStore.rooms.find((r) => r.id === id);
+		if (currentRoom && !list.some((r) => r.id === id)) {
+			return [currentRoom, ...list];
+		}
+	}
+	return list;
+});
+
 const availableCurrencies = computed(() => {
 	const all = currencyStore.currencies;
 	if (!form.value.room_id) {
@@ -287,6 +299,7 @@ onMounted(async () => {
 	try {
 		await Promise.all([
 			roomStore.fetchRooms(),
+			roomStore.fetchDisabledRoomIds(),
 			currencyStore.fetchCurrencies(),
 		]);
 	} catch (err) {

@@ -108,4 +108,10 @@ class User extends Authenticatable
 	{
 		return $this->hasMany(LocationUserPassword::class);
 	}
+
+	public function disabledRooms(): BelongsToMany
+	{
+		return $this->belongsToMany(Room::class, 'user_room_settings')
+			->withTimestamps();
+	}
 }

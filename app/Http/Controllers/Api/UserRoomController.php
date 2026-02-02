@@ -13,7 +13,7 @@ class UserRoomController extends Controller
 {
 	public function index(Request $request): JsonResponse
 	{
-		$userRooms = $request->user()->userRooms()->with('room')->get();
+		$userRooms = $request->user()->userRooms()->with(['room', 'currency'])->get();
 
 		return response()->json($userRooms);
 	}
@@ -22,7 +22,7 @@ class UserRoomController extends Controller
 	{
 		$userRoom = $request->user()->userRooms()
 			->where('room_id', $room->id)
-			->with('room')
+			->with(['room', 'currency'])
 			->firstOrFail();
 
 		return response()->json($userRoom);
@@ -36,7 +36,7 @@ class UserRoomController extends Controller
 
 		$userRoom->update($updateRequest->validated());
 
-		return response()->json($userRoom->load('room'));
+		return response()->json($userRoom->load(['room', 'currency']));
 	}
 
 	public function attach(Request $request, Room $room): JsonResponse
@@ -49,13 +49,25 @@ class UserRoomController extends Controller
 			return response()->json(['message' => 'User already attached to this room'], 400);
 		}
 
+		$balance = 0;
+		$currencyId = null;
+		if ($request->has('balance')) {
+			$validated = $request->validate([
+				'balance' => ['required', 'numeric', 'min:0'],
+				'currency_id' => ['nullable', 'integer', 'exists:currencies,id'],
+			]);
+			$balance = $validated['balance'];
+			$currencyId = $validated['currency_id'] ?? null;
+		}
+
 		$userRoom = UserRoom::create([
 			'user_id' => $request->user()->id,
 			'room_id' => $room->id,
-			'balance' => 0,
+			'balance' => $balance,
+			'currency_id' => $currencyId,
 		]);
 
-		return response()->json($userRoom->load('room'), 201);
+		return response()->json($userRoom->load(['room', 'currency']), 201);
 	}
 
 	public function detach(Request $request, Room $room): JsonResponse

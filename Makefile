@@ -1,6 +1,6 @@
 COMPOSE_DEV = docker compose -f docker-compose.dev.yml
 
-.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php setup setup-dev deploy deploy-lite
+.PHONY: help start up down restart build rebuild shell composer npm artisan migrate migrate-rollback fresh seed test pint switch-php setup setup-dev deploy deploy-lite
 
 help: ## Показать справку по командам
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -78,6 +78,9 @@ artisan: ## Выполнить artisan команду (использовать:
 
 migrate: ## Запустить миграции
 	$(COMPOSE_DEV) exec app php artisan migrate
+
+migrate-rollback: ## Откатить последнюю миграцию
+	$(COMPOSE_DEV) exec app php artisan migrate:rollback --step=1
 
 migrate-fresh: ## Пересоздать базу данных и запустить миграции
 	$(COMPOSE_DEV) exec app php artisan migrate:fresh

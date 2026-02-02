@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\LocationTournamentController;
 use App\Http\Controllers\Api\PackController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\TournamentController;
+use App\Http\Controllers\Api\UserDisabledRoomController;
 use App\Http\Controllers\Api\UserRoomController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,12 @@ Route::get('/public/locations/{location}', [LocationController::class, 'publicSh
 Route::get('/public/locations/{location}/tournaments', [LocationTournamentController::class, 'publicIndex']);
 
 Route::middleware('auth:sanctum')->group(function () {
+	Route::prefix('user/disabled-rooms')->group(function () {
+		Route::get('/', [UserDisabledRoomController::class, 'index']);
+		Route::post('/{room}', [UserDisabledRoomController::class, 'store']);
+		Route::delete('/{room}', [UserDisabledRoomController::class, 'destroy']);
+	});
+
 	Route::get('/user', [AuthController::class, 'user']);
 	Route::post('/logout', [AuthController::class, 'logout']);
 

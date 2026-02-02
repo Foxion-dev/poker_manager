@@ -6,28 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
 	public function up(): void
 	{
-		Schema::create('user_rooms', function (Blueprint $table) {
+		Schema::create('user_room_settings', function (Blueprint $table) {
 			$table->id();
 			$table->foreignId('user_id')->constrained()->onDelete('cascade');
 			$table->foreignId('room_id')->constrained()->onDelete('cascade');
-			$table->decimal('balance', 10, 2)->default(0);
-			$table->foreignId('currency_id')->nullable()->constrained()->onDelete('set null');
 			$table->timestamps();
 
 			$table->unique(['user_id', 'room_id']);
 		});
 	}
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('user_rooms');
-    }
+	public function down(): void
+	{
+		Schema::dropIfExists('user_room_settings');
+	}
 };
