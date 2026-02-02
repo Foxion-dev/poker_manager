@@ -188,29 +188,18 @@
 							/>
 						</div>
 
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							<div>
-								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-									Дата начала *
-								</label>
-								<input
-									v-model="form.start_date"
-									type="date"
-									required
-									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-								/>
-							</div>
-							<div>
-								<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-									Дата окончания
-								</label>
-								<input
-									v-model="form.end_date"
-									type="date"
-									:min="form.start_date"
-									class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-								/>
-							</div>
+						<div>
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								<span class="mr-2">📅</span>
+								Диапазон дат
+							</label>
+							<AppDatePicker
+								v-model="packDateRange"
+								:range="true"
+								:partial-range="true"
+								placeholder="Выберите период"
+								:clearable="false"
+							/>
 						</div>
 
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -293,10 +282,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { packService } from '../../services/packService';
 import { useCurrencyStore } from '../../stores/currencies';
+import AppDatePicker from '../AppDatePicker.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -316,6 +306,24 @@ const form = ref({
 	cashout: null,
 	currency_id: null,
 	description: '',
+});
+
+const packDateRange = computed({
+	get: () => {
+		const start = form.value.start_date ? new Date(form.value.start_date) : null;
+		const end = form.value.end_date ? new Date(form.value.end_date) : null;
+		if (!start && !end) return null;
+		return [start || end, end || start];
+	},
+	set: (v) => {
+		if (!v || !v[0]) {
+			form.value.start_date = '';
+			form.value.end_date = '';
+			return;
+		}
+		form.value.start_date = v[0].toISOString().split('T')[0];
+		form.value.end_date = v[1] ? v[1].toISOString().split('T')[0] : '';
+	}
 });
 
 const fetchPack = async () => {
@@ -352,6 +360,10 @@ const closeForm = () => {
 };
 
 const savePack = async () => {
+	if (!form.value.start_date) {
+		alert('Выберите дату начала');
+		return;
+	}
 	saving.value = true;
 	try {
 		await packService.update(route.params.id, form.value);

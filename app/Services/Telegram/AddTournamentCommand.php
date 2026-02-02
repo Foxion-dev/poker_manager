@@ -266,7 +266,7 @@ class AddTournamentCommand implements TelegramCommandInterface
 			'room_id' => $roomId,
 			'currency_id' => $currencyId ?: null,
 			'buyin' => $buyin,
-			'date' => now()->toDateString(),
+			'date' => now()->toDateTimeString(),
 			'cashout' => $cashout,
 			'cashout_bounty' => $cashoutBounty,
 		]);

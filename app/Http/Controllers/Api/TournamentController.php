@@ -24,7 +24,7 @@ class TournamentController extends Controller
 		}
 
 		if ($request->has('date_to')) {
-			$query->where('date', '<=', $request->date_to);
+			$query->where('date', '<=', $request->date_to . ' 23:59:59');
 		}
 
 		if ($request->has('buyin_min')) {
@@ -77,7 +77,7 @@ class TournamentController extends Controller
 		$user = $request->user();
 		$data = $request->validated();
 		if (!isset($data['date'])) {
-			$data['date'] = now()->toDateString();
+			$data['date'] = now()->toDateTimeString();
 		}
 		$tournament = $user->tournaments()->create($data);
 

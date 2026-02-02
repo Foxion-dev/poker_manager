@@ -58,29 +58,17 @@
 						Свой диапазон
 					</button>
 				</div>
-				<div v-if="selectedPeriod === 'custom'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-							<span class="mr-2">📅</span>
-							Дата начала
-						</label>
-						<input
-							v-model="customDateFrom"
-							type="date"
-							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-						/>
-					</div>
-					<div>
-						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-							<span class="mr-2">📅</span>
-							Дата окончания
-						</label>
-						<input
-							v-model="customDateTo"
-							type="date"
-							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-						/>
-					</div>
+				<div v-if="selectedPeriod === 'custom'" class="sm:max-w-md">
+					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+						<span class="mr-2">📅</span>
+						Диапазон дат
+					</label>
+					<AppDatePicker
+						v-model="customDateRange"
+						:range="true"
+						:partial-range="false"
+						placeholder="Выберите период"
+					/>
 				</div>
 			</div>
 		</div>
@@ -267,6 +255,7 @@
 import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useStatisticsStore } from '../../stores/statistics';
+import AppDatePicker from '../AppDatePicker.vue';
 import {
 	Chart,
 	CategoryScale,
@@ -296,8 +285,7 @@ const statisticsStore = useStatisticsStore();
 const { stats, loading } = storeToRefs(statisticsStore);
 
 const selectedPeriod = ref('month');
-const customDateFrom = ref('');
-const customDateTo = ref('');
+const customDateRange = ref([new Date(new Date().getFullYear(), new Date().getMonth(), 1), new Date()]);
 const chartCanvas = ref(null);
 let chartInstance = null;
 
@@ -321,11 +309,16 @@ const getDateRange = (period) => {
 			break;
 		case 'all':
 			return {};
-		case 'custom':
+		case 'custom': {
+			const range = customDateRange.value;
+			if (!range || !range[0]) return {};
+			const start = range[0] instanceof Date ? range[0].toISOString().split('T')[0] : null;
+			const end = range[1] instanceof Date ? range[1].toISOString().split('T')[0] : null;
 			return {
-				start_date: customDateFrom.value || null,
-				end_date: customDateTo.value || null,
+				start_date: start,
+				end_date: end || start,
 			};
+		}
 		default:
 			return {};
 	}
@@ -464,11 +457,11 @@ watch([stats, loading], () => {
 	}
 }, { deep: true });
 
-watch([customDateFrom, customDateTo], () => {
+watch(customDateRange, () => {
 	if (selectedPeriod.value === 'custom') {
 		fetchStats();
 	}
-});
+}, { deep: true });
 
 onMounted(() => {
 	fetchStats();

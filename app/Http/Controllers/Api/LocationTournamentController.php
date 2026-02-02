@@ -85,6 +85,7 @@ class LocationTournamentController extends Controller
 							'place' => $participant->place,
 							'rebuy' => $participant->rebuy ?? 0,
 							'addon' => $participant->addon ?? false,
+							'is_paid' => $participant->is_paid ?? false,
 							'prize' => $participant->prize,
 							'display_name' => $participant->display_name,
 						];
@@ -167,6 +168,7 @@ class LocationTournamentController extends Controller
 					'place' => $participant->place,
 					'rebuy' => $participant->rebuy ?? 0,
 					'addon' => $participant->addon ?? false,
+					'is_paid' => $participant->is_paid ?? false,
 					'prize' => $participant->prize,
 					'display_name' => $participant->display_name,
 				];
@@ -532,6 +534,9 @@ class LocationTournamentController extends Controller
 								'name' => $participant->user->name,
 							] : null,
 							'place' => $participant->place,
+							'rebuy' => $participant->rebuy ?? 0,
+							'addon' => $participant->addon ?? false,
+							'is_paid' => $participant->is_paid ?? false,
 							'prize' => $participant->prize,
 							'display_name' => $participant->display_name,
 						];

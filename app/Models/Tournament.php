@@ -30,7 +30,7 @@ class Tournament extends Model
 	protected function casts(): array
 	{
 		return [
-			'date' => 'date',
+			'date' => 'datetime',
 			'buyin' => 'decimal:2',
 			'cashout' => 'decimal:2',
 			'cashout_bounty' => 'decimal:2',

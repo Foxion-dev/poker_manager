@@ -19,26 +19,16 @@
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-6 border border-gray-100 dark:border-gray-700">
 			<div class="space-y-4">
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-					<div>
+					<div class="lg:col-span-2">
 						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 							<span class="mr-2">📅</span>
-							Дата начала
+							Диапазон дат
 						</label>
-						<input
-							v-model="dateFrom"
-							type="date"
-							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-						/>
-					</div>
-					<div>
-						<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-							<span class="mr-2">📅</span>
-							Дата окончания
-						</label>
-						<input
-							v-model="dateTo"
-							type="date"
-							class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+						<AppDatePicker
+							v-model="dateRange"
+							:range="true"
+							:partial-range="false"
+							placeholder="Выберите период"
 						/>
 					</div>
 					<div>
@@ -210,7 +200,7 @@
 									</span>
 									<span class="flex items-center">
 										<span class="mr-1">💵</span>
-										Байин: {{ formatBuyin(tournament) }}{{ tournament.cashout_bounty && tournament.bounty_count ? ' (' + tournament.bounty_count + ' баунти)' : '' }}
+										Байин: {{ formatBuyin(tournament) }}{{ hasBountyInBuyin(tournament) ? ' (' + (tournament.bounty_count || 0) + ' баунти)' : '' }}
 									</span>
 									<span v-if="tournament.rebuy_count > 0 || tournament.double_rebuy" class="flex items-center">
 										<span class="mr-1">🔄</span>
@@ -225,10 +215,10 @@
 									v-if="hasAnyCashout(tournament)"
 									class="text-sm sm:text-base font-semibold text-green-600 dark:text-green-400 space-y-1"
 								>
-									<div v-if="tournament.cashout">
+									<div v-if="hasPrize(tournament)">
 										Приз: {{ formatCashout(tournament, tournament.cashout) }}
 									</div>
-									<div v-if="tournament.cashout_bounty">
+									<div v-if="hasBountyCashout(tournament)">
 										Баунти: {{ formatCashout(tournament, tournament.cashout_bounty) }}
 									</div>
 								</div>
@@ -236,10 +226,10 @@
 									Не в деньгах
 								</div>
 								<div
-									v-if="hasAnyCashout(tournament)"
-									class="text-xs mt-1 text-green-600 dark:text-green-400"
+									class="text-xs mt-1 font-medium"
+									:class="getProfit(tournament) < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'"
 								>
-									{{ getProfit(tournament) >= 0 ? '+' : '' }}{{ formatProfit(tournament) }}
+									Итого: {{ getProfit(tournament) >= 0 ? '+' : '' }}{{ formatProfit(tournament) }}
 								</div>
 							</div>
 							<router-link
@@ -259,17 +249,41 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTournamentStore } from '../../stores/tournaments';
 import { formatAmount, formatCurrency, toUsd } from '../../services/moneyService';
+import AppDatePicker from '../AppDatePicker.vue';
 
 const tournamentStore = useTournamentStore();
 const { tournaments, loading } = storeToRefs(tournamentStore);
 
-const today = new Date().toISOString().split('T')[0];
-const dateFrom = ref(today);
-const dateTo = ref(today);
+const today = new Date();
+const dateRange = ref([today, today]);
+
+const dateFrom = computed({
+	get: () => {
+		const range = dateRange.value;
+		if (!range || !range[0]) return '';
+		return range[0] instanceof Date ? range[0].toISOString().split('T')[0] : '';
+	},
+	set: (v) => {
+		const to = dateRange.value?.[1] ? new Date(dateRange.value[1]) : new Date();
+		dateRange.value = v ? [new Date(v), to] : null;
+	}
+});
+
+const dateTo = computed({
+	get: () => {
+		const range = dateRange.value;
+		if (!range || !range[1]) return '';
+		return range[1] instanceof Date ? range[1].toISOString().split('T')[0] : '';
+	},
+	set: (v) => {
+		const from = dateRange.value?.[0] ? new Date(dateRange.value[0]) : new Date();
+		dateRange.value = v ? [from, new Date(v)] : null;
+	}
+});
 const buyinMin = ref(null);
 const buyinMax = ref(null);
 const cashoutMin = ref(null);
@@ -278,8 +292,8 @@ const sortBy = ref('date');
 const sortOrder = ref('desc');
 
 const applyTodayFilter = () => {
-	dateFrom.value = today;
-	dateTo.value = today;
+	const now = new Date();
+	dateRange.value = [now, now];
 	buyinMin.value = null;
 	buyinMax.value = null;
 	cashoutMin.value = null;
@@ -290,8 +304,7 @@ const applyTodayFilter = () => {
 };
 
 const clearFilter = () => {
-	dateFrom.value = '';
-	dateTo.value = '';
+	dateRange.value = null;
 	buyinMin.value = null;
 	buyinMax.value = null;
 	cashoutMin.value = null;
@@ -303,11 +316,13 @@ const clearFilter = () => {
 
 const fetchTournaments = () => {
 	const params = {};
-	if (dateFrom.value) {
-		params.date_from = dateFrom.value;
+	const from = dateFrom.value;
+	const to = dateTo.value;
+	if (from) {
+		params.date_from = from;
 	}
-	if (dateTo.value) {
-		params.date_to = dateTo.value;
+	if (to) {
+		params.date_to = to;
 	}
 	if (buyinMin.value !== null && buyinMin.value !== '') {
 		params.buyin_min = buyinMin.value;
@@ -330,9 +345,9 @@ const fetchTournaments = () => {
 	tournamentStore.fetchTournaments(params);
 };
 
-watch([dateFrom, dateTo, buyinMin, buyinMax, cashoutMin, cashoutMax, sortBy, sortOrder], () => {
+watch([dateRange, buyinMin, buyinMax, cashoutMin, cashoutMax, sortBy, sortOrder], () => {
 	fetchTournaments();
-});
+}, { deep: true });
 
 const formatBuyin = (tournament) => formatAmount(tournament.buyin, tournament.currency);
 
@@ -361,7 +376,13 @@ const formatProfit = (tournament) => {
 };
 
 const formatDate = (date) => {
-	return new Date(date).toLocaleDateString('ru-RU');
+	if (!date) return '';
+	const str = String(date);
+	const hasTime = str.includes('T') || / \d{1,2}:\d{2}/.test(str);
+	const d = new Date(date);
+	return hasTime
+		? d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
+		: d.toLocaleDateString('ru-RU');
 };
 
 const getRoomImageUrl = (imagePath) => {
@@ -382,8 +403,17 @@ const getProfit = (tournament) => {
 	return totalCashout - totalBuyin;
 };
 
+const hasPrize = (tournament) => (parseFloat(tournament.cashout) || 0) > 0;
+
+const hasBountyCashout = (tournament) => (parseFloat(tournament.cashout_bounty) || 0) > 0;
+
+const hasBountyInBuyin = (tournament) =>
+	(parseFloat(tournament.cashout_bounty) || 0) > 0 && (parseInt(tournament.bounty_count) || 0) > 0;
+
 const hasAnyCashout = (tournament) => {
-	return !!(tournament.cashout || tournament.cashout_bounty);
+	const prize = parseFloat(tournament.cashout) || 0;
+	const bounty = parseFloat(tournament.cashout_bounty) || 0;
+	return prize > 0 || bounty > 0;
 };
 
 onMounted(() => {

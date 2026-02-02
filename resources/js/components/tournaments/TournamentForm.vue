@@ -56,11 +56,11 @@
 				<div>
 					<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 						<span class="mr-2">📅</span>
-						Дата
+						Дата и время
 					</label>
 					<input
 						v-model="form.date"
-						type="date"
+						type="datetime-local"
 						class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
 					/>
 				</div>
@@ -230,7 +230,7 @@ const error = ref('');
 
 const form = ref({
 	room_id: '',
-	date: new Date().toISOString().split('T')[0],
+	date: toDatetimeLocal(new Date()),
 	buyin: 0,
 	currency_id: null,
 	cashout_bounty: null,
@@ -310,8 +310,8 @@ onMounted(async () => {
 			try {
 				const tournament = await tournamentStore.fetchTournament(route.params.id);
 				const dateStr = tournament.date
-					? (typeof tournament.date === 'string' ? tournament.date.slice(0, 10) : tournament.date)
-					: new Date().toISOString().split('T')[0];
+					? toDatetimeLocal(new Date(tournament.date))
+					: toDatetimeLocal(new Date());
 				let currencyId = tournament.currency_id ?? tournament.currency?.id ?? null;
 				if (currencyId != null && typeof currencyId !== 'number') {
 					currencyId = parseInt(currencyId, 10);
@@ -338,6 +338,19 @@ onMounted(async () => {
 		}
 });
 
+const toDatetimeLocal = (d) => {
+	const pad = (n) => String(n).padStart(2, '0');
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const fromDatetimeLocal = (str) => {
+	if (!str) return null;
+	const [datePart, timePart] = str.split('T');
+	if (!datePart) return str;
+	const [h, m] = (timePart || '00:00').split(':');
+	return `${datePart} ${h || '00'}:${m || '00'}:00`;
+};
+
 const getRoomImageUrl = (imagePath) => {
 	if (!imagePath) return null;
 	if (imagePath.startsWith('http')) return imagePath;
@@ -349,10 +362,14 @@ const handleSubmit = async () => {
 	error.value = '';
 
 	try {
+		const payload = { ...form.value };
+		if (payload.date) {
+			payload.date = fromDatetimeLocal(payload.date) || payload.date;
+		}
 		if (isEdit.value) {
-			await tournamentStore.updateTournament(route.params.id, form.value);
+			await tournamentStore.updateTournament(route.params.id, payload);
 		} else {
-			await tournamentStore.createTournament(form.value);
+			await tournamentStore.createTournament(payload);
 		}
 		router.push({ name: 'Tournaments' });
 	} catch (err) {

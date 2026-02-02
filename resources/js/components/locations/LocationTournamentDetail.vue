@@ -63,40 +63,47 @@
 		</div>
 
 		<div v-if="tournament && dynamicPrizeDistribution && dynamicPrizeDistribution.length > 0" class="mb-4 sm:mb-6">
-			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-gray-700">
-				<h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">Распределение призов</h3>
-				<div class="space-y-2 sm:space-y-3">
-					<div
-						v-for="(prize, index) in dynamicPrizeDistribution"
-						:key="prize.place"
-						class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 rounded-lg gap-2 sm:gap-0"
-						:class="index === 0 
-							? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700' 
-							: index === 1 
-							? 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-300 dark:border-gray-600' 
-							: 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700'"
-					>
-						<div class="flex items-center space-x-3 sm:space-x-4">
-							<div class="text-xl sm:text-2xl font-bold"
-								:class="index === 0 
-									? 'text-yellow-600 dark:text-yellow-400' 
-									: index === 1 
-									? 'text-gray-600 dark:text-gray-400' 
-									: 'text-orange-600 dark:text-orange-400'"
-							>
-								{{ prize.place }} место
+			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+				<details class="group">
+					<summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer list-none select-none hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+						<h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Распределение призов</h3>
+						<svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+						</svg>
+					</summary>
+					<div class="px-4 sm:px-6 pb-4 sm:pb-6 space-y-2 sm:space-y-3">
+						<div
+							v-for="(prize, index) in dynamicPrizeDistribution"
+							:key="prize.place"
+							class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 rounded-lg gap-2 sm:gap-0"
+							:class="index === 0 
+								? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700' 
+								: index === 1 
+								? 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-300 dark:border-gray-600' 
+								: 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700'"
+						>
+							<div class="flex items-center space-x-3 sm:space-x-4">
+								<div class="text-xl sm:text-2xl font-bold"
+									:class="index === 0 
+										? 'text-yellow-600 dark:text-yellow-400' 
+										: index === 1 
+										? 'text-gray-600 dark:text-gray-400' 
+										: 'text-orange-600 dark:text-orange-400'"
+								>
+									{{ prize.place }} место
+								</div>
+								<div>
+									<p class="text-xs text-gray-500 dark:text-gray-400">
+										{{ prize.percentage }}% от призового фонда
+									</p>
+								</div>
 							</div>
-							<div>
-								<p class="text-xs text-gray-500 dark:text-gray-400">
-									{{ prize.percentage }}% от призового фонда
-								</p>
+							<div class="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400">
+								{{ formatCurrency(prize.prize, tournament.currency) }}
 							</div>
-						</div>
-						<div class="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400">
-							{{ formatCurrency(prize.prize, tournament.currency) }}
 						</div>
 					</div>
-				</div>
+				</details>
 			</div>
 		</div>
 
@@ -116,6 +123,13 @@
 				<div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 					<button
 						v-if="!tournament.is_finished && location?.is_admin"
+						@click="showParticipantsModal = true"
+						class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors w-full sm:w-auto"
+					>
+						+ Участники
+					</button>
+					<button
+						v-if="!tournament.is_finished && location?.is_admin"
 						@click="openPrizeDistributionModal"
 						class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors w-full sm:w-auto"
 					>
@@ -133,23 +147,14 @@
 				</div>
 			</div>
 
-			<div v-if="tournament.participants && tournament.participants.filter(p => {
-				const name = p.display_name || p.name || p.user?.name || '';
-				return name && name !== 'Без имени' && name !== 'Неизвестный участник';
-			}).length > 0" class="space-y-3">
+			<div v-if="sortedParticipants.length > 0" class="space-y-4">
 				<div
-					v-for="participant in tournament.participants.filter(p => {
-						const name = p.display_name || p.name || p.user?.name || '';
-						return name && name !== 'Без имени' && name !== 'Неизвестный участник';
-					})"
+					v-for="participant in sortedParticipants"
 					:key="participant.id"
-					class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+					class="flex flex-col gap-3 sm:gap-4 p-4 sm:p-5 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
 				>
-					<div class="flex-1 min-w-0 w-full sm:w-auto">
-						<div class="flex items-center space-x-2 sm:space-x-3">
-							<span class="text-base sm:text-lg font-bold text-gray-900 dark:text-white w-6 sm:w-8 flex-shrink-0">
-								{{ participant.place }}.
-							</span>
+					<div class="flex items-center justify-between gap-2">
+						<div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
 							<div class="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
 								{{ (participant.display_name || participant.name || participant.user?.name || '?')?.charAt(0).toUpperCase() }}
 							</div>
@@ -157,96 +162,75 @@
 								{{ participant.display_name || participant.name || participant.user?.name || 'Неизвестный участник' }}
 							</span>
 						</div>
-					</div>
-					<div v-if="!tournament.is_finished && location?.is_admin" class="flex flex-wrap items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto justify-start sm:justify-end">
-						<div class="flex-shrink-0">
-							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 text-center">
-								Ребаи
-							</label>
-							<div class="flex items-center space-x-1">
-								<button
-									type="button"
-									@click.prevent="decrementRebuy(participant)"
-									class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
-									:disabled="(participant.rebuy || 0) <= 0"
-								>
-									−
-								</button>
-								<input
-									v-model.number="participant.rebuy"
-									type="number"
-									min="0"
-									class="w-12 sm:w-16 px-1 sm:px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-xs sm:text-sm font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-									@change="updateParticipant(participant)"
-								/>
-								<button
-									type="button"
-									@click.prevent="incrementRebuy(participant)"
-									class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
-								>
-									+
-								</button>
-							</div>
-						</div>
-						<div class="flex-shrink-0">
-							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 text-center">
-								Аддон
-							</label>
-							<div class="flex items-center justify-center">
-								<label class="relative inline-flex items-center cursor-pointer">
-									<input
-										v-model="participant.addon"
-										type="checkbox"
-										class="sr-only peer"
-										@change="updateParticipant(participant)"
-									/>
-									<div class="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-									<span class="ml-2 sm:ml-3 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-										{{ participant.addon ? 'Да' : 'Нет' }}
-									</span>
-								</label>
-							</div>
-						</div>
-						<div class="flex-shrink-0">
-							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 text-center">
-								Оплата
-							</label>
-							<div class="flex items-center justify-center">
-								<label class="relative inline-flex items-center cursor-pointer">
-									<input
-										v-model="participant.is_paid"
-										type="checkbox"
-										class="sr-only peer"
-										@change="updateParticipant(participant)"
-									/>
-									<div class="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
-									<span class="ml-2 sm:ml-3 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300" :class="participant.is_paid ? 'text-green-600 dark:text-green-400 font-bold' : 'text-red-600 dark:text-red-400'">
-										<span class="hidden sm:inline">{{ participant.is_paid ? 'Оплачено' : 'Не оплачено' }}</span>
-										<span class="sm:hidden">{{ participant.is_paid ? 'Оплач.' : 'Не оплач.' }}</span>
-									</span>
-								</label>
-							</div>
-						</div>
-						<div class="flex items-end">
+						<div v-if="!tournament.is_finished && location?.is_admin" class="flex items-center gap-1 flex-shrink-0">
+							<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Ребаи</span>
 							<button
-								@click="removeParticipant(participant)"
-								class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-								title="Удалить участника"
+								type="button"
+								@click.prevent="decrementRebuy(participant)"
+								class="w-7 h-7 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+								:disabled="(participant.rebuy || 0) <= 0"
 							>
-								🗑️
+								−
+							</button>
+							<input
+								v-model.number="participant.rebuy"
+								type="number"
+								min="0"
+								class="w-12 px-1 py-1 text-center border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200 text-xs font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								@change="updateParticipant(participant)"
+							/>
+							<button
+								type="button"
+								@click.prevent="incrementRebuy(participant)"
+								class="w-7 h-7 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+							>
+								+
 							</button>
 						</div>
+						<div v-else class="flex items-center gap-2 sm:gap-4 flex-wrap flex-shrink-0">
+							<div v-if="participant.rebuy > 0" class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+								Ребаи: {{ participant.rebuy }}
+							</div>
+							<div v-if="participant.addon" class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+								Аддон: ✓
+							</div>
+							<div v-if="participant.prize" class="text-xs sm:text-sm font-bold text-green-600 dark:text-green-400">
+								Приз: {{ formatCurrency(participant.prize, tournament.currency) }}
+							</div>
+						</div>
 					</div>
-					<div v-else class="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
-						<div v-if="participant.rebuy > 0" class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-							Ребаи: {{ participant.rebuy }}
+					<div v-if="!tournament.is_finished && location?.is_admin" class="flex items-center justify-between gap-2 pt-3 border-t border-gray-200 dark:border-gray-600">
+						<div class="flex items-center gap-2">
+							<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Аддон</span>
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input
+									v-model="participant.addon"
+									type="checkbox"
+									class="sr-only peer"
+									@change="updateParticipant(participant)"
+								/>
+								<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+							</label>
 						</div>
-						<div v-if="participant.addon" class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-							Аддон: ✓
+						<div class="flex items-center gap-2">
+							<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Оплата</span>
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input
+									v-model="participant.is_paid"
+									type="checkbox"
+									class="sr-only peer"
+									@change="updateParticipant(participant)"
+								/>
+								<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+							</label>
 						</div>
-						<div v-if="participant.prize" class="text-xs sm:text-sm font-bold text-green-600 dark:text-green-400">
-							Приз: {{ formatCurrency(participant.prize, tournament.currency) }}
-						</div>
+						<button
+							@click="removeParticipant(participant)"
+							class="px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+							title="Удалить участника"
+						>
+							🗑️ Удалить
+						</button>
 					</div>
 				</div>
 			</div>
@@ -254,40 +238,21 @@
 				<span class="text-4xl mb-4 block">📭</span>
 				<p>Нет участников в этом турнире</p>
 			</div>
-
-			<div v-if="!tournament.is_finished && location?.is_admin" class="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-				<label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-					Добавить участника
-				</label>
-				<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
-					<select
-						v-model="newParticipantUserId"
-						class="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-					>
-						<option value="">Выберите пользователя локации (опционально)</option>
-						<option v-for="locationUser in availableLocationUsers" :key="locationUser.id" :value="locationUser.user_id || locationUser.id">
-							{{ locationUser.display_name || locationUser.name }}
-						</option>
-					</select>
-				</div>
-				<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-					<input
-						v-model="newParticipantName"
-						type="text"
-						placeholder="Или введите имя нового участника"
-						class="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
-						@keyup.enter="addParticipant"
-					/>
-					<button
-						@click="addParticipant"
-						:disabled="(!newParticipantUserId && !newParticipantName) || addingParticipant"
-						class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-colors w-full sm:w-auto"
-					>
-						{{ addingParticipant ? 'Добавление...' : 'Добавить' }}
-					</button>
-				</div>
-			</div>
 		</div>
+
+		<LocationTournamentParticipantsModal
+			v-model="showParticipantsModal"
+			:participants="tournament?.participants || []"
+			:available-users="availableLocationUsers"
+			:new-participant-name="newParticipantName"
+			:adding="addingParticipant"
+			:removing="removingParticipant"
+			@close="showParticipantsModal = false"
+			@add-participant="addParticipantFromLocationUser"
+			@add-new-user="addParticipant"
+			@remove-participant="removeParticipant"
+			@update:newParticipantName="newParticipantName = $event"
+		/>
 
 		<div v-if="showFinishModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
 			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -529,6 +494,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { locationService } from '../../services/locationService';
 import { useAuthStore } from '../../stores/auth';
 import { storeToRefs } from 'pinia';
+import LocationTournamentParticipantsModal from './LocationTournamentParticipantsModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -542,9 +508,41 @@ const saving = ref(false);
 const newParticipantUserId = ref('');
 const newParticipantName = ref('');
 const addingParticipant = ref(false);
+const removingParticipant = ref(false);
+const showParticipantsModal = ref(false);
 const locationUsers = ref([]);
 
 const locationId = computed(() => route.params.locationId);
+
+const sortedParticipants = computed(() => {
+	if (!tournament.value?.participants) return [];
+	const getName = (p) => (p.display_name || p.name || p.user?.name || '').toLowerCase();
+	const list = tournament.value.participants
+		.filter(p => {
+			const name = getName(p);
+			return name && name !== 'без имени' && name !== 'неизвестный участник';
+		})
+		.slice();
+
+	if (tournament.value.is_finished) {
+		return list.sort((a, b) => {
+			const prizeA = parseFloat(a.prize) || 0;
+			const prizeB = parseFloat(b.prize) || 0;
+			if (prizeB !== prizeA) return prizeB - prizeA;
+			return getName(a).localeCompare(getName(b));
+		});
+	}
+
+	return list.sort((a, b) => {
+		if ((a.is_paid ? 1 : 0) !== (b.is_paid ? 1 : 0)) {
+			return (a.is_paid ? 1 : 0) - (b.is_paid ? 1 : 0);
+		}
+		const rebuyA = a.rebuy ?? 0;
+		const rebuyB = b.rebuy ?? 0;
+		if (rebuyB !== rebuyA) return rebuyB - rebuyA;
+		return getName(a).localeCompare(getName(b));
+	});
+});
 
 const fetchTournament = async () => {
 	loading.value = true;
@@ -599,16 +597,16 @@ const canFinishTournament = computed(() => {
 	if (!tournament.value || !tournament.value.participants || tournament.value.participants.length === 0) {
 		return false;
 	}
-	
+
 	const validParticipants = tournament.value.participants.filter(p => {
 		const name = p.display_name || p.name || p.user?.name || '';
 		return name && name !== 'Без имени' && name !== 'Неизвестный участник';
 	});
-	
+
 	if (validParticipants.length === 0) {
 		return false;
 	}
-	
+
 	return validParticipants.every(p => p.is_paid === true);
 });
 
@@ -627,6 +625,45 @@ const totalEntriesCount = computed(() => {
 	
 	return participantsCount + totalRebuys;
 });
+
+const addParticipantFromLocationUser = async (locationUser) => {
+	const data = {};
+	if (locationUser.user_id) {
+		data.user_id = locationUser.user_id;
+	}
+	if (locationUser.name) {
+		data.name = locationUser.name;
+	}
+	if (!data.user_id && !data.name) {
+		const displayName = locationUser.display_name || locationUser.name;
+		if (displayName) data.name = displayName;
+	}
+	if (!data.user_id && !data.name) return;
+
+	addingParticipant.value = true;
+	try {
+		const response = await locationService.addTournamentParticipant(route.params.locationId, route.params.id, data);
+
+		if (response && response.participants) {
+			tournament.value.participants = response.participants.map(p => ({
+				...p,
+				display_name: p.display_name || p.name || p.user?.name || 'Неизвестный участник',
+			}));
+		}
+
+		if (response && response.users) {
+			location.value.users = response.users;
+			locationUsers.value = response.users;
+		}
+	} catch (error) {
+		console.error('Error adding participant:', error);
+		alert(error.response?.data?.message || 'Ошибка при добавлении участника');
+		await fetchTournament();
+		await fetchLocation();
+	} finally {
+		addingParticipant.value = false;
+	}
+};
 
 const addParticipant = async () => {
 	if (!newParticipantUserId.value && !newParticipantName.value?.trim()) {
@@ -688,7 +725,7 @@ const removeParticipant = async (participant) => {
 		return;
 	}
 
-	saving.value = true;
+	removingParticipant.value = true;
 	try {
 		const response = await locationService.removeTournamentParticipant(route.params.locationId, route.params.id, participant.id);
 		
@@ -705,12 +742,11 @@ const removeParticipant = async (participant) => {
 		}
 	} catch (error) {
 		console.error('Error removing participant:', error);
-		const errorMessage = error.response?.data?.message || 'Ошибка при удалении участника';
-		alert(errorMessage);
+		alert(error.response?.data?.message || 'Ошибка при удалении участника');
 		await fetchTournament();
 		await fetchLocation();
 	} finally {
-		saving.value = false;
+		removingParticipant.value = false;
 	}
 };
 
@@ -1067,11 +1103,16 @@ const clearPrizeDistribution = async () => {
 
 const openFinishModal = () => {
 	if (!canFinishTournament.value) {
-		const unpaidCount = tournament.value.participants.filter(p => {
+		const validParticipants = tournament.value?.participants?.filter(p => {
 			const name = p.display_name || p.name || p.user?.name || '';
-			return name && name !== 'Без имени' && name !== 'Неизвестный участник' && !p.is_paid;
-		}).length;
-		alert(`Нельзя завершить турнир: ${unpaidCount} участник(ов) еще не оплатили вход`);
+			return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+		}) || [];
+		const unpaidCount = validParticipants.filter(p => !p.is_paid).length;
+		if (unpaidCount > 0) {
+			alert(`Нельзя завершить турнир: ${unpaidCount} участник(ов) еще не оплатили вход`);
+		} else {
+			alert('Нельзя завершить турнир: нет участников');
+		}
 		return;
 	}
 	if (!tournament.value || !tournament.value.prize_distribution) return;
@@ -1230,11 +1271,16 @@ const closeFinishModal = () => {
 
 const finishTournament = async () => {
 	if (!canFinishTournament.value) {
-		const unpaidCount = tournament.value.participants.filter(p => {
+		const validParticipants = tournament.value?.participants?.filter(p => {
 			const name = p.display_name || p.name || p.user?.name || '';
-			return name && name !== 'Без имени' && name !== 'Неизвестный участник' && !p.is_paid;
-		}).length;
-		alert(`Нельзя завершить турнир: ${unpaidCount} участник(ов) еще не оплатили вход`);
+			return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+		}) || [];
+		const unpaidCount = validParticipants.filter(p => !p.is_paid).length;
+		if (unpaidCount > 0) {
+			alert(`Нельзя завершить турнир: ${unpaidCount} участник(ов) еще не оплатили вход`);
+		} else {
+			alert('Нельзя завершить турнир: нет участников');
+		}
 		return;
 	}
 	if (selectedWinners.value.length === 0) {
@@ -1247,6 +1293,7 @@ const finishTournament = async () => {
 			id: p.id,
 			rebuy: p.rebuy ?? 0,
 			addon: p.addon ?? false,
+			is_paid: p.is_paid ?? false,
 			prize: null,
 		}));
 
@@ -1270,7 +1317,8 @@ const finishTournament = async () => {
 		closeFinishModal();
 	} catch (error) {
 		console.error('Error finishing tournament:', error);
-		alert('Ошибка при завершении турнира');
+		const message = error.response?.data?.message || 'Ошибка при завершении турнира';
+		alert(message);
 	}
 };
 
@@ -1309,3 +1357,9 @@ onMounted(() => {
 	fetchTournament();
 });
 </script>
+
+<style scoped>
+summary::-webkit-details-marker {
+	display: none;
+}
+</style>
