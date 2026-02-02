@@ -41,6 +41,19 @@ class TelegramBotService
 		return true;
 	}
 
+	public function getWebhookInfo(): ?array
+	{
+		$token = $this->getToken();
+		if (!$token) {
+			return null;
+		}
+		$response = Http::get(self::TELEGRAM_API . $token . '/getWebhookInfo');
+		if (!$response->successful()) {
+			return null;
+		}
+		return $response->json();
+	}
+
 	public function sendMessage(int $chatId, string $text): bool
 	{
 		$token = $this->getToken();
