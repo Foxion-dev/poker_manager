@@ -18,12 +18,22 @@
 							<router-link
 								to="/admin/settings"
 								class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-								:class="$route.path.startsWith('/admin') 
+								:class="$route.path === '/admin/settings' 
 									? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
 									: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
 							>
 								<span class="mr-2">⚙️</span>
 								Настройки
+							</router-link>
+							<router-link
+								to="/admin/docs"
+								class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+								:class="$route.path === '/admin/docs' 
+									? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
+									: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+							>
+								<span class="mr-2">📖</span>
+								Документация
 							</router-link>
 						</div>
 						<div class="sm:hidden ml-4">
@@ -46,9 +56,17 @@
 							to="/admin/settings"
 							@click="mobileMenuOpen = false"
 							class="block px-4 py-3 rounded-lg text-sm font-medium"
-							:class="$route.path.startsWith('/admin') ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+							:class="$route.path === '/admin/settings' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
 						>
 							⚙️ Настройки
+						</router-link>
+						<router-link
+							to="/admin/docs"
+							@click="mobileMenuOpen = false"
+							class="block px-4 py-3 rounded-lg text-sm font-medium"
+							:class="$route.path === '/admin/docs' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+						>
+							📖 Документация
 						</router-link>
 					</div>
 					<div class="flex items-center space-x-4">

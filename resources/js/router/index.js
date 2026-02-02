@@ -75,6 +75,11 @@ const routes = [
 				name: 'Settings',
 				component: () => import('../components/settings/Settings.vue'),
 			},
+			{
+				path: '/help',
+				name: 'Help',
+				component: () => import('../components/help/Help.vue'),
+			},
 		],
 	},
 	{
@@ -87,6 +92,11 @@ const routes = [
 				path: 'settings',
 				name: 'AdminSettings',
 				component: () => import('../components/admin/AdminSettings.vue'),
+			},
+			{
+				path: 'docs',
+				name: 'AdminDocs',
+				component: () => import('../components/admin/AdminDocs.vue'),
 			},
 			{
 				path: 'rooms',
@@ -127,8 +137,10 @@ const pageTitles = {
 	LocationDetail: 'Детали локации - Poker Manager',
 	LocationTournamentDetail: 'Детали турнира - Poker Manager',
 	Settings: 'Настройки - Poker Manager',
+	Help: 'Помощь - Poker Manager',
 	PublicLocationView: 'Публичная локация - Poker Manager',
 	AdminSettings: 'Настройки - Админ-панель',
+	AdminDocs: 'Документация - Админ-панель',
 	AdminUserDetail: 'Детали пользователя - Админ-панель',
 };
 

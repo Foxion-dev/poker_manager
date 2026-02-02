@@ -112,6 +112,15 @@
 										<span class="mr-2">⚙️</span>
 										Настройки
 									</router-link>
+									<router-link
+										to="/help"
+										@click="userMenuOpen = false"
+										class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+										:class="$route.name === 'Help' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''"
+									>
+										<span class="mr-2">📖</span>
+										Помощь
+									</router-link>
 									<div class="border-t border-gray-200 dark:border-gray-700 my-1" />
 									<button
 										@click="handleLogout"
@@ -238,6 +247,17 @@
 						>
 							<span class="mr-2">⚙️</span>
 							Настройки
+						</router-link>
+						<router-link
+							to="/help"
+							@click="mobileMenuOpen = false"
+							class="block px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 mb-1"
+							:class="$route.name === 'Help'
+								? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
+								: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+						>
+							<span class="mr-2">📖</span>
+							Помощь
 						</router-link>
 						<button
 							@click="handleLogout"
