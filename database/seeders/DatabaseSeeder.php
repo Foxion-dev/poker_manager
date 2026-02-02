@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Currency;
 use App\Models\Room;
 use App\Models\Tournament;
 use App\Models\User;
@@ -13,10 +14,7 @@ class DatabaseSeeder extends Seeder
 {
 	public function run(): void
 	{
-		$this->call([
-			CurrencySeeder::class,
-			AspenLocationSeeder::class,
-		]);
+		$this->call(CurrencySeeder::class);
 
 		$roomsData = [
 			['name' => 'PokerStars', 'icon' => '🎰'],
@@ -40,84 +38,74 @@ class DatabaseSeeder extends Seeder
 			));
 		}
 
-		$testUser = User::firstOrCreate(
-			['email' => 'test@example.com'],
+		$admin = User::firstOrCreate(
+			['email' => 'mamama141996@gmail.com'],
 			[
-				'name' => 'Test User',
+				'name' => 'mamama141996',
 				'password' => Hash::make('password'),
-				'balance' => 2500.75,
+				'balance' => 0,
 				'is_admin' => true,
 			]
 		);
 
-		$userRoomBalances = [
-			'PokerStars' => 450.50,
-			'888poker' => 320.25,
-			'partypoker' => 180.00,
-			'GGPoker' => 550.75,
-			'Winamax' => 280.50,
-			'Unibet' => 195.25,
-			'Bet365' => 320.00,
-			'ACR' => 203.50,
-			'pokerdom' => 380.00,
-			'redstarpoker' => 275.50,
-			'coinpoker' => 420.25,
-		];
+		$testUser = User::firstOrCreate(
+			['email' => 'testuser@example.com'],
+			[
+				'name' => 'testuser',
+				'password' => Hash::make('password'),
+				'balance' => 0,
+				'is_admin' => false,
+			]
+		);
 
 		foreach ($rooms as $room) {
 			UserRoom::firstOrCreate(
-				[
-					'user_id' => $testUser->id,
-					'room_id' => $room->id,
-				],
-				[
-					'balance' => $userRoomBalances[$room->name] ?? fake()->randomFloat(2, 100, 500),
-				]
+				['user_id' => $admin->id, 'room_id' => $room->id],
+				['balance' => fake()->randomFloat(2, 0, 500)]
+			);
+			UserRoom::firstOrCreate(
+				['user_id' => $testUser->id, 'room_id' => $room->id],
+				['balance' => fake()->randomFloat(2, 100, 600)]
 			);
 		}
 
-		$usdCurrency = \App\Models\Currency::where('code', 'USD')->first();
-		
-		if (!$usdCurrency) {
-			logger()->warning('USD currency not found in seeder');
+		$this->call(AspenLocationSeeder::class);
+
+		$currencies = Currency::all();
+		if ($currencies->isEmpty()) {
+			return;
 		}
-		
-		$buyins = [5.50, 11, 22, 33, 55, 109, 215, 530];
-		$startDate = now()->subYear()->startOfMonth();
+
+		$buyins = [2.20, 5.50, 11, 22, 33, 55, 109, 215, 530];
+		$startDate = now()->subYear();
 		$endDate = now();
-		$tournamentCount = 0;
-		$totalProfit = 0;
+		$totalDays = $startDate->diffInDays($endDate) ?: 1;
+		$tournamentsPerDay = (int) ceil(1000 / $totalDays);
 
 		Tournament::where('user_id', $testUser->id)->delete();
 
+		$created = 0;
 		$currentDate = $startDate->copy();
-		
-		while ($currentDate->lte($endDate) && $tournamentCount < 500) {
-			if ($currentDate->isWeekend()) {
-				$tournamentsPerDay = rand(2, 6);
-			} else {
-				$tournamentsPerDay = rand(1, 4);
-			}
+		while ($created < 1000 && $currentDate->lte($endDate)) {
+			$countToday = min($tournamentsPerDay + rand(-2, 2), 1000 - $created);
+			$countToday = max(0, $countToday);
 
-			if ($currentDate->isFriday() || $currentDate->isSaturday()) {
-				$tournamentsPerDay = rand(3, 8);
-			}
-
-			for ($j = 0; $j < $tournamentsPerDay && $tournamentCount < 500; $j++) {
+			for ($i = 0; $i < $countToday && $created < 1000; $i++) {
 				$room = $rooms->random();
+				$currency = $currencies->random();
 				$buyin = fake()->randomElement($buyins);
 				$bountyCount = fake()->numberBetween(0, 4);
-				$totalBuyin = $buyin + ($bountyCount * $buyin);
+				$rebuyCount = fake()->numberBetween(0, 3);
+				$doubleRebuy = fake()->boolean(15);
+				$playersCount = fake()->numberBetween(30, 5000);
 
 				$place = null;
 				$cashout = null;
-				$playersCount = fake()->numberBetween(50, 5000);
-
+				$cashoutBounty = null;
 				$itmChance = fake()->numberBetween(1, 100);
 				if ($itmChance <= 18) {
-					$place = fake()->numberBetween(1, (int)($playersCount * 0.15));
+					$place = fake()->numberBetween(1, (int) ($playersCount * 0.15));
 					$prizeMultiplier = fake()->randomFloat(2, 1.2, 20);
-					
 					if ($place === 1) {
 						$prizeMultiplier = fake()->randomFloat(2, 15, 50);
 					} elseif ($place <= 3) {
@@ -129,51 +117,32 @@ class DatabaseSeeder extends Seeder
 					} elseif ($place <= 50) {
 						$prizeMultiplier = fake()->randomFloat(2, 1.5, 5);
 					}
-					
-					$cashout = $totalBuyin * $prizeMultiplier;
-					$totalProfit += ($cashout - $totalBuyin);
+					$totalBuyin = $buyin + ($bountyCount * $buyin) + ($rebuyCount * $buyin) + ($doubleRebuy ? 2 * $buyin : 0);
+					$cashout = round($totalBuyin * $prizeMultiplier, 2);
+					if ($bountyCount > 0 && fake()->boolean(40)) {
+						$cashoutBounty = round($buyin * fake()->numberBetween(1, $bountyCount * 2), 2);
+					}
 				} else {
-					$place = fake()->numberBetween((int)($playersCount * 0.15) + 1, $playersCount);
-					$totalProfit -= $totalBuyin;
+					$place = fake()->numberBetween((int) ($playersCount * 0.15) + 1, $playersCount);
 				}
 
 				Tournament::create([
 					'user_id' => $testUser->id,
 					'room_id' => $room->id,
-					'currency_id' => $usdCurrency?->id,
+					'currency_id' => $currency->id,
 					'buyin' => $buyin,
 					'date' => $currentDate->format('Y-m-d'),
 					'place' => $place,
 					'cashout' => $cashout,
+					'cashout_bounty' => $cashoutBounty,
 					'bounty_count' => $bountyCount,
+					'rebuy_count' => $rebuyCount,
+					'double_rebuy' => $doubleRebuy,
 					'players_count' => $playersCount,
-					'created_at' => $currentDate->copy()->addHours(rand(10, 23))->addMinutes(rand(0, 59)),
-					'updated_at' => $currentDate->copy()->addHours(rand(10, 23))->addMinutes(rand(0, 59)),
 				]);
-
-				$tournamentCount++;
+				$created++;
 			}
-			
 			$currentDate->addDay();
-		}
-		
-		logger()->warning(sprintf('Created %d tournaments for test user (id=%d)', $tournamentCount, $testUser->id));
-
-		$additionalUsers = User::factory()->count(3)->create();
-
-		foreach ($additionalUsers as $additionalUser) {
-			$selectedRooms = $rooms->random(rand(3, 6));
-			foreach ($selectedRooms as $selectedRoom) {
-				UserRoom::create([
-					'user_id' => $additionalUser->id,
-					'room_id' => $selectedRoom->id,
-					'balance' => fake()->randomFloat(2, 50, 300),
-				]);
-			}
-
-			Tournament::factory()->count(rand(20, 40))->create([
-				'user_id' => $additionalUser->id,
-			]);
 		}
 	}
 }

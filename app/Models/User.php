@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -109,9 +110,23 @@ class User extends Authenticatable
 		return $this->hasMany(LocationUserPassword::class);
 	}
 
-	public function disabledRooms(): BelongsToMany
+	public function settings(): HasOne
 	{
-		return $this->belongsToMany(Room::class, 'user_room_settings')
-			->withTimestamps();
+		return $this->hasOne(UserSetting::class, 'user_id');
+	}
+
+	public function getSettings(): UserSetting
+	{
+		return $this->settings()->firstOrCreate([], ['disabled_room_ids' => []]);
+	}
+
+	public function getDisabledRoomIds(): array
+	{
+		return $this->getSettings()->getDisabledRoomIds();
+	}
+
+	public function isTelegramConnected(): bool
+	{
+		return $this->getSettings()->telegram_chat_id !== null;
 	}
 }

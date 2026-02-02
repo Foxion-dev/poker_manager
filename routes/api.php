@@ -30,6 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::put('/user/password', [AuthController::class, 'updatePassword']);
 	Route::post('/logout', [AuthController::class, 'logout']);
 
+	Route::get('user/telegram', [\App\Http\Controllers\Api\UserTelegramController::class, 'index']);
+	Route::post('user/telegram/link-code', [\App\Http\Controllers\Api\UserTelegramController::class, 'storeLinkCode']);
+	Route::delete('user/telegram', [\App\Http\Controllers\Api\UserTelegramController::class, 'destroy']);
+
 	Route::get('rooms', [RoomController::class, 'index']);
 	Route::get('rooms/{room}', [RoomController::class, 'show']);
 	Route::post('user/rooms', [RoomController::class, 'storePersonal']);

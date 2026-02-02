@@ -5,22 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class UserRoomSetting extends Model
+class TelegramLinkCode extends Model
 {
-	protected $table = 'user_room_settings';
-
 	protected $fillable = [
 		'user_id',
-		'room_id',
+		'code',
+		'expires_at',
 	];
+
+	protected function casts(): array
+	{
+		return [
+			'expires_at' => 'datetime',
+		];
+	}
 
 	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class);
 	}
 
-	public function room(): BelongsTo
+	public function isExpired(): bool
 	{
-		return $this->belongsTo(Room::class);
+		return $this->expires_at->isPast();
 	}
 }

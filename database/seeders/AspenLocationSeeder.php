@@ -14,9 +14,9 @@ class AspenLocationSeeder extends Seeder
 	public function run(): void
 	{
 		$owner = User::firstOrCreate(
-			['email' => 'mamaama141996@gmail.com'],
+			['email' => 'mamama141996@gmail.com'],
 			[
-				'name' => 'Богдан',
+				'name' => 'mamama141996',
 				'password' => Hash::make('password'),
 				'balance' => 0,
 				'is_admin' => true,
