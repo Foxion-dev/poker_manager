@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	});
 
 	Route::get('/user', [AuthController::class, 'user']);
+	Route::put('/user/password', [AuthController::class, 'updatePassword']);
 	Route::post('/logout', [AuthController::class, 'logout']);
 
 	Route::get('rooms', [RoomController::class, 'index']);
