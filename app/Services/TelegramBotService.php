@@ -3,9 +3,8 @@
 namespace App\Services;
 
 use App\Models\TelegramBotSetting;
-use App\Models\UserSetting;
-use App\Services\Telegram\BalanceCommand;
-use App\Services\Telegram\GetStatsCommand;
+use App\Services\Telegram\TelegramDispatcher;
+use App\Services\Telegram\TelegramUpdate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -14,9 +13,7 @@ class TelegramBotService
 	private const TELEGRAM_API = 'https://api.telegram.org/bot';
 
 	public function __construct(
-		private TelegramLinkService $linkService,
-		private BalanceCommand $balanceCommand,
-		private GetStatsCommand $getStatsCommand
+		private TelegramDispatcher $dispatcher
 	) {
 	}
 
@@ -97,86 +94,20 @@ class TelegramBotService
 
 	public function handleUpdate(array $update): void
 	{
-		$callbackQuery = $update['callback_query'] ?? null;
-		if ($callbackQuery) {
-			$this->handleCallbackQuery($callbackQuery);
+		$telegramUpdate = TelegramUpdate::fromArray($update);
+		if ($telegramUpdate === null) {
 			return;
 		}
-		$message = $update['message'] ?? null;
-		if (!$message) {
-			return;
+		$response = $this->dispatcher->dispatch($telegramUpdate);
+		if ($telegramUpdate->isCallback && $telegramUpdate->callbackQueryId !== null) {
+			$this->answerCallbackQuery($telegramUpdate->callbackQueryId);
 		}
-		$chatId = (int) ($message['chat']['id'] ?? 0);
-		$username = $message['from']['username'] ?? null;
-		$text = trim((string) ($message['text'] ?? ''));
-		if ($chatId === 0) {
-			return;
-		}
-		$lower = mb_strtolower($text);
-		if ($lower === '/start' || str_starts_with($lower, '/start ')) {
-			$this->handleStart($chatId, $username, $text);
-			return;
-		}
-		if ($lower === '/balance') {
-			$response = $this->balanceCommand->run($chatId, $text, ['username' => $username]);
-			if ($response !== null) {
-				$this->sendCommandResponse($chatId, $response);
-			}
-			return;
-		}
-		if ($lower === '/get_stats') {
-			$response = $this->getStatsCommand->run($chatId, $text, []);
-			if ($response !== null) {
-				$this->sendCommandResponse($chatId, $response);
-			}
-			return;
-		}
-		$getStatsState = GetStatsCommand::getCachedState($chatId);
-		if ($getStatsState !== null) {
-			$response = $this->getStatsCommand->run($chatId, $text, ['state' => $getStatsState]);
-			if ($response !== null) {
-				$this->sendCommandResponse($chatId, $response);
-			}
-			return;
-		}
-		$userSetting = UserSetting::where('telegram_chat_id', $chatId)->first();
-		if (!$userSetting) {
-			$this->sendMessage($chatId, "Сначала привяжите аккаунт. Получите код в настройках приложения и отправьте: /start КОД");
-			return;
+		if ($response !== null) {
+			$this->sendCommandResponse($telegramUpdate->chatId, $response);
 		}
 	}
 
-	private function handleCallbackQuery(array $callbackQuery): void
-	{
-		$callbackId = $callbackQuery['id'] ?? '';
-		$data = (string) ($callbackQuery['data'] ?? '');
-		$message = $callbackQuery['message'] ?? null;
-		if (!$message) {
-			$this->answerCallbackQuery($callbackId);
-			return;
-		}
-		$chatId = (int) ($message['chat']['id'] ?? 0);
-		if ($chatId === 0) {
-			$this->answerCallbackQuery($callbackId);
-			return;
-		}
-		if (str_starts_with($data, 'stats_period:')) {
-			$choice = substr($data, strlen('stats_period:'));
-			$state = GetStatsCommand::getCachedState($chatId);
-			if ($state === null) {
-				$state = ['step' => 'period'];
-			}
-			$response = $this->getStatsCommand->run($chatId, $choice, ['state' => $state]);
-			$this->answerCallbackQuery($callbackId);
-			if ($response !== null) {
-				$this->sendCommandResponse($chatId, $response);
-			}
-			return;
-		}
-		$this->answerCallbackQuery($callbackId);
-	}
-
-	private function sendCommandResponse(int $chatId, string|array $response): void
+	public function sendCommandResponse(int $chatId, string|array $response): void
 	{
 		if (is_array($response)) {
 			$text = $response['text'] ?? '';
@@ -189,33 +120,4 @@ class TelegramBotService
 		}
 		$this->sendMessage($chatId, $response);
 	}
-
-	private function escapeHtml(string $s): string
-	{
-		return htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-	}
-
-	private function handleStart(int $chatId, ?string $username, string $text): void
-	{
-		$parts = preg_split('/\s+/', $text, 2);
-		$code = isset($parts[1]) ? trim($parts[1]) : '';
-		if ($code === '') {
-			$existing = UserSetting::where('telegram_chat_id', $chatId)->first();
-			if ($existing) {
-				$name = $this->escapeHtml($existing->user->name);
-				$this->sendMessage($chatId, "Вы уже привязаны к аккаунту <b>{$name}</b>. /balance — баланс по румам.");
-			} else {
-				$this->sendMessage($chatId, "Чтобы привязать аккаунт, получите код в настройках приложения и отправьте: /start КОД");
-			}
-			return;
-		}
-		$user = $this->linkService->linkByCode($code, $chatId, $username);
-		if ($user) {
-			$name = $this->escapeHtml($user->name);
-			$this->sendMessage($chatId, "Вы привязаны к аккаунту <b>{$name}</b>. Используйте /balance для просмотра баланса по румам.");
-		} else {
-			$this->sendMessage($chatId, "Код неверный или истёк. Получите новый код в настройках приложения.");
-		}
-	}
-
 }
