@@ -61,8 +61,9 @@ deploy: ## [Сервер] Полный деплой: git pull, зависимо�
 	fi
 	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && composer install --no-interaction --prefer-dist --optimize-autoloader"
 	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache"
-	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && npm install && NODE_ENV=production npm run build"
-	@./vendor/bin/sail exec -u root laravel.test sh -c "mkdir -p /var/www/html/public/build && chown -R sail:sail /var/www/html/public/build"
+	@./vendor/bin/sail exec laravel.test sh -c "cd /var/www/html && npm install && NODE_ENV=production npm run build" || (echo "❌ Ошибка сборки Vite"; exit 1)
+	@./vendor/bin/sail exec laravel.test sh -c "test -f /var/www/html/public/build/manifest.json" || (echo "❌ Vite manifest не найден после сборки"; exit 1)
+	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html/public/build"
 	@./vendor/bin/sail artisan migrate --force
 	@./vendor/bin/sail artisan config:clear
 	@./vendor/bin/sail artisan cache:clear
