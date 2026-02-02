@@ -178,15 +178,24 @@ deploy: ## Деплой проекта: подтянуть код из git и п
 	@if ! ./vendor/bin/sail ps | grep -q "laravel.test"; then \
 		echo "⚠️  Контейнеры не запущены. Запускаем..."; \
 		./vendor/bin/sail up -d; \
-		echo "⏳ Ожидание готовности сервисов (проверка healthcheck)..."; \
-		for i in 1 2 3 4 5 6; do \
+		echo "⏳ Ожидание готовности сервисов (MySQL start_period 30s)..."; \
+		for i in 1 2 3 4 5 6 7 8 9 10; do \
 			if ./vendor/bin/sail ps | grep -q "laravel.test.*healthy"; then \
 				echo "✅ Контейнеры готовы (попытка $$i)"; \
 				break; \
 			fi; \
-			echo "⏳ Попытка $$i/6..."; \
+			echo "⏳ Попытка $$i/10..."; \
 			sleep 5; \
+			if [ $$i -eq 10 ]; then \
+				echo "❌ Контейнер laravel.test не запустился. Логи MySQL:"; \
+				./vendor/bin/sail logs mysql --tail=30 2>&1 || true; \
+				exit 1; \
+			fi; \
 		done; \
+	fi
+	@if ! ./vendor/bin/sail ps | grep -q "laravel.test"; then \
+		echo "❌ Контейнер laravel.test не запущен. Проверьте логи: make logs"; \
+		exit 1; \
 	fi
 	@echo "✅ Контейнеры запущены"
 	@echo ""

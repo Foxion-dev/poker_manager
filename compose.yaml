@@ -62,21 +62,22 @@ services:
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
             MYSQL_EXTRA_OPTIONS: '${MYSQL_EXTRA_OPTIONS:-}'
         volumes:
-            - 'sail-mysql:/var/lib/mysql'
+            - 'manager-mysql:/var/lib/mysql'
             - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
             - sail
         restart: unless-stopped
         healthcheck:
             test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-            retries: 3
-            timeout: 5s
-            start_period: 10s
+            retries: 5
+            timeout: 10s
+            start_period: 30s
+            interval: 10s
     redis:
         container_name: manager-redis
         image: 'redis:alpine'
         volumes:
-            - 'sail-redis:/data'
+            - 'manager-redis:/data'
         networks:
             - sail
         restart: unless-stopped
@@ -93,7 +94,7 @@ networks:
     web_public:
         external: true
 volumes:
-    sail-mysql:
+    manager-mysql:
         driver: local
-    sail-redis:
+    manager-redis:
         driver: local
