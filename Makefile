@@ -1,40 +1,42 @@
-.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php deploy deploy-lite
+COMPOSE_DEV = docker compose -f docker-compose.dev.yml
+
+.PHONY: help start up down restart build rebuild shell composer npm artisan migrate fresh seed test pint switch-php setup setup-dev deploy deploy-lite
 
 help: ## Показать справку по командам
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-start: ## Запустить проект локально (контейнеры + dev сервер)
-	@echo "🚀 Запуск проекта..."
-	@if ! ./vendor/bin/sail ps | grep -q "laravel.test"; then \
-		echo "📦 Запуск Docker контейнеров..."; \
-		./vendor/bin/sail up -d; \
+start: ## Запустить проект локально (dev Docker + Vite)
+	@echo "🚀 Запуск проекта (локальная разработка)..."
+	@if ! $(COMPOSE_DEV) ps 2>/dev/null | grep -q "poker-manager-app.*Up"; then \
+		echo "📦 Запуск Docker контейнеров (docker-compose.dev.yml)..."; \
+		$(COMPOSE_DEV) up -d --build; \
 		echo "⏳ Ожидание запуска сервисов..."; \
 		sleep 5; \
 	else \
 		echo "✅ Контейнеры уже запущены"; \
 	fi
 	@echo "🎨 Запуск Vite dev сервера..."
-	@echo "📝 Приложение доступно на http://localhost"
-	@echo "🔧 Vite dev server на http://localhost:5173"
+	@echo "📝 Приложение: http://localhost:8080"
+	@echo "🔧 Vite dev server: http://localhost:5173"
 	@echo ""
-	./vendor/bin/sail npm run dev
+	$(COMPOSE_DEV) exec app npm run dev
 
-up: ## Запустить контейнеры Docker
-	./vendor/bin/sail up -d
+up: ## Запустить контейнеры Docker (локальная разработка)
+	$(COMPOSE_DEV) up -d
 
-down: ## Остановить контейнеры Docker
-	./vendor/bin/sail down
+down: ## Остановить контейнеры Docker (локальная разработка)
+	$(COMPOSE_DEV) down
 
-restart: ## Перезапустить контейнеры Docker
-	./vendor/bin/sail restart
+restart: ## Перезапустить контейнеры Docker (локальная разработка)
+	$(COMPOSE_DEV) restart
 
-build: ## Пересобрать контейнеры Docker
-	./vendor/bin/sail build --no-cache
+build: ## Пересобрать контейнеры Docker (локальная разработка)
+	$(COMPOSE_DEV) build --no-cache
 
-rebuild: ## Остановить, пересобрать и запустить контейнеры
-	./vendor/bin/sail down
-	./vendor/bin/sail build --no-cache
-	./vendor/bin/sail up -d
+rebuild: ## Остановить, пересобрать и запустить контейнеры (локальная разработка)
+	$(COMPOSE_DEV) down
+	$(COMPOSE_DEV) build --no-cache
+	$(COMPOSE_DEV) up -d
 
 switch-php: ## Переключить версию PHP (использовать: make switch-php VERSION=8.4)
 	@if [ -z "$(VERSION)" ]; then \
@@ -47,92 +49,93 @@ switch-php: ## Переключить версию PHP (использовать
 	@echo "Версия PHP изменена на $(VERSION)"
 	@echo "Теперь выполните: make rebuild"
 
-shell: ## Открыть shell в контейнере Laravel
-	./vendor/bin/sail shell
+shell: ## Открыть shell в контейнере приложения (локальная разработка)
+	$(COMPOSE_DEV) exec app bash
 
 composer-install: ## Установить PHP зависимости
-	./vendor/bin/sail composer install
+	$(COMPOSE_DEV) exec app composer install
 
 composer-update: ## Обновить PHP зависимости
-	./vendor/bin/sail composer update
+	$(COMPOSE_DEV) exec app composer update
 
 composer-require: ## Добавить PHP пакет (использовать: make composer-require PACKAGE=package/name)
-	./vendor/bin/sail composer require $(PACKAGE)
+	$(COMPOSE_DEV) exec app composer require $(PACKAGE)
 
 npm-install: ## Установить Node.js зависимости
-	./vendor/bin/sail npm install
+	$(COMPOSE_DEV) exec app npm install
 
 npm-dev: ## Запустить dev сервер Vite
-	./vendor/bin/sail npm run dev
+	$(COMPOSE_DEV) exec app npm run dev
 
 npm-build: ## Собрать assets для production
-	./vendor/bin/sail npm run build
+	$(COMPOSE_DEV) exec app npm run build
 
 npm-watch: ## Запустить watch режим для assets
-	./vendor/bin/sail npm run dev -- --watch
+	$(COMPOSE_DEV) exec app npm run dev -- --watch
 
 artisan: ## Выполнить artisan команду (использовать: make artisan CMD="migrate")
-	./vendor/bin/sail artisan $(CMD)
+	$(COMPOSE_DEV) exec app php artisan $(CMD)
 
 migrate: ## Запустить миграции
-	./vendor/bin/sail artisan migrate
+	$(COMPOSE_DEV) exec app php artisan migrate
 
 migrate-fresh: ## Пересоздать базу данных и запустить миграции
-	./vendor/bin/sail artisan migrate:fresh
+	$(COMPOSE_DEV) exec app php artisan migrate:fresh
 
 migrate-seed: ## Запустить миграции и сидеры
-	./vendor/bin/sail artisan migrate --seed
+	$(COMPOSE_DEV) exec app php artisan migrate --seed
 
 seed: ## Запустить сидеры
-	./vendor/bin/sail artisan db:seed
+	$(COMPOSE_DEV) exec app php artisan db:seed
 
 test: ## Запустить тесты
-	./vendor/bin/sail artisan test
+	$(COMPOSE_DEV) exec app php artisan test
 
 pint: ## Запустить Laravel Pint для форматирования кода
-	./vendor/bin/sail pint
+	$(COMPOSE_DEV) exec app ./vendor/bin/pint
 
 pint-test: ## Проверить форматирование кода без изменений
-	./vendor/bin/sail pint --test
+	$(COMPOSE_DEV) exec app ./vendor/bin/pint --test
 
-logs: ## Показать логи контейнеров
-	./vendor/bin/sail logs
+logs: ## Показать логи контейнеров (локальная разработка)
+	$(COMPOSE_DEV) logs
 
 logs-follow: ## Показать логи с отслеживанием
-	./vendor/bin/sail logs -f
+	$(COMPOSE_DEV) logs -f
 
 mysql: ## Открыть MySQL CLI
-	./vendor/bin/sail mysql
+	$(COMPOSE_DEV) exec mysql mysql -ularavel -psecret laravel
 
 redis: ## Открыть Redis CLI
-	./vendor/bin/sail redis-cli
+	$(COMPOSE_DEV) exec redis redis-cli
 
 queue-work: ## Запустить worker очереди
-	./vendor/bin/sail artisan queue:work
+	$(COMPOSE_DEV) exec app php artisan queue:work
 
 queue-listen: ## Запустить listener очереди
-	./vendor/bin/sail artisan queue:listen
+	$(COMPOSE_DEV) exec app php artisan queue:listen
 
 tinker: ## Открыть Tinker
-	./vendor/bin/sail artisan tinker
+	$(COMPOSE_DEV) exec app php artisan tinker
 
 clear: ## Очистить кеш приложения
-	./vendor/bin/sail artisan cache:clear
-	./vendor/bin/sail artisan config:clear
-	./vendor/bin/sail artisan route:clear
-	./vendor/bin/sail artisan view:clear
+	$(COMPOSE_DEV) exec app php artisan cache:clear
+	$(COMPOSE_DEV) exec app php artisan config:clear
+	$(COMPOSE_DEV) exec app php artisan route:clear
+	$(COMPOSE_DEV) exec app php artisan view:clear
 
 optimize: ## Оптимизировать приложение
-	./vendor/bin/sail artisan config:cache
-	./vendor/bin/sail artisan route:cache
-	./vendor/bin/sail artisan view:cache
+	$(COMPOSE_DEV) exec app php artisan config:cache
+	$(COMPOSE_DEV) exec app php artisan route:cache
+	$(COMPOSE_DEV) exec app php artisan view:cache
 
 fix-permissions: ## Исправить права доступа в контейнере
 	@echo "Исправление прав доступа..."
-	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
+	@$(COMPOSE_DEV) exec -u root app chown -R $$(id -u):$$(id -g) /var/www/html
+	@$(COMPOSE_DEV) exec -u root app chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 	@echo "Права доступа исправлены!"
 
-setup: ## Первоначальная настройка проекта
+setup: ## Первоначальная настройка проекта (сервер, Sail)
 	@echo "Настройка проекта..."
 	@if [ ! -f .env ]; then cp .env.example .env && echo "Создан .env из .env.example"; fi
 	@if [ ! -f ./vendor/bin/sail ]; then \
@@ -162,6 +165,23 @@ setup: ## Первоначальная настройка проекта
 	@sleep 5
 	./vendor/bin/sail artisan migrate --seed
 	@echo "Проект готов к работе!"
+
+setup-dev: ## Первоначальная настройка для локальной разработки (dev Docker)
+	@echo "Настройка проекта (локальная разработка)..."
+	@if [ ! -f .env ]; then cp .env.example .env && echo "Создан .env из .env.example"; fi
+	@if grep -q '^DB_HOST=' .env 2>/dev/null; then sed -i.bak 's/^DB_HOST=.*/DB_HOST=mysql/' .env 2>/dev/null; else echo "DB_HOST=mysql" >> .env; fi
+	@if ! grep -q '^REDIS_HOST=' .env 2>/dev/null; then echo "REDIS_HOST=redis" >> .env; fi
+	@echo "Запуск контейнеров..."
+	$(COMPOSE_DEV) up -d --build
+	@echo "Ожидание запуска сервисов..."
+	@sleep 8
+	$(COMPOSE_DEV) exec app composer install --no-interaction --prefer-dist
+	$(COMPOSE_DEV) exec app php artisan key:generate
+	$(COMPOSE_DEV) exec app npm install
+	@echo "Ожидание готовности MySQL..."
+	@sleep 5
+	$(COMPOSE_DEV) exec app php artisan migrate --seed
+	@echo "Проект готов к работе! Запустите: make start"
 
 deploy: ## Деплой проекта: подтянуть код из git и пересобрать
 	@echo "🚀 Начало деплоя..."

@@ -1,0 +1,68 @@
+services:
+  app:
+    container_name: poker-manager-app
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+    ports:
+      - "8080:80"
+      - "5173:5173"
+    environment:
+      DB_HOST: mysql
+      REDIS_HOST: redis
+    volumes:
+      - .:/var/www/html
+    networks:
+      - dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "echo 'OK';"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  mysql:
+    container_name: poker-manager-mysql
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-secret}'
+      MYSQL_DATABASE: '${DB_DATABASE:-laravel}'
+      MYSQL_USER: '${DB_USERNAME:-laravel}'
+      MYSQL_PASSWORD: '${DB_PASSWORD:-secret}'
+    volumes:
+      - poker-manager-mysql:/var/lib/mysql
+    networks:
+      - dev
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      retries: 5
+      timeout: 10s
+      start_period: 30s
+      interval: 10s
+
+  redis:
+    container_name: poker-manager-redis
+    image: redis:alpine
+    volumes:
+      - poker-manager-redis:/data
+    networks:
+      - dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      retries: 3
+      timeout: 5s
+
+networks:
+  dev:
+    driver: bridge
+
+volumes:
+  poker-manager-mysql:
+    driver: local
+  poker-manager-redis:
+    driver: local

@@ -70,6 +70,11 @@ const routes = [
 				name: 'LocationTournamentDetail',
 				component: () => import('../components/locations/LocationTournamentDetail.vue'),
 			},
+			{
+				path: '/settings',
+				name: 'Settings',
+				component: () => import('../components/settings/Settings.vue'),
+			},
 		],
 	},
 	{
@@ -119,6 +124,7 @@ const pageTitles = {
 	Locations: 'Локации - Poker Manager',
 	LocationDetail: 'Детали локации - Poker Manager',
 	LocationTournamentDetail: 'Детали турнира - Poker Manager',
+	Settings: 'Настройки - Poker Manager',
 	PublicLocationView: 'Публичная локация - Poker Manager',
 	AdminRooms: 'Управление румами - Админ-панель',
 	AdminCurrencies: 'Управление валютами - Админ-панель',
