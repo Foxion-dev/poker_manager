@@ -9,6 +9,7 @@ use App\Services\Telegram\Handlers\GetStatsHandler;
 use App\Services\Telegram\Handlers\StartHandler;
 use App\Services\Telegram\TelegramDispatcher;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Vite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,5 +28,6 @@ class AppServiceProvider extends ServiceProvider
 
 	public function boot(): void
 	{
+		Vite::useManifestFilename('.vite/manifest.json');
 	}
 }
