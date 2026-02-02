@@ -17,7 +17,7 @@ class UpdateLocationTournamentRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			'name' => ['sometimes', 'required', 'string', 'max:255'],
+			'name' => ['sometimes', 'nullable', 'string', 'max:255'],
 			'buyin' => ['sometimes', 'required', 'numeric', 'min:0'],
 			'currency_id' => ['nullable', 'exists:currencies,id'],
 			'format' => ['sometimes', 'required', 'in:classic,classic_bounty,progressive_bounty'],

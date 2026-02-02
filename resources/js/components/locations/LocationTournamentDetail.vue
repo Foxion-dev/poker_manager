@@ -456,6 +456,34 @@
 						</button>
 					</div>
 
+					<div class="mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+						<div>
+							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+								Тип рейка
+							</label>
+							<select
+								v-model="prizeRakeType"
+								class="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							>
+								<option value="fixed">Фиксированный</option>
+								<option value="percentage">Процент</option>
+							</select>
+						</div>
+						<div>
+							<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+								Рейк {{ prizeRakeType === 'percentage' ? '(%)' : '(сумма)' }}
+							</label>
+							<input
+								v-model.number="prizeRake"
+								type="number"
+								step="5"
+								min="0"
+								:max="prizeRakeType === 'percentage' ? 100 : null"
+								class="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+							/>
+						</div>
+					</div>
+
 					<div class="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
 						<p class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
 							Сумма процентов: 
@@ -814,9 +842,14 @@ const showPrizeDistributionModal = ref(false);
 const selectedWinners = ref([]);
 const prizeDistributionForm = ref([]);
 const isFixedPrizeDistribution = ref(false);
+const prizeRake = ref(30);
+const prizeRakeType = ref('fixed');
 
 const openPrizeDistributionModal = () => {
 	if (!tournament.value) return;
+	
+	prizeRake.value = tournament.value.rake ?? 30;
+	prizeRakeType.value = tournament.value.rake_type ?? 'fixed';
 	
 	const customDistribution = tournament.value.prize_distribution;
 	const hasCustomDistribution = customDistribution && Array.isArray(customDistribution) && customDistribution.length > 0 && customDistribution[0].hasOwnProperty('percentage');
@@ -1050,8 +1083,13 @@ const resetPrizeDistribution = () => {
 };
 
 const savePrizeDistribution = async () => {
+	const rakePayload = {
+		rake: prizeRake.value ?? 30,
+		rake_type: prizeRakeType.value ?? 'fixed',
+	};
 	if (!isFixedPrizeDistribution.value) {
 		await locationService.updateTournament(route.params.locationId, route.params.id, {
+			...rakePayload,
 			prize_distribution: null,
 		});
 		await fetchTournament();
@@ -1072,6 +1110,7 @@ const savePrizeDistribution = async () => {
 		}));
 
 		await locationService.updateTournament(route.params.locationId, route.params.id, {
+			...rakePayload,
 			prize_distribution: distribution,
 		});
 
@@ -1090,6 +1129,8 @@ const clearPrizeDistribution = async () => {
 
 	try {
 		await locationService.updateTournament(route.params.locationId, route.params.id, {
+			rake: prizeRake.value ?? 30,
+			rake_type: prizeRakeType.value ?? 'fixed',
 			prize_distribution: null,
 		});
 

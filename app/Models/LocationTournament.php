@@ -11,6 +11,20 @@ class LocationTournament extends Model
 {
 	use HasFactory;
 
+	protected static function booted(): void
+	{
+		static::saving(function (LocationTournament $tournament) {
+			if (trim((string) ($tournament->name ?? '')) === '') {
+				$tournament->name = match ($tournament->format ?? 'classic') {
+					'classic' => 'Классик',
+					'classic_bounty' => 'Классик баунти',
+					'progressive_bounty' => 'Прогрессив баунти',
+					default => $tournament->format ?? 'Классик',
+				};
+			}
+		});
+	}
+
 	protected $fillable = [
 		'location_id',
 		'name',
@@ -60,6 +74,12 @@ class LocationTournament extends Model
 			'progressive_bounty' => 'Прогрессив баунти',
 			default => $this->format,
 		};
+	}
+
+	public function getDisplayNameAttribute(): string
+	{
+		$name = trim((string) ($this->name ?? ''));
+		return $name !== '' ? $name : $this->format_label;
 	}
 
 	public function getTotalBuyinAttribute(): float

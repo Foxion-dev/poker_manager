@@ -14,13 +14,13 @@
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div>
 							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-								Название *
+								Название
 							</label>
 							<input
 								v-model="form.name"
 								type="text"
-								required
 								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								placeholder="Необязательно, подставится тип турнира"
 							/>
 						</div>
 						<div>

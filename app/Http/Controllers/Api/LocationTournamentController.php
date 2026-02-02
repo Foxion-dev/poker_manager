@@ -62,7 +62,7 @@ class LocationTournamentController extends Controller
 			->map(function ($tournament) {
 				return [
 					'id' => $tournament->id,
-					'name' => $tournament->name,
+					'name' => $tournament->display_name,
 					'buyin' => $tournament->buyin,
 					'currency_id' => $tournament->currency_id,
 					'currency' => $tournament->currency,
@@ -143,7 +143,7 @@ class LocationTournamentController extends Controller
 
 		return response()->json([
 			'id' => $locationTournament->id,
-			'name' => $locationTournament->name,
+			'name' => $locationTournament->display_name,
 			'buyin' => $locationTournament->buyin,
 			'currency_id' => $locationTournament->currency_id,
 			'currency' => $locationTournament->currency,
@@ -517,7 +517,7 @@ class LocationTournamentController extends Controller
 			->map(function ($tournament) {
 				return [
 					'id' => $tournament->id,
-					'name' => $tournament->name,
+					'name' => $tournament->display_name,
 					'buyin' => $tournament->buyin,
 					'currency_id' => $tournament->currency_id,
 					'currency' => $tournament->currency,
