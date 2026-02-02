@@ -63,7 +63,6 @@ class TelegramBotService
 		$response = Http::post(self::TELEGRAM_API . $token . '/sendMessage', [
 			'chat_id' => $chatId,
 			'text' => $text,
-			'parse_mode' => null,
 		]);
 		if (!$response->successful()) {
 			Log::warning('Telegram sendMessage failed', ['chat_id' => $chatId, 'response' => $response->body()]);
