@@ -57,4 +57,28 @@ export const roomService = {
 		const response = await api.post(`/user-rooms/${roomId}/attach`, payload);
 		return response.data;
 	},
+
+	async createPersonalRoom(data) {
+		const hasFile = data.image instanceof File;
+		const payload = hasFile ? new FormData() : { ...data };
+		if (hasFile) {
+			payload.append('name', data.name);
+			if (data.icon != null && data.icon !== '') payload.append('icon', data.icon);
+			payload.append('image', data.image);
+			if (data.currency_id != null) payload.append('currency_id', data.currency_id);
+			if (data.currency_ids?.length) {
+				data.currency_ids.forEach((id, i) => payload.append(`currency_ids[${i}]`, id));
+			}
+		} else {
+			if (data.currency_id != null) payload.currency_id = data.currency_id;
+			if (data.currency_ids?.length) payload.currency_ids = data.currency_ids;
+		}
+		const response = await api.post('/user/rooms', hasFile ? payload : data);
+		return response.data;
+	},
+
+	async deletePersonalRoom(roomId) {
+		const response = await api.delete(`/user/rooms/${roomId}`);
+		return response.data;
+	},
 };

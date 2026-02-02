@@ -32,6 +32,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	Route::get('rooms', [RoomController::class, 'index']);
 	Route::get('rooms/{room}', [RoomController::class, 'show']);
+	Route::post('user/rooms', [RoomController::class, 'storePersonal']);
+	Route::delete('user/rooms/{room}', [RoomController::class, 'destroyPersonal']);
 	Route::apiResource('tournaments', TournamentController::class);
 	Route::get('currencies', [CurrencyController::class, 'index']);
 

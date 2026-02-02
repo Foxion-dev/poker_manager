@@ -1,9 +1,119 @@
 <template>
 	<section class="mb-8">
-		<h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Доступные румы</h3>
-		<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-			Отключённые румы не будут показываться в выпадающих списках (например, при создании турнира). Баланс можно указать для каждого рума.
-		</p>
+		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+			<div>
+				<h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Доступные румы</h3>
+				<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+					Отключённые румы не будут показываться в выпадающих списках. Баланс можно указать для каждого рума. Можно добавить свой рум — он будет доступен только вам.
+				</p>
+			</div>
+			<button
+				v-if="!showAddForm"
+				type="button"
+				@click="showAddForm = true"
+				class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shrink-0"
+			>
+				Добавить рум
+			</button>
+		</div>
+
+		<div v-if="showAddForm" class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+			<h4 class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-3">Новый рум (только для вас)</h4>
+			<form class="flex flex-wrap items-end gap-3" @submit.prevent="submitAddRoom">
+				<div class="min-w-[12rem]">
+					<label for="new_room_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Название</label>
+					<input
+						id="new_room_name"
+						v-model="newRoomForm.name"
+						type="text"
+						required
+						maxlength="255"
+						placeholder="Например: Домашний"
+						class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+					/>
+				</div>
+				<div class="w-24">
+					<label for="new_room_icon" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Иконка</label>
+					<input
+						id="new_room_icon"
+						v-model="newRoomForm.icon"
+						type="text"
+						maxlength="10"
+						placeholder="🃏"
+						class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+					/>
+				</div>
+				<div class="min-w-[10rem]">
+					<label for="new_room_image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Изображение</label>
+					<input
+						ref="newRoomImageInput"
+						id="new_room_image"
+						type="file"
+						accept="image/jpeg,image/png,image/gif,image/webp"
+						@change="onNewRoomImageChange"
+						class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50"
+					/>
+					<div v-if="newRoomForm.imagePreview" class="mt-1.5">
+						<img :src="newRoomForm.imagePreview" alt="Превью" class="h-14 w-14 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+					</div>
+				</div>
+				<div class="w-full">
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Доступные валюты</label>
+					<div class="max-h-32 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 space-y-1">
+						<label
+							v-for="currency in currencyStore.currencies"
+							:key="currency.id"
+							class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-2 rounded"
+						>
+							<input
+								type="checkbox"
+								:value="currency.id"
+								v-model="newRoomForm.currency_ids"
+								@change="updateNewRoomDefaultCurrency"
+								class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-600 dark:border-gray-500"
+							/>
+							<span class="text-sm text-gray-700 dark:text-gray-300">{{ currency.code }} — {{ currency.name }}</span>
+						</label>
+						<p v-if="!currencyStore.currencies.length" class="text-sm text-gray-500 dark:text-gray-400 py-2">Нет валют</p>
+					</div>
+				</div>
+				<div class="min-w-[14rem]">
+					<label for="new_room_currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Валюта по умолчанию</label>
+					<select
+						id="new_room_currency"
+						v-model="newRoomForm.currency_id"
+						class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+					>
+						<option :value="null">Не выбрана</option>
+						<option
+							v-for="c in newRoomAvailableCurrencies"
+							:key="c.id"
+							:value="c.id"
+						>
+							{{ c.code }} — {{ c.name }}
+						</option>
+					</select>
+				</div>
+				<div class="flex gap-2">
+					<button
+						type="submit"
+						:disabled="addRoomLoading"
+						class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+					>
+						{{ addRoomLoading ? 'Создание…' : 'Создать' }}
+					</button>
+					<button
+						type="button"
+						@click="cancelAddRoom"
+						class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+					>
+						Отмена
+					</button>
+				</div>
+			</form>
+			<p v-if="addRoomError" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ addRoomError }}</p>
+		</div>
+
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
 			<div v-if="roomStore.loading" class="p-8 text-center text-gray-500 dark:text-gray-400">
 				Загрузка…
@@ -34,7 +144,10 @@
 						{{ room.icon || '🃏' }}
 					</div>
 					<div class="min-w-0 flex-1">
-						<p class="font-medium text-gray-900 dark:text-white truncate">{{ room.name }}</p>
+						<p class="font-medium text-gray-900 dark:text-white truncate">
+							{{ room.name }}
+							<span v-if="room.user_id" class="ml-1 text-xs text-gray-400 dark:text-gray-500">(мой)</span>
+						</p>
 						<p v-if="room.currency" class="text-sm text-gray-500 dark:text-gray-400 truncate">
 							{{ room.currency.code }}
 						</p>
@@ -114,6 +227,18 @@
 								</svg>
 							</button>
 						</div>
+						<button
+							v-if="room.user_id"
+							type="button"
+							title="Удалить рум"
+							:disabled="deletingRoomId === room.id"
+							@click="confirmDeleteRoom(room)"
+							class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-red-400 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+							</svg>
+						</button>
 						<label class="flex items-center gap-2 cursor-pointer">
 							<span class="text-sm text-gray-600 dark:text-gray-400">В списках</span>
 							<button
@@ -143,7 +268,7 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoomStore } from '../../stores/rooms';
 import { useCurrencyStore } from '../../stores/currencies';
 import { roomService } from '../../services/roomService';
@@ -151,6 +276,25 @@ import { toUsd } from '../../services/moneyService';
 
 const roomStore = useRoomStore();
 const currencyStore = useCurrencyStore();
+const showAddForm = ref(false);
+const newRoomForm = ref({ name: '', icon: '', image: null, imagePreview: null, currency_id: null, currency_ids: [] });
+const newRoomImageInput = ref(null);
+
+const newRoomAvailableCurrencies = computed(() =>
+	currencyStore.currencies.filter((c) => newRoomForm.value.currency_ids.includes(c.id))
+);
+
+const updateNewRoomDefaultCurrency = () => {
+	if (
+		newRoomForm.value.currency_id != null &&
+		!newRoomForm.value.currency_ids.includes(newRoomForm.value.currency_id)
+	) {
+		newRoomForm.value.currency_id = null;
+	}
+};
+const addRoomLoading = ref(false);
+const addRoomError = ref(null);
+const deletingRoomId = ref(null);
 const togglingRoomId = ref(null);
 const savingRoomId = ref(null);
 const editingRoomId = ref(null);
@@ -234,6 +378,68 @@ const cancelBalanceEdit = (roomId) => {
 	roomBalanceInputs.value[roomId] = undefined;
 	roomCurrencyInputs.value[roomId] = undefined;
 	editingRoomId.value = null;
+};
+
+const onNewRoomImageChange = (e) => {
+	const file = e.target.files?.[0];
+	if (!file) return;
+	newRoomForm.value.image = file;
+	const reader = new FileReader();
+	reader.onload = (ev) => {
+		newRoomForm.value.imagePreview = ev.target?.result ?? null;
+	};
+	reader.readAsDataURL(file);
+};
+
+const submitAddRoom = async () => {
+	addRoomError.value = null;
+	const name = newRoomForm.value.name?.trim();
+	if (!name) return;
+	addRoomLoading.value = true;
+	try {
+		await roomService.createPersonalRoom({
+			name,
+			icon: newRoomForm.value.icon?.trim() || null,
+			image: newRoomForm.value.image ?? undefined,
+			currency_id: newRoomForm.value.currency_id ?? null,
+			currency_ids: newRoomForm.value.currency_ids?.length ? newRoomForm.value.currency_ids : [],
+		});
+		await roomStore.fetchRooms();
+		newRoomForm.value = { name: '', icon: '', image: null, imagePreview: null, currency_id: null, currency_ids: [] };
+		if (newRoomImageInput.value) newRoomImageInput.value.value = '';
+		showAddForm.value = false;
+	} catch (err) {
+		addRoomError.value = err.response?.data?.message ?? err.response?.data?.errors?.name?.[0] ?? 'Не удалось создать рум.';
+	} finally {
+		addRoomLoading.value = false;
+	}
+};
+
+const cancelAddRoom = () => {
+	showAddForm.value = false;
+	newRoomForm.value = { name: '', icon: '', image: null, imagePreview: null, currency_id: null, currency_ids: [] };
+	if (newRoomImageInput.value) newRoomImageInput.value.value = '';
+	addRoomError.value = null;
+};
+
+const confirmDeleteRoom = (room) => {
+	if (!window.confirm(`Удалить рум «${room.name}»? Он будет удалён только у вас.`)) return;
+	deleteRoom(room.id);
+};
+
+const deleteRoom = async (roomId) => {
+	deletingRoomId.value = roomId;
+	try {
+		await roomService.deletePersonalRoom(roomId);
+		await roomStore.fetchRooms();
+		roomBalances.value[roomId] = undefined;
+		roomBalanceInputs.value[roomId] = undefined;
+		roomCurrencyInputs.value[roomId] = undefined;
+		initialAttachedRoomIds.value.delete(Number(roomId));
+	} catch (_) {}
+	finally {
+		deletingRoomId.value = null;
+	}
 };
 
 const toggleRoom = async (roomId) => {

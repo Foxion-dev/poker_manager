@@ -13,6 +13,7 @@ class Room extends Model
 	use HasFactory;
 
 	protected $fillable = [
+		'user_id',
 		'name',
 		'icon',
 		'image',
@@ -39,6 +40,16 @@ class Room extends Model
 	public function currency(): BelongsTo
 	{
 		return $this->belongsTo(Currency::class);
+	}
+
+	public function owner(): BelongsTo
+	{
+		return $this->belongsTo(User::class, 'user_id');
+	}
+
+	public function isPersonal(): bool
+	{
+		return $this->user_id !== null;
 	}
 
 	public function currencies(): BelongsToMany
