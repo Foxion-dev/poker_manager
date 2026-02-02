@@ -134,6 +134,7 @@ fix-permissions: ## Исправить права доступа в контей
 
 setup: ## Первоначальная настройка проекта
 	@echo "Настройка проекта..."
+	@if [ ! -f .env ]; then cp .env.example .env && echo "Создан .env из .env.example"; fi
 	@if [ ! -f ./vendor/bin/sail ]; then \
 		echo "Установка зависимостей Composer..."; \
 		if command -v composer >/dev/null 2>&1; then \
@@ -152,6 +153,7 @@ setup: ## Первоначальная настройка проекта
 	./vendor/bin/sail up -d
 	@echo "Ожидание запуска контейнеров..."
 	@sleep 5
+	./vendor/bin/sail artisan key:generate
 	./vendor/bin/sail composer install
 	@echo "Исправление прав доступа..."
 	@./vendor/bin/sail exec -u root laravel.test sh -c "chown -R sail:sail /var/www/html && chmod -R 755 /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache" || true
