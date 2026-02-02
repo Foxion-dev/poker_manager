@@ -39,9 +39,9 @@ class DatabaseSeeder extends Seeder
 		}
 
 		$admin = User::firstOrCreate(
-			['email' => 'mamama141996@gmail.com'],
+			['email' => 'admin@poker-manager.com'],
 			[
-				'name' => 'mamama141996',
+				'name' => 'Admin',
 				'password' => Hash::make('password'),
 				'balance' => 0,
 				'is_admin' => true,
