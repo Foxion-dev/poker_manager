@@ -228,6 +228,19 @@ const isEdit = computed(() => !!route.params.id);
 const loading = ref(false);
 const error = ref('');
 
+const toDatetimeLocal = (d) => {
+	const pad = (n) => String(n).padStart(2, '0');
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const fromDatetimeLocal = (str) => {
+	if (!str) return null;
+	const [datePart, timePart] = str.split('T');
+	if (!datePart) return str;
+	const [h, m] = (timePart || '00:00').split(':');
+	return `${datePart} ${h || '00'}:${m || '00'}:00`;
+};
+
 const form = ref({
 	room_id: '',
 	date: toDatetimeLocal(new Date()),
@@ -337,19 +350,6 @@ onMounted(async () => {
 			}
 		}
 });
-
-const toDatetimeLocal = (d) => {
-	const pad = (n) => String(n).padStart(2, '0');
-	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-
-const fromDatetimeLocal = (str) => {
-	if (!str) return null;
-	const [datePart, timePart] = str.split('T');
-	if (!datePart) return str;
-	const [h, m] = (timePart || '00:00').split(':');
-	return `${datePart} ${h || '00'}:${m || '00'}:00`;
-};
 
 const getRoomImageUrl = (imagePath) => {
 	if (!imagePath) return null;

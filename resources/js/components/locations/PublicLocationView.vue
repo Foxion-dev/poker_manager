@@ -268,7 +268,7 @@
 					</div>
 					<div v-if="tournaments.length > 0" class="space-y-4">
 						<div
-							v-for="tournament in tournaments"
+							v-for="tournament in activeTournaments"
 							:key="tournament.id"
 							class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 						>
@@ -294,6 +294,46 @@
 								</div>
 							</div>
 						</div>
+						<details v-if="finishedTournaments.length > 0" class="group">
+							<summary class="flex items-center justify-between cursor-pointer list-none p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors select-none">
+								<span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+									Завершённые турниры ({{ finishedTournaments.length }})
+								</span>
+								<svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</summary>
+							<div class="mt-2 space-y-4">
+								<div
+									v-for="tournament in finishedTournaments"
+									:key="tournament.id"
+									class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+								>
+									<div class="flex items-start justify-between">
+										<div class="flex-1">
+											<h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ tournament.name }}</h4>
+											<div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+												<span>📅 {{ formatDate(tournament.date) }}</span>
+												<span>💵 {{ formatCurrency(tournament.buyin) }}</span>
+												<span>🎯 {{ tournament.format_label }}</span>
+												<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Завершён</span>
+											</div>
+											<div v-if="tournament.participants && tournament.participants.filter(p => {
+												const name = p.display_name || p.name || p.user?.name || '';
+												return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+											}).length > 0" class="mt-3">
+												<p class="text-xs font-medium text-gray-600 dark:text-gray-400">
+													👥 Участников: {{ tournament.participants.filter(p => {
+														const name = p.display_name || p.name || p.user?.name || '';
+														return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+													}).length }}
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</details>
 					</div>
 					<div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
 						<span class="text-4xl mb-4 block">📭</span>
@@ -306,7 +346,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { locationService } from '../../services/locationService';
 
@@ -316,6 +356,14 @@ const router = useRouter();
 const location = ref(null);
 const tournaments = ref([]);
 const loading = ref(false);
+
+const activeTournaments = computed(() =>
+	(tournaments.value || []).filter((t) => !t.is_finished)
+);
+
+const finishedTournaments = computed(() =>
+	(tournaments.value || []).filter((t) => t.is_finished)
+);
 const showPasswordForm = ref(false);
 const locationPassword = ref('');
 const checkingPassword = ref(false);
