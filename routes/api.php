@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::post('telegram/webhook', [\App\Http\Controllers\Api\TelegramWebhookController::class, '__invoke']);
+
 Route::get('/public/locations/{location}', [LocationController::class, 'publicShow']);
 Route::get('/public/locations/{location}/tournaments', [LocationTournamentController::class, 'publicIndex']);
 
