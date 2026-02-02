@@ -50,9 +50,9 @@
 					<div class="flex items-center space-x-2 sm:space-x-4">
 						<router-link
 							v-if="user?.is_admin"
-							to="/admin/rooms"
+							to="/admin/settings"
 							class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700"
-							:class="$route.name === 'AdminRooms' || $route.name === 'AdminCurrencies' || $route.name === 'AdminUsers'
+							:class="$route.path.startsWith('/admin')
 								? 'ring-2 ring-offset-2 ring-indigo-500' 
 								: ''"
 						>
@@ -198,10 +198,10 @@
 					</router-link>
 					<router-link
 						v-if="user?.is_admin"
-						to="/admin/rooms"
+						to="/admin/settings"
 						@click="mobileMenuOpen = false"
 						class="block px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
-						:class="$route.name === 'AdminRooms' || $route.name === 'AdminCurrencies' || $route.name === 'AdminUsers'
+						:class="$route.path.startsWith('/admin')
 							? 'ring-2 ring-offset-2 ring-indigo-500' 
 							: ''"
 					>

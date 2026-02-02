@@ -89,5 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('currencies/{currency}', [CurrencyController::class, 'show']);
 		Route::put('currencies/{currency}', [CurrencyController::class, 'update']);
 		Route::delete('currencies/{currency}', [CurrencyController::class, 'destroy']);
+
+		Route::get('telegram-settings', [\App\Http\Controllers\Api\AdminTelegramSettingsController::class, 'show']);
+		Route::put('telegram-settings', [\App\Http\Controllers\Api\AdminTelegramSettingsController::class, 'update']);
 	});
 });

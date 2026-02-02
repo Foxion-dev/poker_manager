@@ -81,22 +81,24 @@ const routes = [
 		path: '/admin',
 		component: () => import('../components/admin/AdminLayout.vue'),
 		meta: { requiresAuth: true, requiresAdmin: true },
-		redirect: '/admin/rooms',
+		redirect: '/admin/settings',
 		children: [
 			{
+				path: 'settings',
+				name: 'AdminSettings',
+				component: () => import('../components/admin/AdminSettings.vue'),
+			},
+			{
 				path: 'rooms',
-				name: 'AdminRooms',
-				component: () => import('../components/admin/AdminRooms.vue'),
+				redirect: '/admin/settings',
 			},
 			{
 				path: 'currencies',
-				name: 'AdminCurrencies',
-				component: () => import('../components/admin/AdminCurrencies.vue'),
+				redirect: '/admin/settings',
 			},
 			{
 				path: 'users',
-				name: 'AdminUsers',
-				component: () => import('../components/admin/AdminUsers.vue'),
+				redirect: '/admin/settings',
 			},
 			{
 				path: 'users/:id',
@@ -126,9 +128,7 @@ const pageTitles = {
 	LocationTournamentDetail: 'Детали турнира - Poker Manager',
 	Settings: 'Настройки - Poker Manager',
 	PublicLocationView: 'Публичная локация - Poker Manager',
-	AdminRooms: 'Управление румами - Админ-панель',
-	AdminCurrencies: 'Управление валютами - Админ-панель',
-	AdminUsers: 'Управление пользователями - Админ-панель',
+	AdminSettings: 'Настройки - Админ-панель',
 	AdminUserDetail: 'Детали пользователя - Админ-панель',
 };
 

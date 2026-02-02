@@ -3,7 +3,7 @@
 		<nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-50">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div class="flex justify-between h-16">
-					<div class="flex">
+					<div class="flex items-center">
 						<div class="flex-shrink-0 flex items-center">
 							<div class="flex items-center space-x-2">
 								<div class="h-8 w-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -16,36 +16,40 @@
 						</div>
 						<div class="hidden sm:ml-8 sm:flex sm:space-x-1">
 							<router-link
-								to="/admin/rooms"
+								to="/admin/settings"
 								class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-								:class="$route.name === 'AdminRooms' 
+								:class="$route.path.startsWith('/admin') 
 									? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
 									: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
 							>
-								<span class="mr-2">🏠</span>
-								Румы
-							</router-link>
-							<router-link
-								to="/admin/currencies"
-								class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-								:class="$route.name === 'AdminCurrencies' 
-									? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
-									: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-							>
-								<span class="mr-2">💱</span>
-								Валюты
-							</router-link>
-							<router-link
-								to="/admin/users"
-								class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-								:class="$route.name === 'AdminUsers' 
-									? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
-									: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-							>
-								<span class="mr-2">👥</span>
-								Пользователи
+								<span class="mr-2">⚙️</span>
+								Настройки
 							</router-link>
 						</div>
+						<div class="sm:hidden ml-4">
+							<button
+								type="button"
+								@click="mobileMenuOpen = !mobileMenuOpen"
+								class="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+								aria-expanded="mobileMenuOpen"
+							>
+								<span class="sr-only">Меню</span>
+								<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path v-if="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+									<path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						</div>
+					</div>
+					<div v-if="mobileMenuOpen" class="sm:hidden absolute top-16 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg z-40 px-4 py-2">
+						<router-link
+							to="/admin/settings"
+							@click="mobileMenuOpen = false"
+							class="block px-4 py-3 rounded-lg text-sm font-medium"
+							:class="$route.path.startsWith('/admin') ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+						>
+							⚙️ Настройки
+						</router-link>
 					</div>
 					<div class="flex items-center space-x-4">
 						<router-link
@@ -82,6 +86,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
@@ -89,6 +94,7 @@ import { useAuthStore } from '../../stores/auth';
 const router = useRouter();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
+const mobileMenuOpen = ref(false);
 
 const handleLogout = async () => {
 	await authStore.logout();
