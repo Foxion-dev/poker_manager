@@ -9,7 +9,7 @@ start: ## [Локально] Запустить проект в dev-режиме
 	@echo "🚀 Запуск проекта (локальная разработка)..."
 	@if ! $(COMPOSE_DEV) ps 2>/dev/null | grep -q "poker-manager-app.*Up"; then \
 		echo "📦 Запуск контейнеров..."; \
-		$(COMPOSE_DEV) up -d --build; \
+		$(COMPOSE_DEV) up -d; \
 		echo "⏳ Ожидание сервисов..."; \
 		sleep 5; \
 	else \

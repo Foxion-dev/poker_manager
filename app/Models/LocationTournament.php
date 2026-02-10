@@ -29,6 +29,7 @@ class LocationTournament extends Model
 		'location_id',
 		'name',
 		'buyin',
+		'bounty',
 		'currency_id',
 		'format',
 		'itm_percentage',
@@ -43,6 +44,7 @@ class LocationTournament extends Model
 	{
 		return [
 			'buyin' => 'decimal:2',
+			'bounty' => 'decimal:2',
 			'itm_percentage' => 'decimal:2',
 			'rake' => 'decimal:2',
 			'prize_distribution' => 'array',
@@ -90,19 +92,39 @@ class LocationTournament extends Model
 		return ($buyin * $this->participants->count()) + ($totalRebuys * $buyin) + ($totalAddons * $buyin);
 	}
 
+	public function getBountyPoolAttribute(): float
+	{
+		if ($this->format !== 'classic_bounty') {
+			return 0.0;
+		}
+
+		$bounty = (float) ($this->bounty ?? 0);
+		if ($bounty <= 0) {
+			return 0.0;
+		}
+
+		$participantsCount = $this->participants->count();
+		$totalRebuys = $this->participants->sum('rebuy');
+		$totalEntriesWithBounty = $participantsCount + $totalRebuys;
+
+		return round($bounty * $totalEntriesWithBounty, 2);
+	}
+
 	public function getPrizePoolAttribute(): float
 	{
 		$totalBuyin = $this->total_buyin;
+		$bountyPool = $this->bounty_pool;
+		$basePrizePool = max(0.0, $totalBuyin - $bountyPool);
 		$rakeType = $this->rake_type ?? 'fixed';
 		$rake = (float) ($this->rake ?? 30);
 		
 		if ($rakeType === 'percentage') {
-			$rakeAmount = $totalBuyin * ($rake / 100);
+			$rakeAmount = $basePrizePool * ($rake / 100);
 		} else {
 			$rakeAmount = $rake;
 		}
 		
-		return round($totalBuyin - $rakeAmount, 2);
+		return round(max(0.0, $basePrizePool - $rakeAmount), 2);
 	}
 
 	public function getPrizeDistributionAttribute(): array

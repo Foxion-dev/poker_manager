@@ -83,6 +83,23 @@
 								<option value="progressive_bounty">Прогрессив баунти</option>
 							</select>
 						</div>
+						<div v-if="form.format === 'classic_bounty'">
+							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+								Размер баунти *
+							</label>
+							<input
+								v-model.number="form.bounty"
+								type="number"
+								step="0.01"
+								min="0"
+								required
+								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition duration-200"
+								placeholder="Например, 10.00"
+							/>
+							<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+								Для каждого входа и ребая: байин − баунти в призовой фонд, баунти в баунти фонд. Аддон целиком идёт в призовой фонд.
+							</p>
+						</div>
 						<div>
 							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 								Процент ИТМ (%)

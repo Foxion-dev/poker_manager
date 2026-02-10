@@ -92,7 +92,7 @@
 							</span>
 							<button
 								type="button"
-								@click="$emit('remove-participant', participant)"
+								@click.stop.prevent="$emit('remove-participant', participant)"
 								:disabled="removing"
 								class="flex-shrink-0 p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors disabled:opacity-50"
 								title="Удалить"

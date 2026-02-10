@@ -55,7 +55,25 @@
 							Всего входов: {{ formatCurrency(tournament.total_buyin, tournament.currency) }}
 						</p>
 						<p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-							Количество входов: {{ totalEntriesCount }}
+							Игроки: {{ entriesInfo.participants }}, ребаи: {{ entriesInfo.rebuys }}, аддоны: {{ entriesInfo.addons }}
+						</p>
+						<p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+							Количество входов (игроки + ребаи): {{ totalEntriesCount }}
+						</p>
+						<p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+							Рейк:
+							<span v-if="tournament.rake_type === 'percentage'">
+								{{ tournament.rake ?? 0 }}%
+							</span>
+							<span v-else>
+								{{ formatCurrency(tournament.rake ?? 0, tournament.currency) }}
+							</span>
+						</p>
+						<p
+							v-if="tournament.format === 'classic_bounty' && tournament.bounty_pool > 0"
+							class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1"
+						>
+							Баунти фонд: {{ formatCurrency(tournament.bounty_pool, tournament.currency) }}
 						</p>
 					</div>
 				</div>
@@ -212,8 +230,13 @@
 								<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
 							</label>
 						</div>
-						<div class="flex items-center gap-2">
-							<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Оплата</span>
+						<div class="flex items-center gap-3">
+							<div class="flex flex-col items-start gap-1">
+								<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Оплата</span>
+								<span class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+									К оплате: {{ formatCurrency(getParticipantTotalBuyin(participant), tournament.currency) }}
+								</span>
+							</div>
 							<label class="relative inline-flex items-center cursor-pointer">
 								<input
 									v-model="participant.is_paid"
@@ -225,7 +248,8 @@
 							</label>
 						</div>
 						<button
-							@click="removeParticipant(participant)"
+							type="button"
+							@click.stop.prevent="removeParticipant(participant)"
 							class="px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
 							title="Удалить участника"
 						>
@@ -652,6 +676,31 @@ const totalEntriesCount = computed(() => {
 	const totalRebuys = validParticipants.reduce((sum, p) => sum + (p.rebuy || 0), 0);
 	
 	return participantsCount + totalRebuys;
+});
+
+const entriesInfo = computed(() => {
+	if (!tournament.value || !tournament.value.participants) {
+		return {
+			participants: 0,
+			rebuys: 0,
+			addons: 0,
+		};
+	}
+
+	const validParticipants = tournament.value.participants.filter(p => {
+		const name = p.display_name || p.name || p.user?.name || '';
+		return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+	});
+
+	const participantsCount = validParticipants.length;
+	const totalRebuys = validParticipants.reduce((sum, p) => sum + (p.rebuy || 0), 0);
+	const totalAddons = validParticipants.filter(p => p.addon === true).length;
+
+	return {
+		participants: participantsCount,
+		rebuys: totalRebuys,
+		addons: totalAddons,
+	};
 });
 
 const addParticipantFromLocationUser = async (locationUser) => {
@@ -1120,6 +1169,15 @@ const savePrizeDistribution = async () => {
 		console.error('Error saving prize distribution:', error);
 		alert('Ошибка при сохранении распределения призов');
 	}
+};
+
+const getParticipantTotalBuyin = (participant) => {
+	if (!tournament.value || !tournament.value.buyin) return 0;
+	const buyin = parseFloat(tournament.value.buyin) || 0;
+	const rebuys = parseInt(participant.rebuy || 0, 10);
+	const addon = participant.addon ? 1 : 0;
+	const entries = 1 + Math.max(0, rebuys) + addon;
+	return buyin * entries;
 };
 
 const clearPrizeDistribution = async () => {

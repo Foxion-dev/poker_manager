@@ -64,6 +64,7 @@ class LocationTournamentController extends Controller
 					'id' => $tournament->id,
 					'name' => $tournament->display_name,
 					'buyin' => $tournament->buyin,
+					'bounty' => $tournament->bounty,
 					'currency_id' => $tournament->currency_id,
 					'currency' => $tournament->currency,
 					'format' => $tournament->format,
@@ -75,6 +76,7 @@ class LocationTournamentController extends Controller
 					'is_finished' => $tournament->is_finished ?? false,
 					'total_buyin' => $tournament->total_buyin,
 					'prize_pool' => $tournament->prize_pool,
+					'bounty_pool' => $tournament->bounty_pool,
 					'prize_distribution' => $tournament->prize_distribution,
 					'participants' => $tournament->participants->map(function ($participant) {
 						return [
@@ -140,11 +142,12 @@ class LocationTournamentController extends Controller
 		}
 
 		$locationTournament->load(['participants.user', 'currency']);
-
+		
 		return response()->json([
 			'id' => $locationTournament->id,
 			'name' => $locationTournament->display_name,
 			'buyin' => $locationTournament->buyin,
+			'bounty' => $locationTournament->bounty,
 			'currency_id' => $locationTournament->currency_id,
 			'currency' => $locationTournament->currency,
 			'format' => $locationTournament->format,
@@ -158,6 +161,7 @@ class LocationTournamentController extends Controller
 			'is_finished' => $locationTournament->is_finished ?? false,
 			'total_buyin' => $locationTournament->total_buyin,
 			'prize_pool' => $locationTournament->prize_pool,
+			'bounty_pool' => $locationTournament->bounty_pool,
 			'prize_distribution' => $locationTournament->prize_distribution,
 			'participants' => $locationTournament->participants->map(function ($participant) {
 				return [
