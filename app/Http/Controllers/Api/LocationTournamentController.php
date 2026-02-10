@@ -271,7 +271,16 @@ class LocationTournamentController extends Controller
 				];
 
 				if ($locationTournament->format === 'progressive_bounty' && $newRebuy > ($participant->rebuy ?? 0)) {
-					$updateData['bounty_stack'] = $locationTournament->bounty;
+					$currentStack = (float) ($participant->bounty_stack ?? 0);
+					$bountyAmount = (float) ($locationTournament->bounty ?? 0);
+
+					if ($bountyAmount > 0) {
+						if ($currentStack <= 0) {
+							$updateData['bounty_stack'] = $bountyAmount;
+						} else {
+							$updateData['bounty_stack'] = $currentStack + $bountyAmount;
+						}
+					}
 				}
 
 				$participant->update($updateData);
