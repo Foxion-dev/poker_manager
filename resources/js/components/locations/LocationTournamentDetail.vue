@@ -228,54 +228,60 @@
 							</div>
 						</div>
 					</div>
-					<div v-if="!tournament.is_finished && location?.is_admin" class="flex items-center justify-between gap-2 pt-3 border-t border-gray-200 dark:border-gray-600">
-						<div class="flex items-center gap-2">
-							<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Аддон</span>
-							<label class="relative inline-flex items-center cursor-pointer">
-								<input
-									v-model="participant.addon"
-									type="checkbox"
-									class="sr-only peer"
-									@change="updateParticipant(participant)"
-								/>
-								<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-							</label>
-						</div>
-						<div class="flex items-center gap-3">
-							<div class="flex flex-col items-start gap-1">
-								<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Оплата</span>
-								<span class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
-									К оплате: {{ formatCurrency(getParticipantTotalBuyin(participant), tournament.currency) }}
-								</span>
+					<div v-if="!tournament.is_finished && location?.is_admin" class="pt-3 border-t border-gray-200 dark:border-gray-600 space-y-2">
+						<div class="flex items-center justify-between gap-2">
+							<div class="flex items-center gap-2">
+								<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Аддон</span>
+								<label class="relative inline-flex items-center cursor-pointer">
+									<input
+										v-model="participant.addon"
+										type="checkbox"
+										class="sr-only peer"
+										@change="updateParticipant(participant)"
+									/>
+									<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+								</label>
 							</div>
-							<label class="relative inline-flex items-center cursor-pointer">
-								<input
-									v-model="participant.is_paid"
-									type="checkbox"
-									class="sr-only peer"
-									@change="updateParticipant(participant)"
-								/>
-								<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
-							</label>
+							<div class="flex items-center gap-3">
+								<div class="flex flex-col items-start gap-1">
+									<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Оплата</span>
+									<span class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+										К оплате: {{ formatCurrency(getParticipantTotalBuyin(participant), tournament.currency) }}
+									</span>
+								</div>
+								<label class="relative inline-flex items-center cursor-pointer">
+									<input
+										v-model="participant.is_paid"
+										type="checkbox"
+										class="sr-only peer"
+										@change="updateParticipant(participant)"
+									/>
+									<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+								</label>
+							</div>
 							<button
-								v-if="tournament.format === 'progressive_bounty' && (tournament.bounty ?? 0) > 0"
+								type="button"
+								@click.stop.prevent="removeParticipant(participant)"
+								class="px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+								title="Удалить участника"
+							>
+								🗑️ Удалить
+							</button>
+						</div>
+						<div
+							v-if="tournament.format === 'progressive_bounty' && (tournament.bounty ?? 0) > 0"
+							class="flex"
+						>
+							<button
 								type="button"
 								:disabled="progressiveBountySaving"
 								@click="progressiveBountyTargetFor = progressiveBountyTargetFor === participant.id ? null : participant.id"
-								class="ml-2 inline-flex items-center justify-center w-8 h-8 rounded-full border border-indigo-500 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-[10px] sm:text-xs font-semibold transition-colors"
+								class="w-full inline-flex items-center justify-center px-3 py-2 rounded-lg border border-indigo-500 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-[11px] sm:text-xs font-semibold transition-colors"
 								title="Записать баунти"
 							>
 								КО
 							</button>
 						</div>
-						<button
-							type="button"
-							@click.stop.prevent="removeParticipant(participant)"
-							class="px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-							title="Удалить участника"
-						>
-							🗑️ Удалить
-						</button>
 					</div>
 					<div
 						v-if="tournament.format === 'progressive_bounty'"
