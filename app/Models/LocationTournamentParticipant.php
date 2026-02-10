@@ -19,6 +19,8 @@ class LocationTournamentParticipant extends Model
 		'addon',
 		'is_paid',
 		'prize',
+		'bounty_stack',
+		'bounty_prize',
 	];
 
 	protected function casts(): array
@@ -29,6 +31,8 @@ class LocationTournamentParticipant extends Model
 			'addon' => 'boolean',
 			'is_paid' => 'boolean',
 			'prize' => 'decimal:2',
+			'bounty_stack' => 'decimal:2',
+			'bounty_prize' => 'decimal:2',
 		];
 	}
 

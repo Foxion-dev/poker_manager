@@ -70,10 +70,19 @@
 							</span>
 						</p>
 						<p
-							v-if="tournament.format === 'classic_bounty' && tournament.bounty_pool > 0"
+							v-if="['classic_bounty', 'progressive_bounty'].includes(tournament.format) && tournament.bounty_pool > 0"
 							class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1"
 						>
-							Баунти фонд: {{ formatCurrency(tournament.bounty_pool, tournament.currency) }}
+							Баунти фонд:
+							<span class="font-medium">
+								{{ formatCurrency(tournament.bounty_pool, tournament.currency) }}
+							</span>
+							<span v-if="tournament.format === 'progressive_bounty' && (tournament.bounty_pool_remaining !== undefined || tournament.bounty_pool_taken !== undefined)">
+								(остаток:
+								{{ formatCurrency(tournament.bounty_pool_remaining ?? 0, tournament.currency) }},
+								забрано:
+								{{ formatCurrency(tournament.bounty_pool_taken ?? 0, tournament.currency) }})
+							</span>
 						</p>
 					</div>
 				</div>
@@ -165,6 +174,8 @@
 				</div>
 			</div>
 
+			<!-- Глобальной панели прогрессив баунти больше нет — управление через кнопку в карточке игрока -->
+
 			<div v-if="sortedParticipants.length > 0" class="space-y-4">
 				<div
 					v-for="participant in sortedParticipants"
@@ -246,6 +257,16 @@
 								/>
 								<div class="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
 							</label>
+							<button
+								v-if="tournament.format === 'progressive_bounty' && (tournament.bounty ?? 0) > 0"
+								type="button"
+								:disabled="progressiveBountySaving"
+								@click="progressiveBountyTargetFor = progressiveBountyTargetFor === participant.id ? null : participant.id"
+								class="ml-2 inline-flex items-center justify-center w-8 h-8 rounded-full border border-indigo-500 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-[10px] sm:text-xs font-semibold transition-colors"
+								title="Записать баунти"
+							>
+								КО
+							</button>
 						</div>
 						<button
 							type="button"
@@ -255,6 +276,49 @@
 						>
 							🗑️ Удалить
 						</button>
+					</div>
+					<div
+						v-if="tournament.format === 'progressive_bounty'"
+						class="mt-2 flex flex-col gap-2 text-[11px] sm:text-xs text-gray-600 dark:text-gray-400"
+					>
+						<div class="flex items-center justify-between">
+							<div>
+								<span class="font-medium">Баунти стэк:</span>
+								<span>
+									{{ formatCurrency(getEffectiveBountyStack(participant), tournament.currency) }}
+								</span>
+							</div>
+							<div v-if="participant.bounty_prize">
+								<span class="font-medium">Баунти выигрыш:</span>
+								<span class="text-green-600 dark:text-green-400">
+									{{ formatCurrency(participant.bounty_prize, tournament.currency) }}
+								</span>
+							</div>
+						</div>
+						<div
+							v-if="!tournament.is_finished && location?.is_admin && progressiveBountyTargetFor === participant.id"
+							class="pt-2 border-t border-dotted border-indigo-200 dark:border-indigo-700"
+						>
+							<div class="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+								Кого этот игрок выбил?
+							</div>
+							<div class="flex flex-wrap gap-2">
+								<template v-for="p in progressiveBountyParticipants" :key="p.id">
+									<button
+										v-if="p.id !== participant.id && getEffectiveBountyStack(p) > 0"
+										type="button"
+										:disabled="progressiveBountySaving"
+										@click="applyProgressiveBountyHit(participant.id, p.id)"
+										class="px-2 py-1 rounded-full text-[11px] sm:text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-colors disabled:opacity-50"
+									>
+										{{ p.display_name || p.name || p.user?.name || 'Неизвестный участник' }}
+										<span class="ml-1 text-[10px] text-gray-500 dark:text-gray-400">
+											({{ formatCurrency(getEffectiveBountyStack(p), tournament.currency) }})
+										</span>
+									</button>
+								</template>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -737,6 +801,12 @@ const addParticipantFromLocationUser = async (locationUser) => {
 		if (response && response.bounty_pool !== undefined) {
 			tournament.value.bounty_pool = response.bounty_pool;
 		}
+		if (response && response.bounty_pool_remaining !== undefined) {
+			tournament.value.bounty_pool_remaining = response.bounty_pool_remaining;
+		}
+		if (response && response.bounty_pool_taken !== undefined) {
+			tournament.value.bounty_pool_taken = response.bounty_pool_taken;
+		}
 		if (response && response.prize_distribution !== undefined) {
 			tournament.value.prize_distribution = response.prize_distribution;
 		}
@@ -788,6 +858,12 @@ const addParticipant = async () => {
 		}
 		if (response && response.bounty_pool !== undefined) {
 			tournament.value.bounty_pool = response.bounty_pool;
+		}
+		if (response && response.bounty_pool_remaining !== undefined) {
+			tournament.value.bounty_pool_remaining = response.bounty_pool_remaining;
+		}
+		if (response && response.bounty_pool_taken !== undefined) {
+			tournament.value.bounty_pool_taken = response.bounty_pool_taken;
 		}
 		if (response && response.prize_distribution !== undefined) {
 			tournament.value.prize_distribution = response.prize_distribution;
@@ -847,6 +923,12 @@ const removeParticipant = async (participant) => {
 		}
 		if (response && response.bounty_pool !== undefined) {
 			tournament.value.bounty_pool = response.bounty_pool;
+		}
+		if (response && response.bounty_pool_remaining !== undefined) {
+			tournament.value.bounty_pool_remaining = response.bounty_pool_remaining;
+		}
+		if (response && response.bounty_pool_taken !== undefined) {
+			tournament.value.bounty_pool_taken = response.bounty_pool_taken;
 		}
 		if (response && response.prize_distribution !== undefined) {
 			tournament.value.prize_distribution = response.prize_distribution;
@@ -912,6 +994,12 @@ const updateParticipant = async (participant) => {
 		if (response && response.bounty_pool !== undefined) {
 			tournament.value.bounty_pool = response.bounty_pool;
 		}
+		if (response && response.bounty_pool_remaining !== undefined) {
+			tournament.value.bounty_pool_remaining = response.bounty_pool_remaining;
+		}
+		if (response && response.bounty_pool_taken !== undefined) {
+			tournament.value.bounty_pool_taken = response.bounty_pool_taken;
+		}
 		if (response && response.prize_distribution !== undefined) {
 			tournament.value.prize_distribution = response.prize_distribution;
 		}
@@ -926,6 +1014,96 @@ const updateParticipant = async (participant) => {
 	}
 };
 
+const getEffectiveBountyStack = participant => {
+	if (!tournament.value) {
+		return 0;
+	}
+
+	const baseStack = participant.bounty_stack ?? tournament.value.bounty ?? 0;
+	const numeric = Number(baseStack);
+
+	if (Number.isNaN(numeric)) {
+		return 0;
+	}
+
+	return numeric;
+};
+
+const applyProgressiveBountyHit = async (killerId, victimId) => {
+	if (!killerId || !victimId) {
+		return;
+	}
+
+	if (killerId === victimId) {
+		alert('Нельзя выбить самого себя');
+		return;
+	}
+
+	const victim = tournament.value?.participants?.find(p => p.id === victimId);
+
+	if (!victim) {
+		return;
+	}
+
+	const currentStack = getEffectiveBountyStack(victim);
+
+	if (currentStack <= 0) {
+		alert('У выбранного игрока нет баунти для выбивания');
+		return;
+	}
+
+	if (progressiveBountySaving.value) {
+		return;
+	}
+
+	progressiveBountySaving.value = true;
+
+	try {
+		const payload = {
+			killer_participant_id: killerId,
+			victim_participant_id: victimId,
+		};
+
+		const response = await locationService.progressiveBountyHit(
+			route.params.locationId,
+			route.params.id,
+			payload
+		);
+
+		if (response && response.participants) {
+			tournament.value.participants = response.participants.map(p => ({
+				...p,
+				display_name: p.display_name || p.name || p.user?.name || 'Неизвестный участник',
+			}));
+		}
+
+		if (response && response.total_buyin !== undefined) {
+			tournament.value.total_buyin = response.total_buyin;
+		}
+		if (response && response.prize_pool !== undefined) {
+			tournament.value.prize_pool = response.prize_pool;
+		}
+		if (response && response.bounty_pool !== undefined) {
+			tournament.value.bounty_pool = response.bounty_pool;
+		}
+		if (response && response.bounty_pool_remaining !== undefined) {
+			tournament.value.bounty_pool_remaining = response.bounty_pool_remaining;
+		}
+		if (response && response.bounty_pool_taken !== undefined) {
+			tournament.value.bounty_pool_taken = response.bounty_pool_taken;
+		}
+		if (response && response.prize_distribution !== undefined) {
+			tournament.value.prize_distribution = response.prize_distribution;
+		}
+	} catch (error) {
+		console.error('Error applying progressive bounty hit:', error);
+		const message = error.response?.data?.message || 'Ошибка при обновлении прогрессивного баунти';
+		alert(message);
+	} finally {
+		progressiveBountySaving.value = false;
+	}
+};
+
 const showFinishModal = ref(false);
 const showPrizeDistributionModal = ref(false);
 const selectedWinners = ref([]);
@@ -933,6 +1111,19 @@ const prizeDistributionForm = ref([]);
 const isFixedPrizeDistribution = ref(false);
 const prizeRake = ref(30);
 const prizeRakeType = ref('fixed');
+const progressiveBountySaving = ref(false);
+const progressiveBountyTargetFor = ref(null);
+
+const progressiveBountyParticipants = computed(() => {
+	if (!tournament.value || !tournament.value.participants) {
+		return [];
+	}
+
+	return tournament.value.participants.filter(p => {
+		const name = p.display_name || p.name || p.user?.name || '';
+		return name && name !== 'Без имени' && name !== 'Неизвестный участник';
+	});
+});
 
 const openPrizeDistributionModal = () => {
 	if (!tournament.value) return;

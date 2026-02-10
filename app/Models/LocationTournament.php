@@ -94,7 +94,7 @@ class LocationTournament extends Model
 
 	public function getBountyPoolAttribute(): float
 	{
-		if ($this->format !== 'classic_bounty') {
+		if (!in_array($this->format, ['classic_bounty', 'progressive_bounty'], true)) {
 			return 0.0;
 		}
 
@@ -108,6 +108,53 @@ class LocationTournament extends Model
 		$totalEntriesWithBounty = $participantsCount + $totalRebuys;
 
 		return round($bounty * $totalEntriesWithBounty, 2);
+	}
+
+	public function getBountyPoolRemainingAttribute(): float
+	{
+		if (!in_array($this->format, ['classic_bounty', 'progressive_bounty'], true)) {
+			return 0.0;
+		}
+
+		$bounty = (float) ($this->bounty ?? 0);
+		if ($bounty <= 0) {
+			return 0.0;
+		}
+
+		if ($this->format === 'classic_bounty') {
+			return $this->bounty_pool;
+		}
+
+		$total = 0.0;
+
+		foreach ($this->participants as $participant) {
+			$stack = $participant->bounty_stack;
+
+			if ($stack === null) {
+				$stack = $bounty;
+			}
+
+			$total += (float) $stack;
+		}
+
+		return round($total, 2);
+	}
+
+	public function getBountyPoolTakenAttribute(): float
+	{
+		if (!in_array($this->format, ['classic_bounty', 'progressive_bounty'], true)) {
+			return 0.0;
+		}
+
+		if ($this->format === 'classic_bounty') {
+			return 0.0;
+		}
+
+		$totalPrize = (float) $this->participants->sum(function ($participant) {
+			return (float) ($participant->bounty_prize ?? 0);
+		});
+
+		return round($totalPrize, 2);
 	}
 
 	public function getPrizePoolAttribute(): float

@@ -162,6 +162,8 @@ class LocationTournamentController extends Controller
 			'total_buyin' => $locationTournament->total_buyin,
 			'prize_pool' => $locationTournament->prize_pool,
 			'bounty_pool' => $locationTournament->bounty_pool,
+			'bounty_pool_remaining' => $locationTournament->bounty_pool_remaining,
+			'bounty_pool_taken' => $locationTournament->bounty_pool_taken,
 			'prize_distribution' => $locationTournament->prize_distribution,
 			'participants' => $locationTournament->participants->map(function ($participant) {
 				return [
@@ -174,6 +176,8 @@ class LocationTournamentController extends Controller
 					'addon' => $participant->addon ?? false,
 					'is_paid' => $participant->is_paid ?? false,
 					'prize' => $participant->prize,
+					'bounty_stack' => $participant->bounty_stack,
+					'bounty_prize' => $participant->bounty_prize,
 					'display_name' => $participant->display_name,
 				];
 			})->sortBy('place')->values(),
@@ -257,12 +261,20 @@ class LocationTournamentController extends Controller
 		foreach ($participants as $participantData) {
 			$participant = $locationTournament->participants()->find($participantData['id']);
 			if ($participant) {
-				$participant->update([
-					'rebuy' => $participantData['rebuy'] ?? 0,
+				$newRebuy = $participantData['rebuy'] ?? 0;
+
+				$updateData = [
+					'rebuy' => $newRebuy,
 					'addon' => $participantData['addon'] ?? false,
 					'is_paid' => $participantData['is_paid'] ?? false,
 					'prize' => $participantData['prize'] ?? null,
-				]);
+				];
+
+				if ($locationTournament->format === 'progressive_bounty' && $newRebuy > ($participant->rebuy ?? 0)) {
+					$updateData['bounty_stack'] = $locationTournament->bounty;
+				}
+
+				$participant->update($updateData);
 			}
 		}
 
@@ -273,6 +285,8 @@ class LocationTournamentController extends Controller
 			'total_buyin' => $locationTournament->total_buyin,
 			'prize_pool' => $locationTournament->prize_pool,
 			'bounty_pool' => $locationTournament->bounty_pool,
+			'bounty_pool_remaining' => $locationTournament->bounty_pool_remaining,
+			'bounty_pool_taken' => $locationTournament->bounty_pool_taken,
 			'prize_distribution' => $locationTournament->prize_distribution,
 		]);
 	}
@@ -374,6 +388,8 @@ class LocationTournamentController extends Controller
 			'total_buyin' => $locationTournament->total_buyin,
 			'prize_pool' => $locationTournament->prize_pool,
 			'bounty_pool' => $locationTournament->bounty_pool,
+			'bounty_pool_remaining' => $locationTournament->bounty_pool_remaining,
+			'bounty_pool_taken' => $locationTournament->bounty_pool_taken,
 			'prize_distribution' => $locationTournament->prize_distribution,
 			'users' => $allLocationUsers->values(),
 		]);
@@ -438,8 +454,66 @@ class LocationTournamentController extends Controller
 			'total_buyin' => $locationTournament->total_buyin,
 			'prize_pool' => $locationTournament->prize_pool,
 			'bounty_pool' => $locationTournament->bounty_pool,
+			'bounty_pool_remaining' => $locationTournament->bounty_pool_remaining,
+			'bounty_pool_taken' => $locationTournament->bounty_pool_taken,
 			'prize_distribution' => $locationTournament->prize_distribution,
 			'users' => $allLocationUsers->values(),
+		]);
+	}
+
+	public function progressiveBountyHit(Request $request, Location $location, $locationTournamentId): JsonResponse
+	{
+		$user = $request->user();
+		$locationTournament = LocationTournament::where('id', $locationTournamentId)
+			->where('location_id', $location->id)
+			->firstOrFail();
+
+		if (!$location->isAdmin($user)) {
+			return response()->json(['message' => 'Only location admins can update progressive bounty'], 403);
+		}
+
+		if ($locationTournament->is_finished) {
+			return response()->json(['message' => 'Cannot update progressive bounty for finished tournament'], 400);
+		}
+
+		if ($locationTournament->format !== 'progressive_bounty') {
+			return response()->json(['message' => 'Tournament is not progressive bounty'], 400);
+		}
+
+		$data = $request->validate([
+			'killer_participant_id' => ['required', 'integer'],
+			'victim_participant_id' => ['required', 'integer', 'different:killer_participant_id'],
+		]);
+
+		$killer = $locationTournament->participants()->where('id', $data['killer_participant_id'])->firstOrFail();
+		$victim = $locationTournament->participants()->where('id', $data['victim_participant_id'])->firstOrFail();
+
+		$currentStack = $victim->bounty_stack ?? $locationTournament->bounty ?? 0;
+		$currentStack = (float) $currentStack;
+
+		if ($currentStack <= 0) {
+			return response()->json(['message' => 'Victim has no bounty stack'], 422);
+		}
+
+		$half = $currentStack / 2;
+		$toPocket = floor($half / 5) * 5;
+		$toStack = $currentStack - $toPocket;
+
+		$killer->bounty_prize = ($killer->bounty_prize ?? 0) + $toPocket;
+		$killer->bounty_stack = ($killer->bounty_stack ?? ($locationTournament->bounty ?? 0)) + $toStack;
+		$victim->bounty_stack = 0;
+
+		$killer->save();
+		$victim->save();
+
+		$locationTournament->load(['participants.user', 'currency']);
+
+		return response()->json([
+			'participants' => $locationTournament->participants,
+			'total_buyin' => $locationTournament->total_buyin,
+			'prize_pool' => $locationTournament->prize_pool,
+			'bounty_pool' => $locationTournament->bounty_pool,
+			'prize_distribution' => $locationTournament->prize_distribution,
 		]);
 	}
 

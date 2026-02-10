@@ -83,7 +83,7 @@
 								<option value="progressive_bounty">Прогрессив баунти</option>
 							</select>
 						</div>
-						<div v-if="form.format === 'classic_bounty'">
+						<div v-if="form.format === 'classic_bounty' || form.format === 'progressive_bounty'">
 							<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
 								Размер баунти *
 							</label>

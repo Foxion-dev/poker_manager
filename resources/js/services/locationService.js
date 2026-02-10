@@ -110,4 +110,9 @@ export const locationService = {
 		const response = await api.delete(`/locations/${locationId}/tournaments/${tournamentId}/participants/${participantId}`);
 		return response.data;
 	},
+
+	async progressiveBountyHit(locationId, tournamentId, payload) {
+		const response = await api.post(`/locations/${locationId}/tournaments/${tournamentId}/progressive-bounty-hit`, payload);
+		return response.data;
+	},
 };
