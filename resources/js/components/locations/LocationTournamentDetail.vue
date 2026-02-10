@@ -211,7 +211,8 @@
 							<button
 								type="button"
 								@click.prevent="incrementRebuy(participant)"
-								class="w-7 h-7 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+								class="w-7 h-7 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+								:disabled="tournament.format === 'progressive_bounty' && getEffectiveBountyStack(participant) > 0"
 							>
 								+
 							</button>
@@ -894,6 +895,11 @@ const addParticipant = async () => {
 };
 
 const incrementRebuy = async (participant) => {
+	if (tournament.value?.format === 'progressive_bounty' && getEffectiveBountyStack(participant) > 0) {
+		alert('У игрока уже есть активный баунти стэк. Для нового входа сначала нужно выбить этого игрока.');
+		return;
+	}
+
 	participant.rebuy = (participant.rebuy || 0) + 1;
 	await updateParticipant(participant);
 };
