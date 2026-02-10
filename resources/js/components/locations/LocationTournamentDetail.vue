@@ -720,12 +720,25 @@ const addParticipantFromLocationUser = async (locationUser) => {
 	addingParticipant.value = true;
 	try {
 		const response = await locationService.addTournamentParticipant(route.params.locationId, route.params.id, data);
-
+		
 		if (response && response.participants) {
 			tournament.value.participants = response.participants.map(p => ({
 				...p,
 				display_name: p.display_name || p.name || p.user?.name || 'Неизвестный участник',
 			}));
+		}
+		
+		if (response && response.total_buyin !== undefined) {
+			tournament.value.total_buyin = response.total_buyin;
+		}
+		if (response && response.prize_pool !== undefined) {
+			tournament.value.prize_pool = response.prize_pool;
+		}
+		if (response && response.bounty_pool !== undefined) {
+			tournament.value.bounty_pool = response.bounty_pool;
+		}
+		if (response && response.prize_distribution !== undefined) {
+			tournament.value.prize_distribution = response.prize_distribution;
 		}
 
 		if (response && response.users) {
@@ -765,6 +778,19 @@ const addParticipant = async () => {
 				...p,
 				display_name: p.display_name || p.name || p.user?.name || 'Неизвестный участник',
 			}));
+		}
+		
+		if (response && response.total_buyin !== undefined) {
+			tournament.value.total_buyin = response.total_buyin;
+		}
+		if (response && response.prize_pool !== undefined) {
+			tournament.value.prize_pool = response.prize_pool;
+		}
+		if (response && response.bounty_pool !== undefined) {
+			tournament.value.bounty_pool = response.bounty_pool;
+		}
+		if (response && response.prize_distribution !== undefined) {
+			tournament.value.prize_distribution = response.prize_distribution;
 		}
 		
 		if (response && response.users) {
@@ -813,6 +839,19 @@ const removeParticipant = async (participant) => {
 			}));
 		}
 		
+		if (response && response.total_buyin !== undefined) {
+			tournament.value.total_buyin = response.total_buyin;
+		}
+		if (response && response.prize_pool !== undefined) {
+			tournament.value.prize_pool = response.prize_pool;
+		}
+		if (response && response.bounty_pool !== undefined) {
+			tournament.value.bounty_pool = response.bounty_pool;
+		}
+		if (response && response.prize_distribution !== undefined) {
+			tournament.value.prize_distribution = response.prize_distribution;
+		}
+
 		if (response && response.users) {
 			location.value.users = response.users;
 			locationUsers.value = response.users;
@@ -857,23 +896,24 @@ const updateParticipant = async (participant) => {
 			{ participants: participantsData }
 		);
 		
-		if (tournament.value) {
-			const updatedParticipant = tournament.value.participants.find(p => p.id === participant.id);
-			if (updatedParticipant) {
-				updatedParticipant.rebuy = participant.rebuy ?? 0;
-				updatedParticipant.addon = participant.addon ?? false;
-				updatedParticipant.is_paid = participant.is_paid ?? false;
-			}
-			
-			if (response && response.total_buyin !== undefined) {
-				tournament.value.total_buyin = response.total_buyin;
-			}
-			if (response && response.prize_pool !== undefined) {
-				tournament.value.prize_pool = response.prize_pool;
-			}
-			if (response && response.prize_distribution !== undefined) {
-				tournament.value.prize_distribution = response.prize_distribution;
-			}
+		if (response && response.participants) {
+			tournament.value.participants = response.participants.map(p => ({
+				...p,
+				display_name: p.display_name || p.name || p.user?.name || 'Неизвестный участник',
+			}));
+		}
+		
+		if (response && response.total_buyin !== undefined) {
+			tournament.value.total_buyin = response.total_buyin;
+		}
+		if (response && response.prize_pool !== undefined) {
+			tournament.value.prize_pool = response.prize_pool;
+		}
+		if (response && response.bounty_pool !== undefined) {
+			tournament.value.bounty_pool = response.bounty_pool;
+		}
+		if (response && response.prize_distribution !== undefined) {
+			tournament.value.prize_distribution = response.prize_distribution;
 		}
 	} catch (error) {
 		console.error('Error updating participant:', error);

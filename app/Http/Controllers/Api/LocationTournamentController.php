@@ -267,11 +267,12 @@ class LocationTournamentController extends Controller
 		}
 
 		$locationTournament->load(['participants.user', 'currency']);
-
+		
 		return response()->json([
 			'participants' => $locationTournament->participants,
 			'total_buyin' => $locationTournament->total_buyin,
 			'prize_pool' => $locationTournament->prize_pool,
+			'bounty_pool' => $locationTournament->bounty_pool,
 			'prize_distribution' => $locationTournament->prize_distribution,
 		]);
 	}
@@ -370,6 +371,10 @@ class LocationTournamentController extends Controller
 
 		return response()->json([
 			'participants' => $locationTournament->participants,
+			'total_buyin' => $locationTournament->total_buyin,
+			'prize_pool' => $locationTournament->prize_pool,
+			'bounty_pool' => $locationTournament->bounty_pool,
+			'prize_distribution' => $locationTournament->prize_distribution,
 			'users' => $allLocationUsers->values(),
 		]);
 	}
@@ -430,6 +435,10 @@ class LocationTournamentController extends Controller
 
 		return response()->json([
 			'participants' => $locationTournament->participants,
+			'total_buyin' => $locationTournament->total_buyin,
+			'prize_pool' => $locationTournament->prize_pool,
+			'bounty_pool' => $locationTournament->bounty_pool,
+			'prize_distribution' => $locationTournament->prize_distribution,
 			'users' => $allLocationUsers->values(),
 		]);
 	}
